@@ -6,11 +6,12 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using Orleans.Concurrency;
+using TexeraOrleansPrototype.OperatorImplementation.Interfaces;
 
-namespace TexeraOrleansPrototype
+namespace TexeraOrleansPrototype.OperatorImplementation
 {
 
-    public class OrderedCountFinalOperator : OrderingGrain, ICountFinalOperator
+    public class OrderedCountFinalOperatorWithSqNum : NormalGrain, ICountFinalOperator
     {
         private Guid guid = Guid.NewGuid();
         public bool isIntermediate = false;
@@ -36,11 +37,15 @@ namespace TexeraOrleansPrototype
             return Task.CompletedTask;
         }
 
-        public override Task Process_impl(ref List<Immutable<Tuple>> batch)
+        public override async Task Process(Immutable<List<Tuple>> batch)
         {
-            if (batch[0].Value.id == -1)
+        }
+
+        public override async Task<Tuple> Process_impl(Tuple tuple)
+        {
+            if (tuple.id == -1)
             {
-                ICountFinalOperator finalAggregator = this.GrainFactory.GetGrain<ICountFinalOperator>(1);
+                ICountFinalOperator finalAggregator = this.GrainFactory.GetGrain<ICountFinalOperator>(1, Utils.AssemblyPath);//, "OrderedCountFinalOperatorWithSqNum"
                 // finalAggregator.SetAggregatorLevel(false);
                 finalAggregator.SubmitIntermediateAgg(count);
             }
@@ -49,7 +54,7 @@ namespace TexeraOrleansPrototype
                 //Console.WriteLine("Ordered Count processing: [" + (row as Tuple).seq_token + "] " + (row as Tuple).id);
                 count++;
             }
-            return Task.CompletedTask;
+            return null;
         }
     }
 

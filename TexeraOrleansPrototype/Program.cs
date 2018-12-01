@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using TexeraOrleansPrototype.OperatorImplementation.Interfaces;
 
 namespace TexeraOrleansPrototype
 {
@@ -54,8 +55,8 @@ namespace TexeraOrleansPrototype
                 using (var client = clientBuilder.Build())
                 {
                     await client.Connect();
-
-                    Guid streamGuid = await client.GetGrain<ICountFinalOperator>(1).GetStreamGuid();
+                    // , "OrderedCountFinalOperatorWithSqNum"
+                    Guid streamGuid = await client.GetGrain<ICountFinalOperator>(1, Utils.AssemblyPath).GetStreamGuid();
 
                     Console.WriteLine("Client side guid is " + streamGuid);
                     var stream = client.GetStreamProvider("SMSProvider")
@@ -75,17 +76,17 @@ namespace TexeraOrleansPrototype
                     List<IScanOperator> operators = new List<IScanOperator>();
                     for (int i = 0; i < num_scan; ++i)
                     {
-                        var t = client.GetGrain<IScanOperator>(i + 2);
+                        var t = client.GetGrain<IScanOperator>(i + 2, Utils.AssemblyPath); //, "ScanOperatorWithSqNum"
                         operators.Add(t);
 
                         // Explicitly activating other grains
-                        await client.GetGrain<IFilterOperator>(i+2).TrivialCall();
+                        await client.GetGrain<IFilterOperator>(i+2, Utils.AssemblyPath).TrivialCall(); //, "OrderedFilterOperatorWithSqNum"
                         
-                        await client.GetGrain<IKeywordSearchOperator>(i+2).TrivialCall();
+                        await client.GetGrain<IKeywordSearchOperator>(i+2, Utils.AssemblyPath).TrivialCall(); //, "OrderedKeywordSearchOperatorWithSqNum"
                         
-                        await client.GetGrain<ICountOperator>(i+2).TrivialCall();
+                        await client.GetGrain<ICountOperator>(i+2, Utils.AssemblyPath).TrivialCall(); //, "OrderedCountOperatorWithSqNum"
                         
-                        await client.GetGrain<ICountFinalOperator>(1).TrivialCall();
+                        await client.GetGrain<ICountFinalOperator>(1, Utils.AssemblyPath).TrivialCall(); //, "OrderedCountFinalOperatorWithSqNum"
                         
                     }
                     Thread.Sleep(1000);
