@@ -46,16 +46,6 @@ namespace TexeraOrleansPrototype.OperatorImplementation
                         batchToForward.Add(ret);
                     }
                 }
-                // if (batchToForward.Count > 0)
-                // {
-                //     if(nextOperator != null)
-                //     {
-                //         batchToForward[0].seq_token = orderingEnforcer.GetOutgoingSequenceNumber();
-                //         orderingEnforcer.IncrementOutgoingSequenceNumber();
-                //         nextOperator.Process(batchToForward.AsImmutable());
-                //     }
-                    
-                // }
             }
             await orderingEnforcer.PostProcess(batchToForward, this);
         }

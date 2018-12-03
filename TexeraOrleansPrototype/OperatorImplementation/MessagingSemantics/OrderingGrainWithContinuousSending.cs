@@ -8,6 +8,13 @@ using Orleans.Concurrency;
 
 namespace TexeraOrleansPrototype.OperatorImplementation.MessagingSemantics
 {
+    /**
+    Note that due to this class, ideally there should be background sending of batches while the operator is processing. However, what is happeining is
+    something like shown in 1.txt. The SendNext() function is not able to send even one batch and the PostProcess function queues all batches in 
+    tuplesToSendAhead which is sent at the last when all batches are processed by KeywordSearch. This essentially is a loss of data parallelism. We don't
+    know if it is because SendNext() is waiting for the SynchronizationContext which is not being given up by PostProcess(). Only when all 100 calls of
+    PostProcess() finish, the SendNext() begins execution.
+     */
     public class OrderingGrainWithContinuousSending : IOrderingEnforcer
     {
         private Dictionary<ulong, List<Tuple>> stashed = new Dictionary<ulong, List<Tuple>>();
@@ -68,18 +75,18 @@ namespace TexeraOrleansPrototype.OperatorImplementation.MessagingSemantics
                 if (nextOperator != null)
                 {
                     tuplesToSendAhead.AddRange(batchToForward);
-                    // batchToForward[0].seq_token = current_seq_num;
-                    // current_seq_num++;
-                    // nextOperator.Process(batchToForward.AsImmutable());
                 }
 
             }
             await ProcessStashed(currentOperator, nextOperator);
 
-            if(tuplesToSendAhead.Count > 0 && sendingNextTask.IsCompleted)
+            if(nextOperator != null && tuplesToSendAhead.Count > 0 && sendingNextTask.IsCompleted)
             {
                 sendingNextTask = SendNext(nextOperator);
             }
+
+            // if(currentOperator.GetPrimaryKeyLong() == 3 && currentOperator.GetType() == typeof(OrderedFilterOperatorWithSqNum))
+            // Console.Write($"Exiting {currentOperator.GetPrimaryKeyLong()} PostProcess, ");
         }       
 
         private async Task ProcessStashed(INormalGrain currentOperator, INormalGrain nextOperator)
@@ -101,8 +108,6 @@ namespace TexeraOrleansPrototype.OperatorImplementation.MessagingSemantics
                     if(nextOperator != null)
                     {
                         tuplesToSendAhead.AddRange(batchToForward);
-                        // batchToForward[0].seq_token = current_seq_num++;
-                        // nextOperator.Process(batchToForward.AsImmutable());
                     }
                 }
                 stashed.Remove(current_idx);
@@ -115,6 +120,9 @@ namespace TexeraOrleansPrototype.OperatorImplementation.MessagingSemantics
         {
             while(tuplesToSendAhead.Count > 0)
             {
+                // if(nextOperator.GetPrimaryKeyLong() == 3)
+                // Console.Write($"Sending {tuplesToSendAhead.Count} next batch, ");
+                
                 List<Tuple> batchToForward = tuplesToSendAhead.Take(Constants.batchSize).ToList();
                 batchToForward[0].seq_token = current_seq_num++;
                 tuplesToSendAhead = tuplesToSendAhead.Skip(Constants.batchSize).ToList();

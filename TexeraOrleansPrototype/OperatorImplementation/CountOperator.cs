@@ -46,7 +46,7 @@ namespace TexeraOrleansPrototype.OperatorImplementation
                 // }
                 
             }
-            await orderingEnforcer.PostProcess(batchToForward, this);
+            // await orderingEnforcer.PostProcess(batchToForward, this);
         }
 
         public override async Task<Tuple> Process_impl(Tuple tuple)
