@@ -12,13 +12,9 @@ using TexeraOrleansPrototype.OperatorImplementation.MessagingSemantics;
 
 namespace TexeraOrleansPrototype
 {
-    static public class Utils
+    static public class Constants
     {
-        static public IOrderingEnforcer GetOrderingEnforcerInstance()
-        {
-            // return new OrderingGrainWithSequenceNumber();
-            return new OrderingGrainWithContinuousSending();
-        }
-        
+        static public string AssemblyPath = "TexeraOrleansPrototype.OperatorImplementation";
+        static public int batchSize = 1000;
     }
 }

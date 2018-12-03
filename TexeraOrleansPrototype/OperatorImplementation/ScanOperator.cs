@@ -19,7 +19,7 @@ namespace TexeraOrleansPrototype.OperatorImplementation
         public override Task OnActivateAsync()
         {
             
-            nextOperator = this.GrainFactory.GetGrain<IFilterOperator>(this.GetPrimaryKeyLong(), Utils.AssemblyPath);
+            nextOperator = this.GrainFactory.GetGrain<IFilterOperator>(this.GetPrimaryKeyLong(), Constants.AssemblyPath);
 
             string p2;
             if (Program.num_scan == 1)
@@ -42,7 +42,7 @@ namespace TexeraOrleansPrototype.OperatorImplementation
             for (int i = 1; i <= Rows.Count; ++i)
             {
                 batch.Add(Rows[i-1]);
-                if(i%1000 == 0)
+                if(i%Constants.batchSize == 0)
                 {
                     batch[0].seq_token = seq++;
                     // TODO: We can't call batch.Clear() after this because it somehow ends

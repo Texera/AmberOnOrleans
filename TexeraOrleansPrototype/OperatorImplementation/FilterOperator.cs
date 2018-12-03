@@ -22,7 +22,7 @@ namespace TexeraOrleansPrototype.OperatorImplementation
 
         public override Task OnActivateAsync()
         {
-            nextOperator = base.GrainFactory.GetGrain<IKeywordSearchOperator>(this.GetPrimaryKeyLong(), Utils.AssemblyPath);//, "OrderedKeywordSearchOperatorWithSqNum"
+            nextOperator = base.GrainFactory.GetGrain<IKeywordSearchOperator>(this.GetPrimaryKeyLong(), Constants.AssemblyPath);//, "OrderedKeywordSearchOperatorWithSqNum"
             return base.OnActivateAsync();
         }
 
@@ -35,29 +35,29 @@ namespace TexeraOrleansPrototype.OperatorImplementation
             }
 
             List<Tuple> batchReceived = orderingEnforcer.PreProcess(batch.Value, this);
+            List<Tuple> batchToForward = new List<Tuple>();
             if(batchReceived != null)
             {
-                List<Tuple> batchToForward = new List<Tuple>();
                 foreach(Tuple tuple in batchReceived)
                 {
                     Tuple ret = await Process_impl(tuple);
                     if(ret != null)
                     {
                         batchToForward.Add(ret);
-                    }                
-                }
-                if (batchToForward.Count > 0)
-                {
-                    if(nextOperator != null)
-                    {
-                        batchToForward[0].seq_token = orderingEnforcer.GetOutgoingSequenceNumber();
-                        orderingEnforcer.IncrementOutgoingSequenceNumber();
-                        nextOperator.Process(batchToForward.AsImmutable());
                     }
-                    
                 }
+                // if (batchToForward.Count > 0)
+                // {
+                //     if(nextOperator != null)
+                //     {
+                //         batchToForward[0].seq_token = orderingEnforcer.GetOutgoingSequenceNumber();
+                //         orderingEnforcer.IncrementOutgoingSequenceNumber();
+                //         nextOperator.Process(batchToForward.AsImmutable());
+                //     }
+                    
+                // }
             }
-            await orderingEnforcer.PostProcess(this);
+            await orderingEnforcer.PostProcess(batchToForward, this);
         }
 
         public override async Task<Tuple> Process_impl(Tuple tuple)

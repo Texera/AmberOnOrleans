@@ -1,18 +1,21 @@
-﻿using Orleans;
+using Orleans;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using System.Linq;
 using Orleans.Concurrency;
 
 namespace TexeraOrleansPrototype.OperatorImplementation.MessagingSemantics
 {
-    public class OrderingGrainWithSequenceNumber : IOrderingEnforcer
+    public class OrderingGrainWithContinuousSending : IOrderingEnforcer
     {
         private Dictionary<ulong, List<Tuple>> stashed = new Dictionary<ulong, List<Tuple>>();
         private ulong current_idx = 0;
         private ulong current_seq_num = 0;
 
+        public List<Tuple> tuplesToSendAhead = new List<Tuple>();
+        private Task sendingNextTask = Task.CompletedTask;
 
         public ulong GetOutgoingSequenceNumber()
         {
@@ -59,21 +62,27 @@ namespace TexeraOrleansPrototype.OperatorImplementation.MessagingSemantics
 
         public async Task PostProcess(List<Tuple> batchToForward, INormalGrain currentOperator)
         {
+            INormalGrain nextOperator = await currentOperator.GetNextoperator();
             if (batchToForward.Count > 0)
             {
-                INormalGrain nextOperator = await currentOperator.GetNextoperator();
                 if (nextOperator != null)
                 {
-                    batchToForward[0].seq_token = current_seq_num;
-                    current_seq_num++;
-                    nextOperator.Process(batchToForward.AsImmutable());
+                    tuplesToSendAhead.AddRange(batchToForward);
+                    // batchToForward[0].seq_token = current_seq_num;
+                    // current_seq_num++;
+                    // nextOperator.Process(batchToForward.AsImmutable());
                 }
 
             }
-            await ProcessStashed(currentOperator);
+            await ProcessStashed(currentOperator, nextOperator);
+
+            if(tuplesToSendAhead.Count > 0 && sendingNextTask.IsCompleted)
+            {
+                sendingNextTask = SendNext(nextOperator);
+            }
         }       
 
-        private async Task ProcessStashed(INormalGrain currentOperator)
+        private async Task ProcessStashed(INormalGrain currentOperator, INormalGrain nextOperator)
         {
             while(stashed.ContainsKey(current_idx))
             {
@@ -89,17 +98,28 @@ namespace TexeraOrleansPrototype.OperatorImplementation.MessagingSemantics
                 }
                 if (batchToForward.Count > 0)
                 {
-                    INormalGrain nextOperator = await currentOperator.GetNextoperator();
                     if(nextOperator != null)
                     {
-                        batchToForward[0].seq_token = current_seq_num++;
-                        nextOperator.Process(batchToForward.AsImmutable());
+                        tuplesToSendAhead.AddRange(batchToForward);
+                        // batchToForward[0].seq_token = current_seq_num++;
+                        // nextOperator.Process(batchToForward.AsImmutable());
                     }
                 }
                 stashed.Remove(current_idx);
                 current_idx++;
             }
 
+        }
+
+        private async Task SendNext(INormalGrain nextOperator)
+        {
+            while(tuplesToSendAhead.Count > 0)
+            {
+                List<Tuple> batchToForward = tuplesToSendAhead.Take(Constants.batchSize).ToList();
+                batchToForward[0].seq_token = current_seq_num++;
+                tuplesToSendAhead = tuplesToSendAhead.Skip(Constants.batchSize).ToList();
+                await nextOperator.Process(batchToForward.AsImmutable());
+            }
         }
 
     }

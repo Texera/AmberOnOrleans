@@ -45,7 +45,7 @@ namespace TexeraOrleansPrototype.OperatorImplementation
         {
             if (tuple.id == -1)
             {
-                ICountFinalOperator finalAggregator = this.GrainFactory.GetGrain<ICountFinalOperator>(1, Utils.AssemblyPath);//, "OrderedCountFinalOperatorWithSqNum"
+                ICountFinalOperator finalAggregator = this.GrainFactory.GetGrain<ICountFinalOperator>(1, Constants.AssemblyPath);//, "OrderedCountFinalOperatorWithSqNum"
                 // finalAggregator.SetAggregatorLevel(false);
                 finalAggregator.SubmitIntermediateAgg(count);
             }
