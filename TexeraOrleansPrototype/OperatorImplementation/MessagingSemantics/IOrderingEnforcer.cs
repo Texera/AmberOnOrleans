@@ -13,7 +13,7 @@ namespace TexeraOrleansPrototype.OperatorImplementation.MessagingSemantics
         ulong GetExpectedSequenceNumber();
         void IncrementOutgoingSequenceNumber();
         void IncrementExpectedSequenceNumber();
-        List<Tuple> PreProcess(List<Tuple> batch, INormalGrain operatorGrain);
-        Task PostProcess(INormalGrain operatorGrain);
+        List<Tuple> PreProcess(List<Tuple> batch, INormalGrain currentOperator);
+        Task PostProcess(List<Tuple> batchToForward, INormalGrain currentOperator);
     }
 }

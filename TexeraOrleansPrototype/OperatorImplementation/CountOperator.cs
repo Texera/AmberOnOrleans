@@ -23,9 +23,9 @@ namespace TexeraOrleansPrototype.OperatorImplementation
         public override async Task Process(Immutable<List<Tuple>> batch)
         {
             List<Tuple> batchReceived = orderingEnforcer.PreProcess(batch.Value, this);
+            List<Tuple> batchToForward = new List<Tuple>();
             if(batchReceived != null)
             {
-                List<Tuple> batchToForward = new List<Tuple>();
                 foreach(Tuple tuple in batchReceived)
                 {
                     Tuple ret = await Process_impl(tuple);
@@ -34,26 +34,26 @@ namespace TexeraOrleansPrototype.OperatorImplementation
                         batchToForward.Add(ret);
                     }                
                 }
-                if (batchToForward.Count > 0)
-                {
-                    if(nextOperator != null)
-                    {
-                        batchToForward[0].seq_token = orderingEnforcer.GetOutgoingSequenceNumber();
-                        orderingEnforcer.IncrementOutgoingSequenceNumber();
-                        nextOperator.Process(batchToForward.AsImmutable());
-                    }
+                // if (batchToForward.Count > 0)
+                // {
+                //     if(nextOperator != null)
+                //     {
+                //         batchToForward[0].seq_token = orderingEnforcer.GetOutgoingSequenceNumber();
+                //         orderingEnforcer.IncrementOutgoingSequenceNumber();
+                //         nextOperator.Process(batchToForward.AsImmutable());
+                //     }
                     
-                }
+                // }
                 
             }
-            await orderingEnforcer.PostProcess(this);
+            await orderingEnforcer.PostProcess(batchToForward, this);
         }
 
         public override async Task<Tuple> Process_impl(Tuple tuple)
         {
             if (tuple.id == -1)
             {
-                ICountFinalOperator finalAggregator = this.GrainFactory.GetGrain<ICountFinalOperator>(1, Utils.AssemblyPath);//, "OrderedCountFinalOperatorWithSqNum"
+                ICountFinalOperator finalAggregator = this.GrainFactory.GetGrain<ICountFinalOperator>(1, Constants.AssemblyPath);//, "OrderedCountFinalOperatorWithSqNum"
                 // finalAggregator.SetAggregatorLevel(false);
                 finalAggregator.SubmitIntermediateAgg(count);
             }
