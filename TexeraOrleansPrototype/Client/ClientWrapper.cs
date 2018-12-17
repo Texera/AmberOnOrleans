@@ -9,38 +9,40 @@ using Orleans.Configuration;
 using Engine.OperatorImplementation.Interfaces;
 using TexeraUtilities;
 
-namespace Client
+namespace OrleansClient
 {
     /// <summary>
     /// Orleans silo client
     /// </summary>
-    public class Program
+    public class ClientWrapper
     {
         const int initializeAttemptsBeforeFailing = 5;
         private static int attempt = 0;
+        private static ClientWrapper instance;
+        public IClusterClient client;
+         
 
-        static int Main(string[] args)
+        public static ClientWrapper Instance
         {
-            return RunMainAsync().Result;
+            get 
+            {
+                if (instance == null)
+                {
+                    instance = new ClientWrapper();
+                }
+                return instance;
+            }
         }
 
-        private static async Task<int> RunMainAsync()
+        private ClientWrapper()
         {
             try
             {
-                using (var client = await StartClientWithRetries())
-                {
-                    await DoClientWork(client);
-                    Console.ReadKey();
-                }
-
-                return 0;
+                client = StartClientWithRetries().Result;
             }
             catch (Exception e)
             {
                 Console.WriteLine(e);
-                Console.ReadKey();
-                return 1;
             }
         }
 
@@ -82,7 +84,25 @@ namespace Client
             return true;
         }
 
-        private static async Task DoClientWork(IClusterClient client)
+        public static async Task PauseSilo(IClusterClient client)
+        {
+            for (int i = 0; i < Constants.num_scan; ++i)
+            {
+                IScanOperator t = client.GetGrain<IScanOperator>(i + 2, Constants.AssemblyPath);
+                await t.PauseGrain();
+            }
+        }
+
+        public static async Task ResumeSilo(IClusterClient client)
+        {
+            for (int i = 0; i < Constants.num_scan; ++i)
+            {
+                IScanOperator t = client.GetGrain<IScanOperator>(i + 2, Constants.AssemblyPath);
+                await t.ResumeGrain();
+            }
+        }
+
+        public static async Task DoClientWork(IClusterClient client)
         {
             // example of calling grains from the initialized client
             // var friend = client.GetGrain<IHello>(0);

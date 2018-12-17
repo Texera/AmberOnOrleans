@@ -13,6 +13,9 @@ namespace Engine.OperatorImplementation
         private ulong current_seq_num = 0;
         public INormalGrain nextOperator = null;
 
+        protected bool pause = true;
+        protected List<Immutable<List<TexeraTuple>>> pausedRows = new List<Immutable<List<TexeraTuple>>>();
+
         public virtual async Task<INormalGrain> GetNextoperator()
         {
             return nextOperator;
@@ -26,6 +29,45 @@ namespace Engine.OperatorImplementation
             }
 
             return Task.CompletedTask;
+        }
+
+        public async Task PauseGrain()
+        {
+            pause = true;
+
+            if(nextOperator != null)
+            {
+                await nextOperator.PauseGrain();
+            }   
+        }
+
+        public async Task ResumeGrain()
+        {
+            pause = false;
+            if(nextOperator != null)
+            {
+                await nextOperator.ResumeGrain();
+            }
+        }
+
+        public async Task StartProcessAfterPause()
+        {
+            if(pausedRows.Count > 0)
+            {
+                foreach(Immutable<List<TexeraTuple>> batch in pausedRows)
+                {
+                    Process(batch);
+                }
+
+                // Don't empty the paused row because this is the memory address (kind of) which is
+                // transferred.
+                pausedRows = new List<Immutable<List<TexeraTuple>>>();
+            }
+
+            if(nextOperator != null)
+            {
+                nextOperator.StartProcessAfterPause();
+            }
         }
 
         public virtual async Task Process(Immutable<List<TexeraTuple>> batch)

@@ -8,7 +8,7 @@ using Orleans.Streams;
 using System.Diagnostics;
 
 
-namespace TexeraUtilities
+namespace OrleansClient
 {
     public class StreamObserver : IAsyncObserver<int>
     {
@@ -19,8 +19,6 @@ namespace TexeraUtilities
             sw.Start();
             return Task.CompletedTask;
         }
-
-
 
         public Task OnCompletedAsync()
         {
@@ -39,7 +37,6 @@ namespace TexeraUtilities
             sw.Stop();
             Console.WriteLine("Time usage: " + sw.Elapsed);
             Console.WriteLine($"=={item}== count received: by client");
-            Environment.Exit(0);
             return Task.CompletedTask;
         }
     }

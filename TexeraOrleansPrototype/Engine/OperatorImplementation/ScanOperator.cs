@@ -35,6 +35,17 @@ namespace Engine.OperatorImplementation
             return base.OnDeactivateAsync();
         }
 
+        public async Task PauseGrain()
+        {
+            await nextOperator.PauseGrain();
+        }
+
+        public async Task ResumeGrain()
+        {
+            await nextOperator.ResumeGrain();
+            nextOperator.StartProcessAfterPause();
+        }
+
         public async Task SubmitTuples() 
         {
             List<TexeraTuple> batch = new List<TexeraTuple>();

@@ -23,7 +23,7 @@ namespace Engine.OperatorImplementation
         private Guid guid = Guid.NewGuid();
         public override Task OnActivateAsync()
         {
-            nextOperator = this.GrainFactory.GetGrain<ICountOperator>(this.GetPrimaryKeyLong(), Constants.AssemblyPath);//, "OrderedCountOperatorWithSqNum"
+            nextOperator = this.GrainFactory.GetGrain<ICountOperator>(this.GetPrimaryKeyLong(), Constants.AssemblyPath);
             return base.OnActivateAsync();
         }
 
@@ -34,6 +34,19 @@ namespace Engine.OperatorImplementation
 
         public override async Task Process(Immutable<List<TexeraTuple>> batch)
         {
+            Console.Write(" Keyword received batch ");
+            if(batch.Value.Count == 0)
+            {
+                Console.WriteLine($"NOT EXPECTED: Keyword {this.GetPrimaryKeyLong()} received empty batch.");
+                return;
+            }
+
+            if(pause == true)
+            {
+                pausedRows.Add(batch);
+                return;
+            }
+
             List<TexeraTuple> batchReceived = orderingEnforcer.PreProcess(batch.Value, this);
             List<TexeraTuple> batchToForward = new List<TexeraTuple>();
             if(batchReceived != null)
@@ -46,16 +59,6 @@ namespace Engine.OperatorImplementation
                         batchToForward.Add(ret);
                     }
                 }
-                // if (batchToForward.Count > 0)
-                // {
-                //     if(nextOperator != null)
-                //     {
-                //         batchToForward[0].seq_token = orderingEnforcer.GetOutgoingSequenceNumber();
-                //         orderingEnforcer.IncrementOutgoingSequenceNumber();
-                //         nextOperator.Process(batchToForward.AsImmutable());
-                //     }
-                    
-                // }
             }
             await orderingEnforcer.PostProcess(batchToForward, this);
         }

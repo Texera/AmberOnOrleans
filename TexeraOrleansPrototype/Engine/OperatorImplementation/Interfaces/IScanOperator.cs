@@ -9,7 +9,8 @@ namespace Engine.OperatorImplementation.Interfaces
     public interface IScanOperator : IGrainWithIntegerKey
     {
         Task SubmitTuples();
-
+        Task PauseGrain();
+        Task ResumeGrain();
         Task LoadTuples();
     }
 }
