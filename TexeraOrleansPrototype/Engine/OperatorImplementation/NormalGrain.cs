@@ -13,7 +13,7 @@ namespace Engine.OperatorImplementation
         private ulong current_seq_num = 0;
         public INormalGrain nextOperator = null;
 
-        protected bool pause = true;
+        protected bool pause = false;
         protected List<Immutable<List<TexeraTuple>>> pausedRows = new List<Immutable<List<TexeraTuple>>>();
 
         public virtual async Task<INormalGrain> GetNextoperator()

@@ -23,7 +23,7 @@ namespace Engine.OperatorImplementation
 
         public override async Task Process(Immutable<List<TexeraTuple>> batch)
         {
-            Console.Write("Count received batch");
+            // Console.Write("Count received batch");
             if(batch.Value.Count == 0)
             {
                 Console.WriteLine($"NOT EXPECTED: Count {this.GetPrimaryKeyLong()} received empty batch.");
