@@ -6,19 +6,44 @@ using System.Text;
 using System.Threading.Tasks;
 using TexeraUtilities;
 
-namespace Engine.OperatorImplementation
+namespace Engine.OperatorImplementation.Common
 {
     public class NormalGrain : Grain, INormalGrain
     {
         private ulong current_seq_num = 0;
-        public INormalGrain nextOperator = null;
+        public INormalGrain nextGrain = null;
+        protected PredicateBase predicate = null;
+        public bool IsLastOperatorGrain = false;
 
         protected bool pause = false;
         protected List<Immutable<List<TexeraTuple>>> pausedRows = new List<Immutable<List<TexeraTuple>>>();
 
-        public virtual async Task<INormalGrain> GetNextoperator()
+        public virtual async Task<INormalGrain> GetNextGrain()
         {
-            return nextOperator;
+            return nextGrain;
+        }
+
+        public Task SetIsLastOperatorGrain(bool isLastOperatorGrain)
+        {
+            this.IsLastOperatorGrain = isLastOperatorGrain;
+            return Task.CompletedTask;
+        }
+
+        public async Task<bool> GetIsLastOperatorGrain()
+        {
+            return IsLastOperatorGrain;
+        }
+
+        public Task SetPredicate(PredicateBase predicate)
+        {
+            this.predicate = predicate;
+            return Task.CompletedTask;
+        }
+
+        public virtual Task SetNextGrain(INormalGrain nextGrain)
+        {
+            this.nextGrain = nextGrain;
+            return Task.CompletedTask;
         }
 
         public Task TrivialCall()
@@ -31,22 +56,22 @@ namespace Engine.OperatorImplementation
             return Task.CompletedTask;
         }
 
-        public async Task PauseGrain()
+        public virtual async Task PauseGrain()
         {
             pause = true;
 
-            if(nextOperator != null)
+            if(nextGrain != null)
             {
-                await nextOperator.PauseGrain();
+                await nextGrain.PauseGrain();
             }   
         }
 
-        public async Task ResumeGrain()
+        public virtual async Task ResumeGrain()
         {
             pause = false;
-            if(nextOperator != null)
+            if(nextGrain != null)
             {
-                await nextOperator.ResumeGrain();
+                await nextGrain.ResumeGrain();
             }
         }
 
@@ -64,9 +89,9 @@ namespace Engine.OperatorImplementation
                 pausedRows = new List<Immutable<List<TexeraTuple>>>();
             }
 
-            if(nextOperator != null)
+            if(nextGrain != null)
             {
-                nextOperator.StartProcessAfterPause();
+                nextGrain.StartProcessAfterPause();
             }
         }
 
@@ -84,8 +109,8 @@ namespace Engine.OperatorImplementation
             
             if (batchToForward.Count > 0)
             {
-                if (nextOperator != null)
-                    nextOperator.Process(batchToForward.AsImmutable());
+                if (nextGrain != null)
+                    nextGrain.Process(batchToForward.AsImmutable());
             }
         }
 

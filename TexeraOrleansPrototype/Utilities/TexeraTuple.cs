@@ -4,7 +4,7 @@ namespace TexeraUtilities {
     {
         public ulong seq_token;
         public int id;
-        public string region;
+        public string region = "";
         /*
         public string country;
         public string item_type;

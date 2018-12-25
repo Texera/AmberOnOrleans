@@ -10,29 +10,30 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using Orleans.Concurrency;
-using Engine.OperatorImplementation.Interfaces;
 using Engine.OperatorImplementation.MessagingSemantics;
+using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
 
-namespace Engine.OperatorImplementation
+namespace Engine.OperatorImplementation.Operators
 {
-    public class OrderedFilterOperatorWithSqNum : NormalGrain, IFilterOperator
+    public class KeywordSearchOperatorGrain : NormalGrain, IKeywordSearchOperatorGrain
     {
-        bool finished = false;
+        bool finished=false;
         IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
 
         public override Task OnActivateAsync()
         {
-            nextOperator = base.GrainFactory.GetGrain<IKeywordSearchOperator>(this.GetPrimaryKeyLong(), Constants.AssemblyPath);//, "OrderedKeywordSearchOperatorWithSqNum"
+            // nextGrain = this.GrainFactory.GetGrain<ICountOperatorGrain>(this.GetPrimaryKey(), Constants.OperatorAssemblyPathPrefix);
             return base.OnActivateAsync();
         }
 
         public override async Task Process(Immutable<List<TexeraTuple>> batch)
         {
-            // Console.Write(" Filter received batch ");
+            string extensionKey = "";
+            // Console.Write(" Keyword received batch ");
             if(batch.Value.Count == 0)
             {
-                Console.WriteLine($"NOT EXPECTED: Filter {this.GetPrimaryKeyLong()} received empty batch.");
+                Console.WriteLine($"NOT EXPECTED: Keyword {this.GetPrimaryKey(out extensionKey)} received empty batch.");
                 return;
             }
 
@@ -55,17 +56,19 @@ namespace Engine.OperatorImplementation
                     }
                 }
             }
-            await orderingEnforcer.PostProcess(batchToForward, this);
+
+            var streamProvider = GetStreamProvider("SMSProvider");
+            var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(out extensionKey), "Random");
+            await orderingEnforcer.PostProcess(batchToForward, this, stream);
         }
 
         public override async Task<TexeraTuple> Process_impl(TexeraTuple tuple)
         {
-            if(tuple.id != -1 && false)
+            if(tuple.id != -1 && !tuple.region.Contains(((KeywordPredicate)predicate).GetQuery()))
             {
                 return null;
             }
-
-            // bool cond = Program.conditions_on ? (row as Tuple).unit_cost > 50 : true;
+            
             if (tuple.id == -1)
             {
                 Console.WriteLine("Ordered Filter done");
@@ -76,5 +79,4 @@ namespace Engine.OperatorImplementation
             return tuple;
         }
     }
-
 }

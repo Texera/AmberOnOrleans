@@ -5,12 +5,13 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Orleans.Streams;
+using Orleans.Concurrency;
 using System.Diagnostics;
-
+using TexeraUtilities;
 
 namespace OrleansClient
 {
-    public class StreamObserver : IAsyncObserver<int>
+    public class StreamObserver : IAsyncObserver<Immutable<List<TexeraTuple>>>
     {
         Stopwatch sw=new Stopwatch();
 
@@ -32,11 +33,17 @@ namespace OrleansClient
             return Task.CompletedTask;
         }
 
-        public Task OnNextAsync(int item, StreamSequenceToken token = null)
+        public Task OnNextAsync(Immutable<List<TexeraTuple>> item, StreamSequenceToken token = null)
         {
             sw.Stop();
             Console.WriteLine("Time usage: " + sw.Elapsed);
-            Console.WriteLine($"=={item}== count received: by client");
+
+            List<TexeraTuple> results = item.Value;
+            for(int i=0; i<results.Count; i++)
+            {
+                Console.WriteLine($"=={results[i].seq_token}, {results[i].id}, {results[i].region}, {results[i].unit_cost}, {results[i].unit_price}, {results[i].units_sold}== count received: by client");
+            }
+
             return Task.CompletedTask;
         }
     }

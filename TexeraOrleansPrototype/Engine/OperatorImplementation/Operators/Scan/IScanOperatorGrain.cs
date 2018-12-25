@@ -3,14 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Engine.OperatorImplementation.Common;
 
-namespace Engine.OperatorImplementation.Interfaces
+namespace Engine.OperatorImplementation.Operators
 {
-    public interface IScanOperator : IGrainWithIntegerKey
+    public interface IScanOperatorGrain : INormalGrain
     {
         Task SubmitTuples();
-        Task PauseGrain();
-        Task ResumeGrain();
         Task LoadTuples();
     }
 }

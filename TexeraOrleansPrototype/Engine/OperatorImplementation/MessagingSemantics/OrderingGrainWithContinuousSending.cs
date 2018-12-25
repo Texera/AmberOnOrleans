@@ -1,4 +1,5 @@
 using Orleans;
+using Orleans.Streams;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -6,6 +7,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using Orleans.Concurrency;
 using TexeraUtilities;
+using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.MessagingSemantics
 {
@@ -47,17 +49,18 @@ namespace Engine.OperatorImplementation.MessagingSemantics
         
         public List<TexeraTuple> PreProcess(List<TexeraTuple> batch, INormalGrain currentOperator)
         {
-            var seq_token = batch[0].seq_token;           
+            var seq_token = batch[0].seq_token;
+            string extensionKey = "";
 
             if(seq_token < current_idx)
             {
                 // de-dup messages
-                Console.WriteLine($"Grain {currentOperator.GetPrimaryKeyLong()} received duplicate message with sequence number {seq_token}: expected sequence number {current_idx}");
+                Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} received duplicate message with sequence number {seq_token}: expected sequence number {current_idx}");
                 return null;
             }
             if (seq_token != current_idx)
             {
-                Console.WriteLine($"Grain {currentOperator.GetPrimaryKeyLong()} received message ahead in sequence, being put in stash: sequence number {seq_token}, expected sequence number {current_idx}");                              
+                Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} received message ahead in sequence, being put in stash: sequence number {seq_token}, expected sequence number {current_idx}");                              
                 stashed.Add(seq_token, batch);
                 return null;           
             }
@@ -68,37 +71,44 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             }
         }
 
-        public async Task PostProcess(List<TexeraTuple> batchToForward, INormalGrain currentOperator)
-        {
-            INormalGrain nextOperator = await currentOperator.GetNextoperator();
+        // TODO: The third argument should ideally not be here
+        public async Task PostProcess(List<TexeraTuple> batchToForward, INormalGrain currentOperatorGrain, IAsyncStream<Immutable<List<TexeraTuple>>> stream)
+        { 
+            INormalGrain nextGrain = await currentOperatorGrain.GetNextGrain();
+            bool isLastGrain = await currentOperatorGrain.GetIsLastOperatorGrain();
+            bool shouldBeForwarded = (nextGrain != null) | isLastGrain;
             if (batchToForward.Count > 0)
             {
-                if (nextOperator != null)
+                if (shouldBeForwarded)
                 {
                     tuplesToSendAhead.AddRange(batchToForward);
                 }
 
             }
-            await ProcessStashed(currentOperator, nextOperator);
+            await ProcessStashed(currentOperatorGrain);
 
-            if(nextOperator != null && tuplesToSendAhead.Count > 0 && sendingNextTask.IsCompleted)
+            if(shouldBeForwarded && tuplesToSendAhead.Count > 0 && sendingNextTask.IsCompleted)
             {
-                sendingNextTask = SendNext(nextOperator);
+                sendingNextTask = SendNext(currentOperatorGrain, stream);
             }
 
-            // if(currentOperator.GetPrimaryKeyLong() == 3 && currentOperator.GetType() == typeof(OrderedFilterOperatorWithSqNum))
-            // Console.Write($"Exiting {currentOperator.GetPrimaryKeyLong()} PostProcess, ");
+            // if(currentOperator.GetPrimaryKey() == 3 && currentOperator.GetType() == typeof(FilterOperatorGrain))
+            // Console.Write($"Exiting {currentOperator.GetPrimaryKey()} PostProcess, ");
         }       
 
-        private async Task ProcessStashed(INormalGrain currentOperator, INormalGrain nextOperator)
+        private async Task ProcessStashed(INormalGrain currentOperatorGrain)
         {
+            INormalGrain nextGrain = await currentOperatorGrain.GetNextGrain();
+            bool isLastGrain = await currentOperatorGrain.GetIsLastOperatorGrain();
+            bool shouldBeForwarded = (nextGrain != null) | isLastGrain;
+
             while(stashed.ContainsKey(current_idx))
             {
                 List<TexeraTuple> batch = stashed[current_idx];
                 List<TexeraTuple> batchToForward = new List<TexeraTuple>();
                 foreach(TexeraTuple tuple in batch)
                 {
-                    TexeraTuple ret = await currentOperator.Process_impl(tuple);
+                    TexeraTuple ret = await currentOperatorGrain.Process_impl(tuple);
                     if(ret != null)
                     {
                         batchToForward.Add(ret);
@@ -106,7 +116,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                 }
                 if (batchToForward.Count > 0)
                 {
-                    if(nextOperator != null)
+                    if(shouldBeForwarded)
                     {
                         tuplesToSendAhead.AddRange(batchToForward);
                     }
@@ -117,17 +127,27 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 
         }
 
-        private async Task SendNext(INormalGrain nextOperator)
+        private async Task SendNext(INormalGrain currentOperatorGrain, IAsyncStream<Immutable<List<TexeraTuple>>> stream)
         {
             while(tuplesToSendAhead.Count > 0)
             {
-                // if(nextOperator.GetPrimaryKeyLong() == 3)
+                // if(nextGrain.GetPrimaryKey() == 3)
                 // Console.Write($"Sending {tuplesToSendAhead.Count} next batch, ");
+                INormalGrain nextGrain = await currentOperatorGrain.GetNextGrain();
+                bool isLastGrain = await currentOperatorGrain.GetIsLastOperatorGrain();
                 
                 List<TexeraTuple> batchToForward = tuplesToSendAhead.Take(Constants.batchSize).ToList();
                 batchToForward[0].seq_token = current_seq_num++;
                 tuplesToSendAhead = tuplesToSendAhead.Skip(Constants.batchSize).ToList();
-                await nextOperator.Process(batchToForward.AsImmutable());
+
+                if(nextGrain != null)
+                {
+                    await nextGrain.Process(batchToForward.AsImmutable());
+                }
+                else if(isLastGrain)
+                {
+                    await stream.OnNextAsync(batchToForward.AsImmutable());
+                }
             }
         }
 

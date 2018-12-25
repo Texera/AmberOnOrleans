@@ -1,12 +1,16 @@
 using Orleans;
 using Orleans.Runtime;
 using Orleans.Hosting;
+using Orleans.Concurrency;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
 using Orleans.Configuration;
-using Engine.OperatorImplementation.Interfaces;
+using Engine.Controller;
+using Engine.OperatorImplementation.Common;
+using Engine.OperatorImplementation.Operators;
+using Engine.WorkflowImplementation;
 using TexeraUtilities;
 
 namespace OrleansClient
@@ -84,35 +88,56 @@ namespace OrleansClient
             return true;
         }
 
-        public static async Task PauseSilo(IClusterClient client)
+        public static async Task PauseSilo(Workflow workflow, IClusterClient client)
         {
+            Operator op = workflow.StartOperator;
             for (int i = 0; i < Constants.num_scan; ++i)
             {
-                IScanOperator t = client.GetGrain<IScanOperator>(i + 2, Constants.AssemblyPath);
+                IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
                 await t.PauseGrain();
             }
         }
 
-        public static async Task ResumeSilo(IClusterClient client)
+        public static async Task ResumeSilo(Workflow workflow, IClusterClient client)
         {
+            Operator op = workflow.StartOperator;
             for (int i = 0; i < Constants.num_scan; ++i)
             {
-                IScanOperator t = client.GetGrain<IScanOperator>(i + 2, Constants.AssemblyPath);
+                IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
                 await t.ResumeGrain();
             }
         }
 
         public static async Task DoClientWork(IClusterClient client)
         {
-            // example of calling grains from the initialized client
-            // var friend = client.GetGrain<IHello>(0);
-            // var response = await friend.SayHello("Good morning, my friend!");
-            // Console.WriteLine("\n\n{0}\n\n", response);
-            Guid streamGuid = await client.GetGrain<ICountFinalOperator>(1, Constants.AssemblyPath).GetStreamGuid();
+            ScanPredicate scanPredicate = new ScanPredicate();
+            FilterPredicate filterPredicate = new FilterPredicate(0);
+            KeywordPredicate keywordPredicate = new KeywordPredicate("");
+            CountPredicate countPredicate = new CountPredicate();
+
+            ScanOperator scanOperator = (ScanOperator)scanPredicate.GetNewOperator(Constants.num_scan);
+            FilterOperator filterOperator = (FilterOperator)filterPredicate.GetNewOperator(Constants.num_scan);
+            KeywordOperator keywordOperator = (KeywordOperator)keywordPredicate.GetNewOperator(Constants.num_scan);
+            CountOperator countOperator = (CountOperator)countPredicate.GetNewOperator(Constants.num_scan);
+
+            scanOperator.NextOperator = filterOperator;
+            filterOperator.NextOperator = keywordOperator;
+            keywordOperator.NextOperator = countOperator;
+
+            ExecutionController controller = new ExecutionController(Guid.NewGuid());
+            IControllerGrain controllerGrain = client.GetGrain<IControllerGrain>(controller.GrainID.PrimaryKey, controller.GrainID.ExtensionKey);
+            
+            Workflow workflow = new Workflow(scanOperator);
+            await controllerGrain.SetUpAndConnectGrains(workflow);
+            await controllerGrain.CreateStreamFromLastOperator(workflow);
+
+            Guid streamGuid = countOperator.GetStreamGuid();
+
+            // Guid streamGuid = await client.GetGrain<ICountFinalOperatorGrain>(1, Constants.OperatorAssemblyPathPrefix).GetStreamGuid();
 
             Console.WriteLine("Client side guid is " + streamGuid);
             var stream = client.GetStreamProvider("SMSProvider")
-            .GetStream<int>(streamGuid, "Random");
+            .GetStream<Immutable<List<TexeraTuple>>>(streamGuid, "Random");
             var so = new StreamObserver();
             await stream.SubscribeAsync(so);
 
@@ -125,21 +150,11 @@ namespace OrleansClient
             Console.WriteLine("with conditions: " + Constants.conditions_on);
             Console.WriteLine();
 
-            List<IScanOperator> operators = new List<IScanOperator>();
+            List<IScanOperatorGrain> operators = new List<IScanOperatorGrain>();
             for (int i = 0; i < Constants.num_scan; ++i)
             {
-                var t = client.GetGrain<IScanOperator>(i + 2, Constants.AssemblyPath); //, "ScanOperatorWithSqNum"
-                operators.Add(t);
-
-                // Explicitly activating other grains
-                await client.GetGrain<IFilterOperator>(i+2, Constants.AssemblyPath).TrivialCall(); //, "OrderedFilterOperatorWithSqNum"
-                
-                await client.GetGrain<IKeywordSearchOperator>(i+2, Constants.AssemblyPath).TrivialCall(); //, "OrderedKeywordSearchOperatorWithSqNum"
-                
-                await client.GetGrain<ICountOperator>(i+2, Constants.AssemblyPath).TrivialCall(); //, "OrderedCountOperatorWithSqNum"
-                
-                await client.GetGrain<ICountFinalOperator>(1, Constants.AssemblyPath).TrivialCall(); //, "OrderedCountFinalOperatorWithSqNum"
-                
+                var t = client.GetGrain<IScanOperatorGrain>(scanOperator.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix); //, "ScanOperatorWithSqNum"
+                operators.Add(t);              
             }
             await Task.Delay(1000);
             Console.WriteLine("Start loading tuples");

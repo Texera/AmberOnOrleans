@@ -1,10 +1,12 @@
 ﻿using Orleans;
+using Orleans.Streams;
 using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using Orleans.Concurrency;
 using TexeraUtilities;
+using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.MessagingSemantics
 {
@@ -37,17 +39,18 @@ namespace Engine.OperatorImplementation.MessagingSemantics
         
         public List<TexeraTuple> PreProcess(List<TexeraTuple> batch, INormalGrain currentOperator)
         {
-            var seq_token = batch[0].seq_token;           
+            var seq_token = batch[0].seq_token;
+            string extensionKey = "";      
 
             if(seq_token < current_idx)
             {
                 // de-dup messages
-                Console.WriteLine($"Grain {currentOperator.GetPrimaryKeyLong()} received duplicate message with sequence number {seq_token}: expected sequence number {current_idx}");
+                Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} received duplicate message with sequence number {seq_token}: expected sequence number {current_idx}");
                 return null;
             }
             if (seq_token != current_idx)
             {
-                Console.WriteLine($"Grain {currentOperator.GetPrimaryKeyLong()} received message ahead in sequence, being put in stash: sequence number {seq_token}, expected sequence number {current_idx}");                              
+                Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} received message ahead in sequence, being put in stash: sequence number {seq_token}, expected sequence number {current_idx}");                              
                 stashed.Add(seq_token, batch);
                 return null;           
             }
@@ -58,16 +61,16 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             }
         }
 
-        public async Task PostProcess(List<TexeraTuple> batchToForward, INormalGrain currentOperator)
+        public async Task PostProcess(List<TexeraTuple> batchToForward, INormalGrain currentOperator, IAsyncStream<Immutable<List<TexeraTuple>>> stream)
         {
             if (batchToForward.Count > 0)
             {
-                INormalGrain nextOperator = await currentOperator.GetNextoperator();
-                if (nextOperator != null)
+                INormalGrain nextGrain = await currentOperator.GetNextGrain();
+                if (nextGrain != null)
                 {
                     batchToForward[0].seq_token = current_seq_num;
                     current_seq_num++;
-                    nextOperator.Process(batchToForward.AsImmutable());
+                    nextGrain.Process(batchToForward.AsImmutable());
                 }
 
             }
@@ -90,11 +93,11 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                 }
                 if (batchToForward.Count > 0)
                 {
-                    INormalGrain nextOperator = await currentOperator.GetNextoperator();
-                    if(nextOperator != null)
+                    INormalGrain nextGrain = await currentOperator.GetNextGrain();
+                    if(nextGrain != null)
                     {
                         batchToForward[0].seq_token = current_seq_num++;
-                        nextOperator.Process(batchToForward.AsImmutable());
+                        nextGrain.Process(batchToForward.AsImmutable());
                     }
                 }
                 stashed.Remove(current_idx);

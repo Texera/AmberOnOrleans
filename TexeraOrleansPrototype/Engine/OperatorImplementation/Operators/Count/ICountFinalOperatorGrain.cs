@@ -3,13 +3,13 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
+using Engine.OperatorImplementation.Common;
 
-namespace Engine.OperatorImplementation.Interfaces
+namespace Engine.OperatorImplementation.Operators
 {
-    public interface ICountFinalOperator : INormalGrain
+    public interface ICountFinalOperatorGrain : INormalGrain
     {
         // Task SetAggregatorLevel(bool isIntermediate);
-        Task<Guid> GetStreamGuid();
         Task SubmitIntermediateAgg(int aggregation);
         
     }

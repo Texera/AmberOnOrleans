@@ -10,7 +10,7 @@ using System.Threading.Tasks;
 using System.Diagnostics;
 using Engine.OperatorImplementation.MessagingSemantics;
 
-namespace Engine
+namespace Engine.OperatorImplementation.Common
 {
     static public class Utils
     {

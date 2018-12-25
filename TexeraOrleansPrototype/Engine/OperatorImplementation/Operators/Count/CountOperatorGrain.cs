@@ -6,14 +6,14 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using Orleans.Concurrency;
-using Engine.OperatorImplementation.Interfaces;
 using Engine.OperatorImplementation.MessagingSemantics;
+using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
 
-namespace Engine.OperatorImplementation
+namespace Engine.OperatorImplementation.Operators
 {
 
-    public class OrderedCountOperatorWithSqNum : NormalGrain, ICountOperator
+    public class CountOperatorGrain : NormalGrain, ICountOperatorGrain
     {
         private Guid guid = Guid.NewGuid();
         public bool isIntermediate = false;
@@ -23,10 +23,11 @@ namespace Engine.OperatorImplementation
 
         public override async Task Process(Immutable<List<TexeraTuple>> batch)
         {
+            string extensionKey = "";
             // Console.Write("Count received batch");
             if(batch.Value.Count == 0)
             {
-                Console.WriteLine($"NOT EXPECTED: Count {this.GetPrimaryKeyLong()} received empty batch.");
+                Console.WriteLine($"NOT EXPECTED: Count {this.GetPrimaryKey(out extensionKey)} received empty batch.");
                 return;
             }
 
@@ -43,21 +44,25 @@ namespace Engine.OperatorImplementation
                 foreach(TexeraTuple tuple in batchReceived)
                 {
                     TexeraTuple ret = await Process_impl(tuple);
-                    if(ret != null)
-                    {
-                        batchToForward.Add(ret);
-                    }                
+                    // if(ret != null)
+                    // {
+                    //     batchToForward.Add(ret);
+                    // }
                 }
                 
             }
-            // await orderingEnforcer.PostProcess(batchToForward, this);
+            // var streamProvider = GetStreamProvider("SMSProvider");
+            // var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(), "Random");
+
+            // await orderingEnforcer.PostProcess(batchToForward, this, stream);
         }
 
         public override async Task<TexeraTuple> Process_impl(TexeraTuple tuple)
         {
             if (tuple.id == -1)
             {
-                ICountFinalOperator finalAggregator = this.GrainFactory.GetGrain<ICountFinalOperator>(1, Constants.AssemblyPath);//, "OrderedCountFinalOperatorWithSqNum"
+                string extensionKey = "";
+                ICountFinalOperatorGrain finalAggregator = this.GrainFactory.GetGrain<ICountFinalOperatorGrain>(this.GetPrimaryKey(out extensionKey), "0", Constants.OperatorAssemblyPathPrefix);//, "CountFinalOperatorGrain"
                 // finalAggregator.SetAggregatorLevel(false);
                 finalAggregator.SubmitIntermediateAgg(count);
             }

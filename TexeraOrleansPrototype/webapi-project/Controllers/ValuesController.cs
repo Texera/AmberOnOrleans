@@ -41,12 +41,12 @@ namespace webapi.Controllers
         {
             if(id==5)
             {
-                ClientWrapper.PauseSilo(client);
+                // ClientWrapper.PauseSilo(client);
                 return "Paused";
             }
             if(id==6)
             {
-                ClientWrapper.ResumeSilo(client);
+                // ClientWrapper.ResumeSilo(client);
                 return "Resumed";
             }
 
@@ -57,7 +57,7 @@ namespace webapi.Controllers
         [HttpPost]
         public void Post([FromBody]string value)
         {
-            ClientWrapper.ResumeSilo(client);
+            // ClientWrapper.ResumeSilo(client);
         }
 
         // PUT api/values/5

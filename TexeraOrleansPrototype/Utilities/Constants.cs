@@ -10,7 +10,8 @@ namespace TexeraUtilities
 {
     static public class Constants
     {
-        public const string AssemblyPath = "Engine.OperatorImplementation";
+        public const string OperatorAssemblyPathPrefix = "Engine.OperatorImplementation.Operators";
+        public const string ControllerAssemblyPathPrefix = "Engine.Controller";
         public const int batchSize = 1000;
         public const int num_scan = 10;
         public const bool conditions_on = false;
