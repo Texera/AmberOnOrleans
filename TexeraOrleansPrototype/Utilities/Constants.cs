@@ -16,7 +16,7 @@ namespace TexeraUtilities
         public const int num_scan = 10;
         public const bool conditions_on = false;
         public const bool ordered_on = true;
-        public const string dataset = "large";
+        public const string dataset = "small";
         public const string delivery = "RPC";
         public const string dir= @"/home/sheng/datasets/";
     }

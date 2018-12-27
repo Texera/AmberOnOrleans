@@ -8,6 +8,10 @@ namespace Engine.OperatorImplementation.Operators
 
         public KeywordPredicate(string query)
         {
+            if(query == null)
+            {
+                query = "";
+            }
             this.query = query;
         }
 

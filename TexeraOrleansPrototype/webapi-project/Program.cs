@@ -19,7 +19,7 @@ namespace webapi
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                //.UseWebRoot("../new-gui/dist")
+                .UseWebRoot("../new-gui/dist")
                 .UseStartup<Startup>()
                 .Build();
     }

@@ -2,9 +2,9 @@ namespace TexeraUtilities {
 
     public class TexeraTuple
     {
-        public ulong seq_token;
-        public int id;
-        public string region = "";
+        public ulong seq_token {get; set;}
+        public int id {get; set;}
+        public string region {get; set;}
         /*
         public string country;
         public string item_type;
@@ -14,9 +14,9 @@ namespace TexeraUtilities {
         public int order_id;
         public string ship_date;
         */
-        public int units_sold;
-        public float unit_price;
-        public float unit_cost;
+        public int units_sold {get; set;}
+        public float unit_price {get; set;}
+        public float unit_cost {get; set;}
         /*
         public float total_revenue;
         public float total_cost;
@@ -26,6 +26,7 @@ namespace TexeraUtilities {
         {
             this.seq_token = seq_token;
             this.id = id;
+            this.region = "";
             if (list == null)
                 return;
             region = list[0];

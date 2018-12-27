@@ -30,7 +30,7 @@ namespace Engine.OperatorImplementation.Operators
         public override async Task Process(Immutable<List<TexeraTuple>> batch)
         {
             string extensionKey = "";
-            Console.Write(" Filter received batch ");
+            // Console.Write(" Filter received batch ");
             if(batch.Value.Count == 0)
             {
                 Console.WriteLine($"NOT EXPECTED: Filter {this.GetPrimaryKey(out extensionKey)} received empty batch.");

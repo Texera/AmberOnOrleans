@@ -108,30 +108,35 @@ namespace OrleansClient
             }
         }
 
-        public static async Task DoClientWork(IClusterClient client)
+        public static async Task<List<TexeraTuple>> DoClientWork(IClusterClient client, Workflow workflow)
         {
-            ScanPredicate scanPredicate = new ScanPredicate();
-            FilterPredicate filterPredicate = new FilterPredicate(0);
-            KeywordPredicate keywordPredicate = new KeywordPredicate("");
-            CountPredicate countPredicate = new CountPredicate();
+            // ScanPredicate scanPredicate = new ScanPredicate();
+            // FilterPredicate filterPredicate = new FilterPredicate(0);
+            // KeywordPredicate keywordPredicate = new KeywordPredicate("");
+            // CountPredicate countPredicate = new CountPredicate();
 
-            ScanOperator scanOperator = (ScanOperator)scanPredicate.GetNewOperator(Constants.num_scan);
-            FilterOperator filterOperator = (FilterOperator)filterPredicate.GetNewOperator(Constants.num_scan);
-            KeywordOperator keywordOperator = (KeywordOperator)keywordPredicate.GetNewOperator(Constants.num_scan);
-            CountOperator countOperator = (CountOperator)countPredicate.GetNewOperator(Constants.num_scan);
+            // ScanOperator scanOperator = (ScanOperator)scanPredicate.GetNewOperator(Constants.num_scan);
+            // FilterOperator filterOperator = (FilterOperator)filterPredicate.GetNewOperator(Constants.num_scan);
+            // KeywordOperator keywordOperator = (KeywordOperator)keywordPredicate.GetNewOperator(Constants.num_scan);
+            // CountOperator countOperator = (CountOperator)countPredicate.GetNewOperator(Constants.num_scan);
 
-            scanOperator.NextOperator = filterOperator;
-            filterOperator.NextOperator = keywordOperator;
-            keywordOperator.NextOperator = countOperator;
+            // scanOperator.NextOperator = filterOperator;
+            // filterOperator.NextOperator = keywordOperator;
+            // keywordOperator.NextOperator = countOperator;
+
+            // Workflow workflow = new Workflow(scanOperator);
+
+
 
             ExecutionController controller = new ExecutionController(Guid.NewGuid());
             IControllerGrain controllerGrain = client.GetGrain<IControllerGrain>(controller.GrainID.PrimaryKey, controller.GrainID.ExtensionKey);
             
-            Workflow workflow = new Workflow(scanOperator);
             await controllerGrain.SetUpAndConnectGrains(workflow);
             await controllerGrain.CreateStreamFromLastOperator(workflow);
 
-            Guid streamGuid = countOperator.GetStreamGuid();
+            // Guid streamGuid = countOperator.GetStreamGuid();
+
+            Guid streamGuid = workflow.GetLastOperator().GetStreamGuid();
 
             // Guid streamGuid = await client.GetGrain<ICountFinalOperatorGrain>(1, Constants.OperatorAssemblyPathPrefix).GetStreamGuid();
 
@@ -153,7 +158,7 @@ namespace OrleansClient
             List<IScanOperatorGrain> operators = new List<IScanOperatorGrain>();
             for (int i = 0; i < Constants.num_scan; ++i)
             {
-                var t = client.GetGrain<IScanOperatorGrain>(scanOperator.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix); //, "ScanOperatorWithSqNum"
+                var t = client.GetGrain<IScanOperatorGrain>(workflow.StartOperator.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix); //, "ScanOperatorWithSqNum"
                 operators.Add(t);              
             }
             await Task.Delay(1000);
@@ -163,10 +168,15 @@ namespace OrleansClient
             Console.WriteLine("Finish loading tuples");
             await so.Start();
             Console.WriteLine("Start experiment");
+
+            Task x = null;
             for (int i = 0; i < Constants.num_scan; ++i)
             {
-                operators[i].SubmitTuples();
+                x = operators[i].SubmitTuples();
             }
+
+            await x;
+            return so.resultsToRet;
         }
     }
 }

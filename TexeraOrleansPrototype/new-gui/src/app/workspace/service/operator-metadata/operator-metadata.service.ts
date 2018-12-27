@@ -6,7 +6,7 @@ import '../../../common/rxjs-operators';
 import { AppSettings } from '../../../common/app-setting';
 import { OperatorMetadata } from '../../types/operator-schema.interface';
 
-export const MOCK_OPERATOR_METADATA_ENDPOINT = 'resources/operator-metadata';
+export const MOCK_OPERATOR_METADATA_ENDPOINT = 'resources/OperatorMetadata';
 
 export const EMPTY_OPERATOR_METADATA: OperatorMetadata = {
   operators: [],

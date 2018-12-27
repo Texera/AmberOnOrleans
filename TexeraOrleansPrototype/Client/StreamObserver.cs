@@ -13,6 +13,7 @@ namespace OrleansClient
 {
     public class StreamObserver : IAsyncObserver<Immutable<List<TexeraTuple>>>
     {
+       public  List<TexeraTuple> resultsToRet = new List<TexeraTuple>();
         Stopwatch sw=new Stopwatch();
 
         public Task Start()
@@ -39,6 +40,7 @@ namespace OrleansClient
             Console.WriteLine("Time usage: " + sw.Elapsed);
 
             List<TexeraTuple> results = item.Value;
+            resultsToRet.AddRange(results);
             for(int i=0; i<results.Count; i++)
             {
                 Console.WriteLine($"=={results[i].seq_token}, {results[i].id}, {results[i].region}, {results[i].unit_cost}, {results[i].unit_price}, {results[i].units_sold}== count received: by client");

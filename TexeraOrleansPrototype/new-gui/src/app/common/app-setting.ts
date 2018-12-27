@@ -2,7 +2,7 @@ import { isDevMode } from '@angular/core';
 
 export class AppSettings {
   private static readonly SERVER_ADDRESS = 'http://localhost';
-  private static readonly API_PORT = 8080;
+  private static readonly API_PORT = 5000;
   private static readonly API_ENDPOINT = 'api';
 
   public static getApiEndpoint(): string {

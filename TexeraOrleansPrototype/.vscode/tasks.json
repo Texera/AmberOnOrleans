@@ -7,7 +7,7 @@
             "type": "process",
             "args": [
                 "build",
-                "${workspaceFolder}/TexeraOrleansPrototype.csproj"
+                "${workspaceFolder}/webapi-project/webapi.csproj"
             ],
             "problemMatcher": "$msCompile"
         }

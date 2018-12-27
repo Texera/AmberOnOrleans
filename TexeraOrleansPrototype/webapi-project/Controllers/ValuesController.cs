@@ -30,7 +30,7 @@ namespace webapi.Controllers
                 client = ClientWrapper.Instance.client;
             }
 
-            ClientWrapper.DoClientWork(client).Wait();
+            // ClientWrapper.DoClientWork(client).Wait();
 
             return new string[] { "value1", "value2" };
         }

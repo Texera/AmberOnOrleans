@@ -10,5 +10,27 @@ namespace Engine.WorkflowImplementation
         {
             this.StartOperator = startingOperator;
         }
+
+        public Workflow()
+        {
+
+        }
+
+        public Operator GetLastOperator()
+        {
+            Operator currentOperator;
+            Operator nextOperator;
+
+            currentOperator = StartOperator;
+            nextOperator = currentOperator.NextOperator;
+
+            while(nextOperator != null)
+            {
+                currentOperator = nextOperator;
+                nextOperator = currentOperator.NextOperator;
+            }
+            
+            return currentOperator;
+        }
     }
 }
