@@ -16,7 +16,7 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class KeywordSearchOperatorGrain : NormalGrain, IKeywordSearchOperatorGrain
+    public class KeywordSearchOperatorGrain : ProcessorGrain, IKeywordSearchOperatorGrain
     {
         bool finished=false;
         IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();

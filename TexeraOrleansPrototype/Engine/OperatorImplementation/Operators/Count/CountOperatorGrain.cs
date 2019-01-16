@@ -13,7 +13,7 @@ using TexeraUtilities;
 namespace Engine.OperatorImplementation.Operators
 {
 
-    public class CountOperatorGrain : NormalGrain, ICountOperatorGrain
+    public class CountOperatorGrain : ProcessorGrain, ICountOperatorGrain
     {
         private Guid guid = Guid.NewGuid();
         public bool isIntermediate = false;

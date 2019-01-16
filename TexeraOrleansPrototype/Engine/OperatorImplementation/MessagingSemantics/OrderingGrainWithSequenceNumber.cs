@@ -37,7 +37,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             current_idx++;
         }
         
-        public List<TexeraTuple> PreProcess(List<TexeraTuple> batch, INormalGrain currentOperator)
+        public List<TexeraTuple> PreProcess(List<TexeraTuple> batch, IProcessorGrain currentOperator)
         {
             var seq_token = batch[0].seq_token;
             string extensionKey = "";      
@@ -61,7 +61,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             }
         }
 
-        public async Task PostProcess(List<TexeraTuple> batchToForward, INormalGrain currentOperator, IAsyncStream<Immutable<List<TexeraTuple>>> stream)
+        public async Task PostProcess(List<TexeraTuple> batchToForward, IProcessorGrain currentOperator, IAsyncStream<Immutable<List<TexeraTuple>>> stream)
         {
             if (batchToForward.Count > 0)
             {
@@ -70,14 +70,14 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                 {
                     batchToForward[0].seq_token = current_seq_num;
                     current_seq_num++;
-                    nextGrain.Process(batchToForward.AsImmutable());
+                    ((IProcessorGrain)nextGrain).Process(batchToForward.AsImmutable());
                 }
 
             }
             await ProcessStashed(currentOperator);
         }       
 
-        private async Task ProcessStashed(INormalGrain currentOperator)
+        private async Task ProcessStashed(IProcessorGrain currentOperator)
         {
             while(stashed.ContainsKey(current_idx))
             {
@@ -97,7 +97,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     if(nextGrain != null)
                     {
                         batchToForward[0].seq_token = current_seq_num++;
-                        nextGrain.Process(batchToForward.AsImmutable());
+                        ((IProcessorGrain)nextGrain).Process(batchToForward.AsImmutable());
                     }
                 }
                 stashed.Remove(current_idx);

@@ -16,7 +16,7 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class FilterOperatorGrain : NormalGrain, IFilterOperatorGrain
+    public class FilterOperatorGrain : ProcessorGrain, IFilterOperatorGrain
     {
         bool finished = false;
         IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();

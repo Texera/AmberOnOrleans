@@ -16,7 +16,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
         ulong GetExpectedSequenceNumber();
         void IncrementOutgoingSequenceNumber();
         void IncrementExpectedSequenceNumber();
-        List<TexeraTuple> PreProcess(List<TexeraTuple> batch, INormalGrain currentOperator);
-        Task PostProcess(List<TexeraTuple> batchToForward, INormalGrain currentOperator, IAsyncStream<Immutable<List<TexeraTuple>>> stream);
+        List<TexeraTuple> PreProcess(List<TexeraTuple> batch, IProcessorGrain currentOperator);
+        Task PostProcess(List<TexeraTuple> batchToForward, IProcessorGrain currentOperator, IAsyncStream<Immutable<List<TexeraTuple>>> stream);
     }
 }

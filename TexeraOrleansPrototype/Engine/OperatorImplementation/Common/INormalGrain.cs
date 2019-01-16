@@ -15,11 +15,8 @@ namespace Engine.OperatorImplementation.Common
         Task<bool> GetIsLastOperatorGrain();
         Task SetPredicate(PredicateBase predicate);
         Task SetNextGrain(INormalGrain nextGrain);
-        Task Process(Immutable<List<TexeraTuple>> row);
-        Task<TexeraTuple> Process_impl(TexeraTuple tuple);
         Task PauseGrain();
         Task ResumeGrain();
-        Task StartProcessAfterPause();
         Task TrivialCall();
     }
 }

@@ -12,7 +12,7 @@ using Engine.OperatorImplementation.Common;
 namespace Engine.OperatorImplementation.Operators
 {
 
-    public class CountFinalOperatorGrain : NormalGrain, ICountFinalOperatorGrain
+    public class CountFinalOperatorGrain : ProcessorGrain, ICountFinalOperatorGrain
     {
         public bool isIntermediate = false;
         public int count = 0;
@@ -34,7 +34,7 @@ namespace Engine.OperatorImplementation.Operators
                 
                 if(nextGrain != null)
                 {
-                    nextGrain.Process(new List<TexeraTuple>(){t}.AsImmutable());
+                    ((IProcessorGrain)nextGrain).Process(new List<TexeraTuple>(){t}.AsImmutable());
                 }
                 else if(IsLastOperatorGrain)
                 {

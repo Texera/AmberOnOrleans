@@ -47,7 +47,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             current_idx++;
         }
         
-        public List<TexeraTuple> PreProcess(List<TexeraTuple> batch, INormalGrain currentOperator)
+        public List<TexeraTuple> PreProcess(List<TexeraTuple> batch, IProcessorGrain currentOperator)
         {
             var seq_token = batch[0].seq_token;
             string extensionKey = "";
@@ -72,7 +72,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
         }
 
         // TODO: The third argument should ideally not be here
-        public async Task PostProcess(List<TexeraTuple> batchToForward, INormalGrain currentOperatorGrain, IAsyncStream<Immutable<List<TexeraTuple>>> stream)
+        public async Task PostProcess(List<TexeraTuple> batchToForward, IProcessorGrain currentOperatorGrain, IAsyncStream<Immutable<List<TexeraTuple>>> stream)
         { 
             INormalGrain nextGrain = await currentOperatorGrain.GetNextGrain();
             bool isLastGrain = await currentOperatorGrain.GetIsLastOperatorGrain();
@@ -96,7 +96,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             // Console.Write($"Exiting {currentOperator.GetPrimaryKey()} PostProcess, ");
         }       
 
-        private async Task ProcessStashed(INormalGrain currentOperatorGrain)
+        private async Task ProcessStashed(IProcessorGrain currentOperatorGrain)
         {
             INormalGrain nextGrain = await currentOperatorGrain.GetNextGrain();
             bool isLastGrain = await currentOperatorGrain.GetIsLastOperatorGrain();
@@ -127,7 +127,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 
         }
 
-        private async Task SendNext(INormalGrain currentOperatorGrain, IAsyncStream<Immutable<List<TexeraTuple>>> stream)
+        private async Task SendNext(IProcessorGrain currentOperatorGrain, IAsyncStream<Immutable<List<TexeraTuple>>> stream)
         {
             while(tuplesToSendAhead.Count > 0)
             {
@@ -142,7 +142,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 
                 if(nextGrain != null)
                 {
-                    await nextGrain.Process(batchToForward.AsImmutable());
+                    await ((IProcessorGrain)nextGrain).Process(batchToForward.AsImmutable());
                 }
                 else if(isLastGrain)
                 {
