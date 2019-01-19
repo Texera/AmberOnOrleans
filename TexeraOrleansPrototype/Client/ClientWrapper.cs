@@ -176,6 +176,12 @@ namespace OrleansClient
             }
 
             await x;
+
+            while(so.resultsToRet.Count == 0)
+            {
+
+            }
+            
             return so.resultsToRet;
         }
     }

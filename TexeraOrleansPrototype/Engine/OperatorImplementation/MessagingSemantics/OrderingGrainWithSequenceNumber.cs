@@ -61,24 +61,25 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             }
         }
 
-        public async Task PostProcess(List<TexeraTuple> batchToForward, IProcessorGrain currentOperator, IAsyncStream<Immutable<List<TexeraTuple>>> stream)
+        public void PostProcess(ref List<TexeraTuple> batchToForward, IProcessorGrain currentOperator)
         {
             if (batchToForward.Count > 0)
             {
-                INormalGrain nextGrain = await currentOperator.GetNextGrain();
-                if (nextGrain != null)
-                {
+                // INormalGrain nextGrain = await currentOperator.GetNextGrain();
+                // if (nextGrain != null)
+                // {
                     batchToForward[0].seq_token = current_seq_num;
                     current_seq_num++;
-                    ((IProcessorGrain)nextGrain).Process(batchToForward.AsImmutable());
-                }
-
+                    // ((IProcessorGrain)nextGrain).Process(batchToForward.AsImmutable());
+                // }
             }
-            await ProcessStashed(currentOperator);
+
+            // await ProcessStashed(currentOperator);
         }       
 
-        private async Task ProcessStashed(IProcessorGrain currentOperator)
+        public async Task<List<List<TexeraTuple>>> ProcessStashed(IProcessorGrain currentOperator)
         {
+            List<List<TexeraTuple>> batchList = new List<List<TexeraTuple>>();
             while(stashed.ContainsKey(current_idx))
             {
                 List<TexeraTuple> batch = stashed[current_idx];
@@ -93,16 +94,19 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                 }
                 if (batchToForward.Count > 0)
                 {
-                    INormalGrain nextGrain = await currentOperator.GetNextGrain();
-                    if(nextGrain != null)
-                    {
+                    // INormalGrain nextGrain = await currentOperator.GetNextGrain();
+                    // if(nextGrain != null)
+                    // {
                         batchToForward[0].seq_token = current_seq_num++;
-                        ((IProcessorGrain)nextGrain).Process(batchToForward.AsImmutable());
-                    }
+                        batchList.Add(batchToForward);
+                        // ((IProcessorGrain)nextGrain).Process(batchToForward.AsImmutable());
+                    // }
                 }
                 stashed.Remove(current_idx);
                 current_idx++;
             }
+
+            return batchList;
 
         }
 

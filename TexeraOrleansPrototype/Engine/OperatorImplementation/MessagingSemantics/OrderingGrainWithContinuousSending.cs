@@ -18,7 +18,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
     know if it is because SendNext() is waiting for the SynchronizationContext which is not being given up by PostProcess(). Only when all 100 calls of
     PostProcess() finish, the SendNext() begins execution.
      */
-    public class OrderingGrainWithContinuousSending : IOrderingEnforcer
+    public class OrderingGrainWithContinuousSending
     {
         private Dictionary<ulong, List<TexeraTuple>> stashed = new Dictionary<ulong, List<TexeraTuple>>();
         private ulong current_idx = 0;
@@ -133,7 +133,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             {
                 // if(nextGrain.GetPrimaryKey() == 3)
                 // Console.Write($"Sending {tuplesToSendAhead.Count} next batch, ");
-                INormalGrain nextGrain = await currentOperatorGrain.GetNextGrain();
+                IProcessorGrain nextGrain = await currentOperatorGrain.GetNextGrain();
                 bool isLastGrain = await currentOperatorGrain.GetIsLastOperatorGrain();
                 
                 List<TexeraTuple> batchToForward = tuplesToSendAhead.Take(Constants.batchSize).ToList();
@@ -142,7 +142,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 
                 if(nextGrain != null)
                 {
-                    await ((IProcessorGrain)nextGrain).Process(batchToForward.AsImmutable());
+                    await (nextGrain).Process(batchToForward.AsImmutable());
                 }
                 else if(isLastGrain)
                 {

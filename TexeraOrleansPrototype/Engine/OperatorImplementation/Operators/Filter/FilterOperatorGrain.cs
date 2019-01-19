@@ -23,25 +23,24 @@ namespace Engine.OperatorImplementation.Operators
 
         public override Task OnActivateAsync()
         {
-            // nextGrain = base.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(this.GetPrimaryKey(), Constants.OperatorAssemblyPathPrefix);//, "KeywordSearchOperatorGrain"
             return base.OnActivateAsync();
         }
 
-        public override async Task Process(Immutable<List<TexeraTuple>> batch)
+        public override async Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> batch)
         {
             string extensionKey = "";
             // Console.Write(" Filter received batch ");
             if(batch.Value.Count == 0)
             {
                 Console.WriteLine($"NOT EXPECTED: Filter {this.GetPrimaryKey(out extensionKey)} received empty batch.");
-                return;
+                return null;
             }
 
-            if(pause == true)
-            {
-                pausedRows.Add(batch);
-                return;
-            }
+            // if(pause == true)
+            // {
+            //     pausedRows.Add(batch);
+            //     return;
+            // }
 
             List<TexeraTuple> batchReceived = orderingEnforcer.PreProcess(batch.Value, this);
             List<TexeraTuple> batchToForward = new List<TexeraTuple>();
@@ -56,11 +55,20 @@ namespace Engine.OperatorImplementation.Operators
                     }
                 }
             }
-            
-            var streamProvider = GetStreamProvider("SMSProvider");
-            var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(out extensionKey), "Random");
 
-            await orderingEnforcer.PostProcess(batchToForward, this, stream);
+            List<List<TexeraTuple>> batchList = new List<List<TexeraTuple>>();
+
+            if(batchToForward.Count > 0)
+            {
+                orderingEnforcer.PostProcess(ref batchToForward, this);
+                batchList.Add(batchToForward);
+            }
+            List<List<TexeraTuple>> stashedBatches = await orderingEnforcer.ProcessStashed(this);
+            batchList.AddRange(stashedBatches);
+
+            return batchList;
+            // var streamProvider = GetStreamProvider("SMSProvider");
+            // var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(out extensionKey), "Random");
         }
 
         public override async Task<TexeraTuple> Process_impl(TexeraTuple tuple)
@@ -73,13 +81,15 @@ namespace Engine.OperatorImplementation.Operators
             // bool cond = Program.conditions_on ? (row as Tuple).unit_cost > 50 : true;
             if (tuple.id == -1)
             {
-                Console.WriteLine("Ordered Filter done");
+                // Console.WriteLine("Ordered Filter done");
                 finished = true;
                 return tuple;
             }
 
             return tuple;
         }
+
+        
     }
 
 }

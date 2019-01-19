@@ -21,21 +21,20 @@ namespace Engine.OperatorImplementation.Operators
         public int intermediateAggregatorsResponded = 0;
         IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
 
-        public override async Task Process(Immutable<List<TexeraTuple>> batch)
+        public override async Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> batch)
         {
             string extensionKey = "";
             // Console.Write("Count received batch");
             if(batch.Value.Count == 0)
             {
                 Console.WriteLine($"NOT EXPECTED: Count {this.GetPrimaryKey(out extensionKey)} received empty batch.");
-                return;
             }
 
-            if(pause == true)
-            {
-                pausedRows.Add(batch);
-                return;
-            }
+            // if(pause == true)
+            // {
+            //     pausedRows.Add(batch);
+            //     return;
+            // }
             
             List<TexeraTuple> batchReceived = orderingEnforcer.PreProcess(batch.Value, this);
             List<TexeraTuple> batchToForward = new List<TexeraTuple>();
@@ -44,13 +43,10 @@ namespace Engine.OperatorImplementation.Operators
                 foreach(TexeraTuple tuple in batchReceived)
                 {
                     TexeraTuple ret = await Process_impl(tuple);
-                    // if(ret != null)
-                    // {
-                    //     batchToForward.Add(ret);
-                    // }
                 }
-                
             }
+
+            return null;
             // var streamProvider = GetStreamProvider("SMSProvider");
             // var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(), "Random");
 

@@ -16,8 +16,8 @@ namespace Engine.OperatorImplementation.Common
     {
         static public IOrderingEnforcer GetOrderingEnforcerInstance()
         {
-            // return new OrderingGrainWithSequenceNumber();
-            return new OrderingGrainWithContinuousSending();
+            return new OrderingGrainWithSequenceNumber();
+            // return new OrderingGrainWithContinuousSending();
         }
         
     }

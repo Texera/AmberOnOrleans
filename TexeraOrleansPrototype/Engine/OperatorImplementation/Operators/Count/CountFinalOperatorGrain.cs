@@ -34,7 +34,7 @@ namespace Engine.OperatorImplementation.Operators
                 
                 if(nextGrain != null)
                 {
-                    ((IProcessorGrain)nextGrain).Process(new List<TexeraTuple>(){t}.AsImmutable());
+                    (nextGrain).ReceiveTuples(new List<TexeraTuple>(){t}.AsImmutable());
                 }
                 else if(IsLastOperatorGrain)
                 {
@@ -44,22 +44,13 @@ namespace Engine.OperatorImplementation.Operators
             return Task.CompletedTask;
         }
 
-        public override async Task Process(Immutable<List<TexeraTuple>> batch)
+        public override async Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> batch)
         {
+            return null;
         }
 
         public override async Task<TexeraTuple> Process_impl(TexeraTuple tuple)
         {
-            // if (tuple.id == -1)
-            // {
-            //     ICountFinalOperatorGrain finalAggregator = this.GrainFactory.GetGrain<ICountFinalOperatorGrain>(1, Constants.OperatorAssemblyPathPrefix);//, "CountFinalOperatorGrain"
-            //     finalAggregator.SubmitIntermediateAgg(count);
-            // }
-            // else
-            // {
-            //     //Console.WriteLine("Ordered Count processing: [" + (row as Tuple).seq_token + "] " + (row as Tuple).id);
-            //     count++;
-            // }
             return null;
         }
     }

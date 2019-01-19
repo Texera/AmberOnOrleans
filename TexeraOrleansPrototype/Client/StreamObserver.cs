@@ -37,7 +37,7 @@ namespace OrleansClient
         public Task OnNextAsync(Immutable<List<TexeraTuple>> item, StreamSequenceToken token = null)
         {
             sw.Stop();
-            Console.WriteLine("Time usage: " + sw.Elapsed);
+            // Console.WriteLine("Time usage: " + sw.Elapsed);
 
             List<TexeraTuple> results = item.Value;
             resultsToRet.AddRange(results);

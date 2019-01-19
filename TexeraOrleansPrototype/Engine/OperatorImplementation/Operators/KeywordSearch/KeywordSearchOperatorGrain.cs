@@ -27,21 +27,21 @@ namespace Engine.OperatorImplementation.Operators
             return base.OnActivateAsync();
         }
 
-        public override async Task Process(Immutable<List<TexeraTuple>> batch)
+        public override async Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> batch)
         {
             string extensionKey = "";
-            // Console.Write(" Keyword received batch ");
+            Console.Write(" Keyword received batch ");
             if(batch.Value.Count == 0)
             {
                 Console.WriteLine($"NOT EXPECTED: Keyword {this.GetPrimaryKey(out extensionKey)} received empty batch.");
-                return;
+                return null;
             }
 
-            if(pause == true)
-            {
-                pausedRows.Add(batch);
-                return;
-            }
+            // if(pause == true)
+            // {
+            //     pausedRows.Add(batch);
+            //     return;
+            // }
 
             List<TexeraTuple> batchReceived = orderingEnforcer.PreProcess(batch.Value, this);
             List<TexeraTuple> batchToForward = new List<TexeraTuple>();
@@ -57,9 +57,17 @@ namespace Engine.OperatorImplementation.Operators
                 }
             }
 
-            var streamProvider = GetStreamProvider("SMSProvider");
-            var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(out extensionKey), "Random");
-            await orderingEnforcer.PostProcess(batchToForward, this, stream);
+            List<List<TexeraTuple>> batchList = new List<List<TexeraTuple>>();
+
+            if(batchToForward.Count > 0)
+            {
+                orderingEnforcer.PostProcess(ref batchToForward, this);
+                batchList.Add(batchToForward);
+            }
+            List<List<TexeraTuple>> stashedBatches = await orderingEnforcer.ProcessStashed(this);
+            batchList.AddRange(stashedBatches);
+
+            return batchList;
         }
 
         public override async Task<TexeraTuple> Process_impl(TexeraTuple tuple)
@@ -71,7 +79,7 @@ namespace Engine.OperatorImplementation.Operators
             
             if (tuple.id == -1)
             {
-                Console.WriteLine("Ordered Filter done");
+                Console.WriteLine("Ordered Keyword done");
                 finished = true;
                 return tuple;
             }

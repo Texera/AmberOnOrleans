@@ -11,14 +11,14 @@ namespace Engine.OperatorImplementation.Common
     public class NormalGrain : Grain, INormalGrain
     {
         private ulong current_seq_num = 0;
-        public INormalGrain nextGrain = null;
+        public IProcessorGrain nextGrain = null;
         protected PredicateBase predicate = null;
         public bool IsLastOperatorGrain = false;
 
         protected bool pause = false;
         protected List<Immutable<List<TexeraTuple>>> pausedRows = new List<Immutable<List<TexeraTuple>>>();
 
-        public virtual async Task<INormalGrain> GetNextGrain()
+        public virtual async Task<IProcessorGrain> GetNextGrain()
         {
             return nextGrain;
         }
@@ -40,7 +40,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public virtual Task SetNextGrain(INormalGrain nextGrain)
+        public virtual Task SetNextGrain(IProcessorGrain nextGrain)
         {
             this.nextGrain = nextGrain;
             return Task.CompletedTask;

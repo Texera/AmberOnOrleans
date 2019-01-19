@@ -40,7 +40,7 @@ namespace Engine.OperatorImplementation.Operators
         public override async Task ResumeGrain()
         {
             await nextGrain.ResumeGrain();
-            ((IProcessorGrain)nextGrain).StartProcessAfterPause();
+            // ((IProcessorGrain)nextGrain).StartProcessAfterPause();
         }
 
         public async Task SubmitTuples() 
@@ -58,7 +58,7 @@ namespace Engine.OperatorImplementation.Operators
                         batch[0].seq_token = seq++;
                         // TODO: We can't call batch.Clear() after this because it somehow ends
                         // up clearing the memory and the next grain gets list with no tuples.
-                        ((IProcessorGrain)nextGrain).Process(batch.AsImmutable());
+                        await (nextGrain).ReceiveTuples(batch.AsImmutable());
                         // batch.Clear();
                         batch = new List<TexeraTuple>();
                     }
@@ -68,14 +68,14 @@ namespace Engine.OperatorImplementation.Operators
                 if(batch.Count > 0)
                 {
                     batch[0].seq_token = seq++;
-                    ((IProcessorGrain)nextGrain).Process(batch.AsImmutable());
+                    await (nextGrain).ReceiveTuples(batch.AsImmutable());
                     // batch.Clear();
                     batch = new List<TexeraTuple>();
                 }
 
                 // Console.WriteLine("Seq num for last tuple " + seq);
                 batch.Add(new TexeraTuple(seq ,- 1, null));
-                ((IProcessorGrain)nextGrain).Process(batch.AsImmutable());
+                await (nextGrain).ReceiveTuples(batch.AsImmutable());
 
                 string extensionKey = "";
                 this.GetPrimaryKey(out extensionKey);

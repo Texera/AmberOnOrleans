@@ -55,7 +55,7 @@ namespace Engine.Controller
                             case ScanOperator o:
                                 IScanOperatorGrain scanGrain = this.GrainFactory.GetGrain<IScanOperatorGrain>(nextGrainID.PrimaryKey, nextGrainID.ExtensionKey);
                                 await scanGrain.TrivialCall();
-                                await currGrain.SetNextGrain(scanGrain);
+                                // await currGrain.SetNextGrain(scanGrain);
                                 break;
                             case FilterOperator o:
                                 IFilterOperatorGrain filterGrain = this.GrainFactory.GetGrain<IFilterOperatorGrain>(nextGrainID.PrimaryKey, nextGrainID.ExtensionKey);

@@ -10,8 +10,9 @@ namespace Engine.OperatorImplementation.Common
 {
     public interface IProcessorGrain : INormalGrain
     {
-        Task Process(Immutable<List<TexeraTuple>> row);
+        Task ReceiveTuples(Immutable<List<TexeraTuple>> row);
+        Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> row);
         Task<TexeraTuple> Process_impl(TexeraTuple tuple);
-        Task StartProcessAfterPause();
+        // Task StartProcessAfterPause();
     }
 }

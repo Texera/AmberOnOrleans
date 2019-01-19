@@ -10,11 +10,11 @@ namespace Engine.OperatorImplementation.Common
 {
     public interface INormalGrain : IGrainWithGuidCompoundKey
     {
-        Task<INormalGrain> GetNextGrain();
+        Task<IProcessorGrain> GetNextGrain();
         Task SetIsLastOperatorGrain(bool isLastOperatorGrain);
         Task<bool> GetIsLastOperatorGrain();
         Task SetPredicate(PredicateBase predicate);
-        Task SetNextGrain(INormalGrain nextGrain);
+        Task SetNextGrain(IProcessorGrain nextGrain);
         Task PauseGrain();
         Task ResumeGrain();
         Task TrivialCall();
