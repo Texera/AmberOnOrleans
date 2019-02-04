@@ -72,6 +72,10 @@ namespace Engine.OperatorImplementation.Common
             if(nextGrain != null)
             {
                 await nextGrain.ResumeGrain();
+                List<TexeraTuple> batch = new List<TexeraTuple>();
+
+                // make a call with empty batch so that rows received during pause get processed
+                await nextGrain.ReceiveTuples(batch.AsImmutable(), nextGrain);
             }
         }
     }
