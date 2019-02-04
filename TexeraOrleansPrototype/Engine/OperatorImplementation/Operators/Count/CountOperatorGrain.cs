@@ -21,6 +21,11 @@ namespace Engine.OperatorImplementation.Operators
         public int intermediateAggregatorsResponded = 0;
         IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
 
+        public override Task<Type> GetGrainInterfaceType()
+        {
+            return Task.FromResult(typeof(ICountOperatorGrain));
+        }
+
         public override async Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> batch)
         {
             string extensionKey = "";

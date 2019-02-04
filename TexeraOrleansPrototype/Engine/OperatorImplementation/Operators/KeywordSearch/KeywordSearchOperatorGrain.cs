@@ -27,6 +27,11 @@ namespace Engine.OperatorImplementation.Operators
             return base.OnActivateAsync();
         }
 
+        public override Task<Type> GetGrainInterfaceType()
+        {
+            return Task.FromResult(typeof(IKeywordSearchOperatorGrain));
+        }
+
         public override async Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> batch)
         {
             string extensionKey = "";

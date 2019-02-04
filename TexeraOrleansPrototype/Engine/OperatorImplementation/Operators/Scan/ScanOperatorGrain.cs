@@ -58,7 +58,7 @@ namespace Engine.OperatorImplementation.Operators
                         batch[0].seq_token = seq++;
                         // TODO: We can't call batch.Clear() after this because it somehow ends
                         // up clearing the memory and the next grain gets list with no tuples.
-                        await (nextGrain).ReceiveTuples(batch.AsImmutable());
+                        await (nextGrain).ReceiveTuples(batch.AsImmutable(), nextGrain);
                         // batch.Clear();
                         batch = new List<TexeraTuple>();
                     }
@@ -68,14 +68,14 @@ namespace Engine.OperatorImplementation.Operators
                 if(batch.Count > 0)
                 {
                     batch[0].seq_token = seq++;
-                    await (nextGrain).ReceiveTuples(batch.AsImmutable());
+                    await (nextGrain).ReceiveTuples(batch.AsImmutable(), nextGrain);
                     // batch.Clear();
                     batch = new List<TexeraTuple>();
                 }
 
                 // Console.WriteLine("Seq num for last tuple " + seq);
                 batch.Add(new TexeraTuple(seq ,- 1, null));
-                await (nextGrain).ReceiveTuples(batch.AsImmutable());
+                await (nextGrain).ReceiveTuples(batch.AsImmutable(), nextGrain);
 
                 string extensionKey = "";
                 this.GetPrimaryKey(out extensionKey);

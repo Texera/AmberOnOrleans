@@ -18,6 +18,11 @@ namespace Engine.OperatorImplementation.Operators
         public int count = 0;
         public int intermediateAggregatorsResponded = 0;
 
+        public override Task<Type> GetGrainInterfaceType()
+        {
+            return Task.FromResult(typeof(ICountFinalOperatorGrain));
+        }
+
         public Task SubmitIntermediateAgg(int aggregation)
         {
             count += aggregation;
@@ -34,7 +39,7 @@ namespace Engine.OperatorImplementation.Operators
                 
                 if(nextGrain != null)
                 {
-                    (nextGrain).ReceiveTuples(new List<TexeraTuple>(){t}.AsImmutable());
+                    (nextGrain).ReceiveTuples(new List<TexeraTuple>(){t}.AsImmutable(), nextGrain);
                 }
                 else if(IsLastOperatorGrain)
                 {
