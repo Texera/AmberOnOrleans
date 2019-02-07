@@ -17,8 +17,10 @@ namespace TexeraUtilities
         public const int max_retries = 60;
         public const bool conditions_on = false;
         public const bool ordered_on = true;
-        public const string dataset = "small";
+        public const string dataset = "large";
         public const string delivery = "RPC";
-        public const string dir= @"/home/sheng/datasets/";
+        public const string dir= @"D:\";
+        public const string HDFS_WebAPIEntryPoint="http://localhost:50070/webhdfs/v1";
+        public const ulong blockSize=1024*1024*10;
     }
 }

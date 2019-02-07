@@ -17,6 +17,6 @@ namespace Engine.OperatorImplementation.Common
         Task SetNextGrain(IProcessorGrain nextGrain);
         Task PauseGrain();
         Task ResumeGrain();
-        Task TrivialCall();
+        Task Init();
     }
 }

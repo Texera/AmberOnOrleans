@@ -13,22 +13,14 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ScanOperatorGrain : NormalGrain, IScanOperatorGrain
     {
-        public List<TexeraTuple> Rows = new List<TexeraTuple>();
-        System.IO.StreamReader file;
 
+        enum FileType{unknown,csv,pdf,txt};
+        FileType file_type;
+        System.IO.StreamReader file;
+        string file_path;
+        ulong start,end,seq_number=0,tuple_counter=0;
         public override Task OnActivateAsync()
         {
-            
-            // nextGrain = this.GrainFactory.GetGrain<IFilterOperatorGrain>(this.GetPrimaryKey(), Constants.OperatorAssemblyPathPrefix);
-
-            string p2;
-            string extensionKey = "";
-            Guid key = this.GetPrimaryKey(out extensionKey);
-            if (Constants.num_scan == 1)
-                p2 = Constants.dir + Constants.dataset + "_input.csv";
-            else
-                p2 = Constants.dir + Constants.dataset + "_input" + "_" + (Int32.Parse(extensionKey) + 1) + ".csv";
-            file = new System.IO.StreamReader(p2);
             return base.OnActivateAsync();
         }
 
@@ -40,7 +32,6 @@ namespace Engine.OperatorImplementation.Operators
         public override async Task ResumeGrain()
         {
             await nextGrain.ResumeGrain();
-            // ((IProcessorGrain)nextGrain).StartProcessAfterPause();
         }
 
         public async Task SubmitTuples() 
@@ -48,62 +39,134 @@ namespace Engine.OperatorImplementation.Operators
             try
             {
                 List<TexeraTuple> batch = new List<TexeraTuple>();
-                ulong seq = 0;
-
-                for (int i = 1; i <= Rows.Count; ++i)
+                for (int i = 0; i <Constants.batchSize;)
                 {
-                    batch.Add(Rows[i-1]);
-                    if(i%Constants.batchSize == 0)
+                    if(start>end)break;
+                    TexeraTuple tx;
+                    if(ReadTuple(out tx))
                     {
-                        batch[0].seq_token = seq++;
-                        // TODO: We can't call batch.Clear() after this because it somehow ends
-                        // up clearing the memory and the next grain gets list with no tuples.
-                        await (nextGrain).ReceiveTuples(batch.AsImmutable(), nextGrain);
-                        // batch.Clear();
-                        batch = new List<TexeraTuple>();
+                        batch.Add(tx);
+                        ++i;
                     }
                 }
-
-                // Console.WriteLine(seq);
-                if(batch.Count > 0)
+                if(batch.Count>0)
                 {
-                    batch[0].seq_token = seq++;
-                    await (nextGrain).ReceiveTuples(batch.AsImmutable(), nextGrain);
-                    // batch.Clear();
+                    batch[0].seq_token=seq_number++;
+                    await (nextGrain).ReceiveTuples(batch.AsImmutable(),nextGrain);
                     batch = new List<TexeraTuple>();
                 }
-
-                // Console.WriteLine("Seq num for last tuple " + seq);
-                batch.Add(new TexeraTuple(seq ,- 1, null));
-                await (nextGrain).ReceiveTuples(batch.AsImmutable(), nextGrain);
-
-                string extensionKey = "";
-                this.GetPrimaryKey(out extensionKey);
-                Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending done");
-             // return Task.CompletedTask;
+                if(start <= end)
+                {
+                    string extensionKey = "";
+                    Guid primaryKey=this.GetPrimaryKey(out extensionKey);
+                    IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
+                    self.SubmitTuples();
+                }
+                else
+                {
+                    file.Close();
+                    string extensionKey = "";
+                    Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending done "+seq_number.ToString());
+                    batch.Add(new TexeraTuple(seq_number ,-1, null));
+                    await (nextGrain).ReceiveTuples(batch.AsImmutable(),nextGrain);
+                }
             }
             catch(Exception ex)
             {
                 Console.WriteLine("EXCEPTION in Sending Tuples - "+ ex.ToString());
             }
         }
-
-
-        public Task LoadTuples()
+        
+        private void TrySkipFirst()
         {
-            string line;
-            ulong count = 0;
-            while ((line = file.ReadLine()) != null)
+            switch(file_type)
             {
-                // The sequence token filled here will be replaced later in SubmitTuples().
-                Rows.Add(new TexeraTuple(count, (int)count, line.Split(",")));
-                count++;
+                case FileType.csv:
+                if (start != 0)
+                    this.start += (ulong)file.ReadLine().Length;
+                break;
+                default:
+                //not implemented
+                break;
             }
-            string extensionKey = "";
-            this.GetPrimaryKey(out extensionKey);
-            Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " loading done");
+        }
+        
+        public Task Init(ulong start_byte,ulong end_byte)
+        {
+            if(!GetFile(((ScanPredicate)predicate).GetFileName(),start_byte))
+                return Task.FromException(new Exception("unable to get file"));
+            start=start_byte;
+            end=end_byte;
+            if(Enum.TryParse<FileType>(file_path.Substring(file_path.LastIndexOf(".")+1),out file_type))
+            {
+                if(!Enum.IsDefined(typeof(FileType),file_type))
+                    file_type=FileType.unknown;
+            }
+            else
+                file_type=FileType.unknown;
+            TrySkipFirst();
             return Task.CompletedTask;
         }
-       
+
+        private bool GetFile(string path, ulong offset)
+        {
+            try
+            {
+                if(path.StartsWith("http://"))
+                {
+                    //HDFS RESTful read
+                    file_path=Utils.GenerateURLForHDFSWebAPI(file_path,offset);
+                    file=Utils.GetFileHandleFromHDFS(file_path);
+                }
+                else
+                {
+                    //normal read
+                    file_path = path;
+                    file = new System.IO.StreamReader(file_path);
+                    if(file.BaseStream.CanSeek)
+                        file.BaseStream.Seek((long)offset,SeekOrigin.Begin);
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("EXCEPTION in Opening File - "+ ex.ToString());
+                return false;
+            }
+            return true;
+        }
+
+
+        private bool ReadTuple(out TexeraTuple tx)
+        {
+            try
+            {
+                string res = file.ReadLine();
+                start += (ulong)res.Length;
+                if (file.EndOfStream)
+                    start = end + 1;
+                try
+                {
+                    tx=new TexeraTuple(tuple_counter, (int)tuple_counter, res.Split(","));
+                    ++tuple_counter;
+                    return true;
+                }
+                catch
+                {
+                    tx=null;
+                    Console.WriteLine("Failed to parse the tuple");
+                    return false;
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("EXCEPTION in Reading Tuples from File - "+ ex.ToString());
+                Console.WriteLine("start_offset: "+start.ToString()+" end_offset: "+end.ToString());
+                GetFile(file_path,start);
+                tx=null;
+                return false;
+            }
+        }
+
+
     }
 }

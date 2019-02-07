@@ -46,13 +46,8 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public Task TrivialCall()
+        public Task Init()
         {
-            for(int i=0; i< 10000; i++)
-            {
-                int a = 1;
-            }
-
             return Task.CompletedTask;
         }
 

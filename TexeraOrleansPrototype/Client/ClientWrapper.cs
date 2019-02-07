@@ -130,7 +130,6 @@ namespace OrleansClient
 
             ExecutionController controller = new ExecutionController(Guid.NewGuid());
             IControllerGrain controllerGrain = client.GetGrain<IControllerGrain>(controller.GrainID.PrimaryKey, controller.GrainID.ExtensionKey);
-            
             await controllerGrain.SetUpAndConnectGrains(workflow);
             await controllerGrain.CreateStreamFromLastOperator(workflow);
 
@@ -161,11 +160,6 @@ namespace OrleansClient
                 var t = client.GetGrain<IScanOperatorGrain>(workflow.StartOperator.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix); //, "ScanOperatorWithSqNum"
                 operators.Add(t);              
             }
-            await Task.Delay(1000);
-            Console.WriteLine("Start loading tuples");
-            for (int i = 0; i < Constants.num_scan; ++i)
-                await operators[i].LoadTuples();
-            Console.WriteLine("Finish loading tuples");
             await so.Start();
             Console.WriteLine("Start experiment");
 

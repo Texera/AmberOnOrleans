@@ -10,6 +10,6 @@ namespace Engine.OperatorImplementation.Operators
     public interface IScanOperatorGrain : INormalGrain
     {
         Task SubmitTuples();
-        Task LoadTuples();
+        Task Init(ulong start_byte,ulong end_byte);
     }
 }
