@@ -26,16 +26,41 @@ namespace Engine.OperatorImplementation.Operators
 
         public override async Task PauseGrain()
         {
+            pause=true;
             await nextGrain.PauseGrain();
         }
 
         public override async Task ResumeGrain()
         {
+            pause=false;
+            if(start<=end)
+            {
+                string extensionKey = "";
+                Guid primaryKey=this.GetPrimaryKey(out extensionKey);
+                IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
+                self.SubmitTuples().ContinueWith((t) =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        Exception ex = t.Exception;
+                        while (ex is AggregateException && ex.InnerException != null)
+                        {
+                            ex = ex.InnerException;
+                        }
+
+                        if (ex is TimeoutException)
+                        {
+                            self.SubmitTuples();
+                        }
+                    }
+                });
+            }
             await nextGrain.ResumeGrain();
         }
 
         public async Task SubmitTuples() 
         {
+            if(pause)return;
             try
             {
                 List<TexeraTuple> batch = new List<TexeraTuple>();
@@ -51,6 +76,9 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 if(batch.Count>0)
                 {
+                    string extensionKey = "";
+                    Guid primaryKey=this.GetPrimaryKey(out extensionKey);
+                    //Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending "+seq_number.ToString());
                     batch[0].seq_token=seq_number++;
                     await (nextGrain).ReceiveTuples(batch.AsImmutable(),nextGrain);
                     batch = new List<TexeraTuple>();
@@ -60,13 +88,30 @@ namespace Engine.OperatorImplementation.Operators
                     string extensionKey = "";
                     Guid primaryKey=this.GetPrimaryKey(out extensionKey);
                     IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
-                    self.SubmitTuples();
+                    self.SubmitTuples().ContinueWith((t) =>
+                    {
+                        if (t.IsFaulted)
+                        {
+                            Exception ex = t.Exception;
+                            while (ex is AggregateException && ex.InnerException != null)
+                            {
+                                ex = ex.InnerException;
+                            }
+
+                            if (ex is TimeoutException)
+                            {
+                                self.SubmitTuples();
+                            }
+                        }
+                    });
                 }
                 else
                 {
                     file.Close();
                     string extensionKey = "";
-                    Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending done "+seq_number.ToString());
+                    Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending done");
+                    Console.WriteLine("current offset: "+start.ToString()+" end offset: "+end.ToString());
+                    Console.WriteLine("tuple count: "+tuple_counter.ToString());
                     batch.Add(new TexeraTuple(seq_number ,-1, null));
                     await (nextGrain).ReceiveTuples(batch.AsImmutable(),nextGrain);
                 }
@@ -83,7 +128,11 @@ namespace Engine.OperatorImplementation.Operators
             {
                 case FileType.csv:
                 if (start != 0)
-                    this.start += (ulong)file.ReadLine().Length;
+                {
+                    string res=file.ReadLine();
+                    Console.WriteLine("Skip: "+res);
+                    this.start += (ulong)(Encoding.UTF8.GetByteCount(res)+Environment.NewLine.Length);
+                }
                 break;
                 default:
                 //not implemented
@@ -91,9 +140,18 @@ namespace Engine.OperatorImplementation.Operators
             }
         }
         
-        public Task Init(ulong start_byte,ulong end_byte)
+        public override Task Init()
         {
-            if(!GetFile(((ScanPredicate)predicate).GetFileName(),start_byte))
+            ulong filesize=((ScanPredicate)predicate).GetFileSize();
+            string extensionKey = "";
+            Guid key = this.GetPrimaryKey(out extensionKey);
+            ulong i=UInt64.Parse(extensionKey);
+            ulong num_grains=(ulong)((ScanPredicate)predicate).GetNumberOfGrains();
+            ulong partition=filesize/num_grains;
+            ulong start_byte=i*partition;
+            ulong end_byte=num_grains-1==i?filesize:(i+1)*partition;
+            file_path = ((ScanPredicate)predicate).GetFileName();
+            if(!GetFile(file_path,start_byte))
                 return Task.FromException(new Exception("unable to get file"));
             start=start_byte;
             end=end_byte;
@@ -105,8 +163,11 @@ namespace Engine.OperatorImplementation.Operators
             else
                 file_type=FileType.unknown;
             TrySkipFirst();
+            Console.WriteLine("Init: "+file_type.ToString()+" start byte: "+start.ToString()+" end byte: "+end.ToString());
             return Task.CompletedTask;
         }
+
+        
 
         private bool GetFile(string path, ulong offset)
         {
@@ -115,13 +176,12 @@ namespace Engine.OperatorImplementation.Operators
                 if(path.StartsWith("http://"))
                 {
                     //HDFS RESTful read
-                    file_path=Utils.GenerateURLForHDFSWebAPI(file_path,offset);
-                    file=Utils.GetFileHandleFromHDFS(file_path);
+                    string uri_path=Utils.GenerateURLForHDFSWebAPI(path,offset);
+                    file=Utils.GetFileHandleFromHDFS(uri_path);
                 }
                 else
                 {
                     //normal read
-                    file_path = path;
                     file = new System.IO.StreamReader(file_path);
                     if(file.BaseStream.CanSeek)
                         file.BaseStream.Seek((long)offset,SeekOrigin.Begin);
@@ -141,7 +201,10 @@ namespace Engine.OperatorImplementation.Operators
             try
             {
                 string res = file.ReadLine();
-                start += (ulong)res.Length;
+                string extensionKey = "";
+                Guid primaryKey=this.GetPrimaryKey(out extensionKey);
+                start += (ulong)(Encoding.UTF8.GetByteCount(res)+Environment.NewLine.Length);
+                //Console.WriteLine("offset: "+start+" length: "+res.Length+" "+extensionKey+" "+res);
                 if (file.EndOfStream)
                     start = end + 1;
                 try

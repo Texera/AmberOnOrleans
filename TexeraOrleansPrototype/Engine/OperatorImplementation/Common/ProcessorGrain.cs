@@ -37,12 +37,17 @@ namespace Engine.OperatorImplementation.Common
                 {
                     foreach (Immutable<List<TexeraTuple>> pausedBatch in pausedRows)
                     {
-                        processedBatchList.AddRange(await Process(pausedBatch));
+                        //Console.WriteLine("process paused "+pausedBatch.Value[0].seq_token);
+                        var res=await Process(pausedBatch);
+                        if(res!=null)processedBatchList.AddRange(res);
                     }
+                    pausedRows.Clear();
                 }
                 if(batch.Value.Count != 0)
                 {
-                    processedBatchList.AddRange(await Process(batch));
+                    //Console.WriteLine("process normal "+batch.Value[0].seq_token);
+                    var res=await Process(batch);
+                    if(res!=null)processedBatchList.AddRange(res);
                 }
 
                 await MakeSendProcessedBatchCall(processedBatchList, 0, grain);
@@ -68,6 +73,7 @@ namespace Engine.OperatorImplementation.Common
 
                         if (ex is TimeoutException && retryCount < Constants.max_retries)
                         {
+                            //Console.WriteLine("Resend tuple in MakeSendProcessedBatchCall");
                             MakeSendProcessedBatchCall(processedBatchList, retryCount + 1, grain);
                         }
                     }
@@ -101,6 +107,7 @@ namespace Engine.OperatorImplementation.Common
 
                             if(ex is TimeoutException && retryCount < Constants.max_retries)
                             {
+                                //Console.WriteLine("Resend tuple in SendSingleBatch");
                                 SendSingleBatch(batch, retryCount+1, grain);
                             }
                         }
@@ -125,6 +132,7 @@ namespace Engine.OperatorImplementation.Common
 
                             if(ex is TimeoutException && retryCount < Constants.max_retries)
                             {
+                                //Console.WriteLine("Resend tuple in SendSingleBatch");
                                 SendSingleBatch(batch, retryCount+1, grain);
                             }
                         }
@@ -136,7 +144,7 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task ReceiveTuples(Immutable<List<TexeraTuple>> batch, IProcessorGrain grain)
         {
-            // Console.WriteLine("Receive Tuples called.");
+            //Console.WriteLine("Receive Tuples called. "+ batch.Value[0].seq_token);
             // receivedTuples.Enqueue(batch);
             await MakeProcessReceivedTuplesCall(batch, 0, grain);
         }
@@ -155,6 +163,7 @@ namespace Engine.OperatorImplementation.Common
 
                     if(ex is TimeoutException && retryCount < Constants.max_retries)
                     {
+                        //Console.WriteLine("Resend tuple in MakeProcessReceivedTuplesCall");
                         MakeProcessReceivedTuplesCall(batch, retryCount+1, grain);
                     }
                 }

@@ -11,6 +11,7 @@ using System.Diagnostics;
 using Engine.OperatorImplementation.MessagingSemantics;
 using System.Text;
 using System.IO;
+using Newtonsoft.Json.Linq;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -29,6 +30,24 @@ namespace Engine.OperatorImplementation.Common
             sb.Append("?op=OPEN&offset=");
             sb.Append(offset);
             return sb.ToString();
+        }
+
+
+        static public ulong GetFileLengthFromHDFS(string filename)
+        {
+            StringBuilder sb=new StringBuilder();
+            sb.Append(filename);
+            sb.Append("?op=GETFILESTATUS");
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(sb.ToString());
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            using (StreamReader Reader = new StreamReader(response.GetResponseStream()))
+            {
+                string str_response=Reader.ReadToEnd();
+                Console.WriteLine(str_response);
+                JObject obj =JObject.Parse(str_response);
+                return UInt64.Parse(obj["FileStatus"]["length"].ToString());
+            }
         }
 
         static public StreamReader GetFileHandleFromHDFS(string uri)

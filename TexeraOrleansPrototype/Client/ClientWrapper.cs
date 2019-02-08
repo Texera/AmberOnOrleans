@@ -12,6 +12,7 @@ using Engine.OperatorImplementation.Common;
 using Engine.OperatorImplementation.Operators;
 using Engine.WorkflowImplementation;
 using TexeraUtilities;
+using System.Threading;
 
 namespace OrleansClient
 {
@@ -150,7 +151,6 @@ namespace OrleansClient
             Console.WriteLine("Delivery: " + Constants.delivery);
             Console.WriteLine("# of workflows: " + Constants.num_scan);
             Console.WriteLine("FIFO & exactly-once: " + Constants.ordered_on);
-            Console.WriteLine("dataset: " + Constants.dataset);
             Console.WriteLine("with conditions: " + Constants.conditions_on);
             Console.WriteLine();
 
@@ -162,15 +162,23 @@ namespace OrleansClient
             }
             await so.Start();
             Console.WriteLine("Start experiment");
-
-            Task x = null;
             for (int i = 0; i < Constants.num_scan; ++i)
             {
-                x = operators[i].SubmitTuples();
+                operators[i].SubmitTuples();
             }
-
-            await x;
-
+            Console.WriteLine("Pausing");
+            for (int i = 0; i < Constants.num_scan; ++i)
+            {
+                await operators[i].PauseGrain();
+            }
+            Console.WriteLine("Paused");
+            Thread.Sleep(10000);
+            Console.WriteLine("Resuming");
+            for (int i = 0; i < Constants.num_scan; ++i)
+            {
+                await operators[i].ResumeGrain();
+            }
+            Console.WriteLine("Resumed");
             while(so.resultsToRet.Count == 0)
             {
 

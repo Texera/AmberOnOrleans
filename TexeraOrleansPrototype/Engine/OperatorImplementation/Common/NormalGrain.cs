@@ -46,7 +46,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public Task Init()
+        public virtual Task Init()
         {
             return Task.CompletedTask;
         }

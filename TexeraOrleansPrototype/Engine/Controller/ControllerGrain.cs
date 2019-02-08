@@ -5,7 +5,6 @@ using Engine.Common;
 using Engine.OperatorImplementation.Operators;
 using Engine.OperatorImplementation.Common;
 using Engine.WorkflowImplementation;
-using TexeraUtilities;
 
 namespace Engine.Controller
 {
@@ -29,24 +28,19 @@ namespace Engine.Controller
                     {
                         case ScanOperator o:
                             currGrain = this.GrainFactory.GetGrain<IScanOperatorGrain>(currOpOutputGrainIDs[i].PrimaryKey, currOpOutputGrainIDs[i].ExtensionKey);
-                            await currGrain.SetPredicate(currentOperator.Predicate);
-                            await (currGrain as IScanOperatorGrain).Init((ulong)i*Constants.blockSize,(ulong)(i+1)*Constants.blockSize);
                             break;
                         case FilterOperator o:
                             currGrain = this.GrainFactory.GetGrain<IFilterOperatorGrain>(currOpOutputGrainIDs[i].PrimaryKey, currOpOutputGrainIDs[i].ExtensionKey);
-                            await currGrain.Init();
                             break;
                         case KeywordOperator o:
                             currGrain = this.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(currOpOutputGrainIDs[i].PrimaryKey, currOpOutputGrainIDs[i].ExtensionKey);
-                            await currGrain.Init();
                             break;
                         case CountOperator o:
                             currGrain = this.GrainFactory.GetGrain<ICountFinalOperatorGrain>(currOpOutputGrainIDs[i].PrimaryKey, currOpOutputGrainIDs[i].ExtensionKey);
-                            await currGrain.Init();
                             break;
                     }
                     await currGrain.SetPredicate(currentOperator.Predicate);
-
+                    await currGrain.Init();
                     if(nextOperator != null)
                     {
                         List<GrainIdentifier> nextOpInputGrainIDs = nextOperator.GetInputGrainIDs();
