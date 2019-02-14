@@ -166,19 +166,19 @@ namespace OrleansClient
             {
                 operators[i].SubmitTuples();
             }
-            Console.WriteLine("Pausing");
-            for (int i = 0; i < Constants.num_scan; ++i)
-            {
-                await operators[i].PauseGrain();
-            }
-            Console.WriteLine("Paused");
-            Thread.Sleep(10000);
-            Console.WriteLine("Resuming");
-            for (int i = 0; i < Constants.num_scan; ++i)
-            {
-                await operators[i].ResumeGrain();
-            }
-            Console.WriteLine("Resumed");
+            // Console.WriteLine("Pausing");
+            // for (int i = 0; i < Constants.num_scan; ++i)
+            // {
+            //     await operators[i].PauseGrain();
+            // }
+            // Console.WriteLine("Paused");
+            // Thread.Sleep(10000);
+            // Console.WriteLine("Resuming");
+            // for (int i = 0; i < Constants.num_scan; ++i)
+            // {
+            //     await operators[i].ResumeGrain();
+            // }
+            // Console.WriteLine("Resumed");
             while(so.resultsToRet.Count == 0)
             {
 

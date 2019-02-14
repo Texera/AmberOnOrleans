@@ -74,15 +74,19 @@ namespace Engine.OperatorImplementation.Operators
                         ++i;
                     }
                 }
+
+                // send this batch
                 if(batch.Count>0)
                 {
-                    string extensionKey = "";
-                    Guid primaryKey=this.GetPrimaryKey(out extensionKey);
+                    // string extensionKey = "";
+                    // Guid primaryKey=this.GetPrimaryKey(out extensionKey);
                     //Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending "+seq_number.ToString());
                     batch[0].seq_token=seq_number++;
                     await (nextGrain).ReceiveTuples(batch.AsImmutable(),nextGrain);
                     batch = new List<TexeraTuple>();
                 }
+
+                // Grain sends a message to itself to send the next batch
                 if(start <= end)
                 {
                     string extensionKey = "";
@@ -167,8 +171,6 @@ namespace Engine.OperatorImplementation.Operators
             return Task.CompletedTask;
         }
 
-        
-
         private bool GetFile(string path, ulong offset)
         {
             try
@@ -201,8 +203,6 @@ namespace Engine.OperatorImplementation.Operators
             try
             {
                 string res = file.ReadLine();
-                string extensionKey = "";
-                Guid primaryKey=this.GetPrimaryKey(out extensionKey);
                 start += (ulong)(Encoding.UTF8.GetByteCount(res)+Environment.NewLine.Length);
                 //Console.WriteLine("offset: "+start+" length: "+res.Length+" "+extensionKey+" "+res);
                 if (file.EndOfStream)
