@@ -71,7 +71,7 @@ catalog
 plan/
 plan_files/
 query-results/
-.vscode/
+/.vscode/
 
 # Ignoring Mac OSX specific files
 .DS_Store
