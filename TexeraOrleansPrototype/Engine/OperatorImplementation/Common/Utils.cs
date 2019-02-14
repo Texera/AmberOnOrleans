@@ -66,6 +66,24 @@ namespace Engine.OperatorImplementation.Common
                 throw ex;
             }
         }
+
+        static public bool IsTaskTimedout(Task t)
+        {
+            if (t.IsFaulted)
+            {
+                Exception ex = t.Exception;
+                while (ex is AggregateException && ex.InnerException != null)
+                {
+                    ex = ex.InnerException;
+                }
+
+                if (ex is TimeoutException)
+                {
+                    return true;
+                }
+            }
+            return false;
+        }
         
     }
 }

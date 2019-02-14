@@ -10,5 +10,6 @@ namespace Engine.OperatorImplementation.Operators
     public interface IScanOperatorGrain : INormalGrain
     {
         Task SubmitTuples();
+        Task MakeSubmitTuples(int retryCount);
     }
 }

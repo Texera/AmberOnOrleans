@@ -52,6 +52,7 @@ namespace webapi.Controllers
                 if((string)operator1["operatorType"] == "ScanSource")
                 {
                     Console.WriteLine("Scan");
+                    //example path to HDFS through WebHDFS API: "http://localhost:50070/webhdfs/v1/input/very_large_input.csv"
                     ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"]);
                     ScanOperator scanOperator = (ScanOperator)scanPredicate.GetNewOperator(Constants.num_scan);
                     map.Add((string)operator1["operatorID"], scanOperator);

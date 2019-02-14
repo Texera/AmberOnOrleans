@@ -38,7 +38,7 @@ namespace Engine.OperatorImplementation.Common
                     foreach (Immutable<List<TexeraTuple>> pausedBatch in pausedRows)
                     {
                         //Console.WriteLine("process paused "+pausedBatch.Value[0].seq_token);
-                        var res=await Process(pausedBatch);
+                        List<List<TexeraTuple>> res=await Process(pausedBatch);
                         if(res!=null)processedBatchList.AddRange(res);
                     }
                     pausedRows.Clear();
@@ -46,7 +46,7 @@ namespace Engine.OperatorImplementation.Common
                 if(batch.Value.Count != 0)
                 {
                     //Console.WriteLine("process normal "+batch.Value[0].seq_token);
-                    var res=await Process(batch);
+                    List<List<TexeraTuple>> res=await Process(batch);
                     if(res!=null)processedBatchList.AddRange(res);
                 }
 
@@ -60,23 +60,12 @@ namespace Engine.OperatorImplementation.Common
 
         public async Task MakeSendProcessedBatchCall(List<List<TexeraTuple>> processedBatchList, int retryCount, IProcessorGrain grain)
         {
+
             // GrainFactory.GetGrain<IProcessorGrain>(this.GetPrimaryKey(out extensionKey), extensionKey).SendProcessedBatches(processedBatchList.AsImmutable(), 0).ContinueWith((t) =>
             grain.SendProcessedBatches(processedBatchList.AsImmutable(), grain).ContinueWith((t) =>
                 {
-                    if (t.IsFaulted)
-                    {
-                        Exception ex = t.Exception;
-                        while (ex is AggregateException && ex.InnerException != null)
-                        {
-                            ex = ex.InnerException;
-                        }
-
-                        if (ex is TimeoutException && retryCount < Constants.max_retries)
-                        {
-                            //Console.WriteLine("Resend tuple in MakeSendProcessedBatchCall");
-                            MakeSendProcessedBatchCall(processedBatchList, retryCount + 1, grain);
-                        }
-                    }
+                    if(Utils.IsTaskTimedout(t) && retryCount<Constants.max_retries)
+                        MakeSendProcessedBatchCall(processedBatchList, retryCount + 1, grain);
                 }
             );
         }
@@ -96,23 +85,11 @@ namespace Engine.OperatorImplementation.Common
         {
             if(nextGrain != null)
             {
-                nextGrain.ReceiveTuples(batch.AsImmutable(), nextGrain).ContinueWith((t)=>{
-                        if(t.IsFaulted)
-                        {
-                            Exception ex = t.Exception;
-                            while(ex is AggregateException && ex.InnerException != null)
-                            {
-                                ex = ex.InnerException;
-                            }
-
-                            if(ex is TimeoutException && retryCount < Constants.max_retries)
-                            {
-                                //Console.WriteLine("Resend tuple in SendSingleBatch");
-                                SendSingleBatch(batch, retryCount+1, grain);
-                            }
-                        }
-                    }
-                );
+                nextGrain.ReceiveTuples(batch.AsImmutable(), nextGrain).ContinueWith((t)=>
+                {
+                    if(Utils.IsTaskTimedout(t) && retryCount<Constants.max_retries)
+                        SendSingleBatch(batch, retryCount + 1, grain); 
+                });
             }
             else
             {
@@ -121,23 +98,11 @@ namespace Engine.OperatorImplementation.Common
                     string extensionKey = "";
                     var streamProvider = GetStreamProvider("SMSProvider");
                     var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(out extensionKey), "Random");
-                    stream.OnNextAsync(batch.AsImmutable()).ContinueWith((t)=>{
-                        if(t.IsFaulted)
-                        {
-                            Exception ex = t.Exception;
-                            while(ex is AggregateException && ex.InnerException != null)
-                            {
-                                ex = ex.InnerException;
-                            }
-
-                            if(ex is TimeoutException && retryCount < Constants.max_retries)
-                            {
-                                //Console.WriteLine("Resend tuple in SendSingleBatch");
-                                SendSingleBatch(batch, retryCount+1, grain);
-                            }
-                        }
-                        }
-                    );
+                    stream.OnNextAsync(batch.AsImmutable()).ContinueWith((t)=>
+                    {
+                        if(Utils.IsTaskTimedout(t) && retryCount<Constants.max_retries)
+                            SendSingleBatch(batch, retryCount + 1, grain);
+                    });
                 }
             }
         }
@@ -152,23 +117,11 @@ namespace Engine.OperatorImplementation.Common
         private async Task MakeProcessReceivedTuplesCall(Immutable<List<TexeraTuple>> batch, int retryCount, IProcessorGrain grain)
         {
             // GrainFactory.GetGrain<IProcessorGrain>(this.GetPrimaryKey(out extensionKey), extensionKey).ProcessReceivedTuples(batch, 0).ContinueWith((t)=>{
-            grain.ProcessReceivedTuples(batch, grain).ContinueWith((t)=>{
-                if(t.IsFaulted)
-                {
-                    Exception ex = t.Exception;
-                    while(ex is AggregateException && ex.InnerException != null)
-                    {
-                        ex = ex.InnerException;
-                    }
-
-                    if(ex is TimeoutException && retryCount < Constants.max_retries)
-                    {
-                        //Console.WriteLine("Resend tuple in MakeProcessReceivedTuplesCall");
-                        MakeProcessReceivedTuplesCall(batch, retryCount+1, grain);
-                    }
-                }
-            }
-            );
+            grain.ProcessReceivedTuples(batch, grain).ContinueWith((t)=>
+            {
+                if(Utils.IsTaskTimedout(t) && retryCount<Constants.max_retries)
+                    MakeProcessReceivedTuplesCall(batch,retryCount+1,grain);
+            });
         }
 
         public virtual async Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> batch)

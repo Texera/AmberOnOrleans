@@ -164,7 +164,12 @@ namespace OrleansClient
             Console.WriteLine("Start experiment");
             for (int i = 0; i < Constants.num_scan; ++i)
             {
-                operators[i].SubmitTuples();
+                while(true)
+                {
+                    Task t=operators[i].MakeSubmitTuples(0);
+                    t.Wait();
+                    if(t.IsCompletedSuccessfully)break;
+                }
             }
             // Console.WriteLine("Pausing");
             // for (int i = 0; i < Constants.num_scan; ++i)

@@ -33,34 +33,36 @@ namespace Engine.OperatorImplementation.Operators
         public override async Task ResumeGrain()
         {
             pause=false;
+            await nextGrain.ResumeGrain();
             if(start<=end)
             {
                 string extensionKey = "";
                 Guid primaryKey=this.GetPrimaryKey(out extensionKey);
                 IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
-                self.SubmitTuples().ContinueWith((t) =>
-                {
-                    if (t.IsFaulted)
-                    {
-                        Exception ex = t.Exception;
-                        while (ex is AggregateException && ex.InnerException != null)
-                        {
-                            ex = ex.InnerException;
-                        }
-
-                        if (ex is TimeoutException)
-                        {
-                            self.SubmitTuples();
-                        }
-                    }
-                });
+                await MakeSubmitTuples(0);
             }
-            await nextGrain.ResumeGrain();
         }
+
+
+        public async Task MakeSubmitTuples(int retryCount)
+        {
+            string extensionKey = "";
+            Guid primaryKey=this.GetPrimaryKey(out extensionKey);
+            IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
+            self.SubmitTuples().ContinueWith((t) =>
+            {
+                if(Utils.IsTaskTimedout(t) && retryCount<Constants.max_retries)
+                    MakeSubmitTuples(retryCount+1);
+            });
+        }
+
 
         public async Task SubmitTuples() 
         {
-            if(pause)return;
+            if(pause)
+            {
+                return;
+            }
             try
             {
                 List<TexeraTuple> batch = new List<TexeraTuple>();
@@ -92,22 +94,7 @@ namespace Engine.OperatorImplementation.Operators
                     string extensionKey = "";
                     Guid primaryKey=this.GetPrimaryKey(out extensionKey);
                     IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
-                    self.SubmitTuples().ContinueWith((t) =>
-                    {
-                        if (t.IsFaulted)
-                        {
-                            Exception ex = t.Exception;
-                            while (ex is AggregateException && ex.InnerException != null)
-                            {
-                                ex = ex.InnerException;
-                            }
-
-                            if (ex is TimeoutException)
-                            {
-                                self.SubmitTuples();
-                            }
-                        }
-                    });
+                    await self.MakeSubmitTuples(0);
                 }
                 else
                 {
