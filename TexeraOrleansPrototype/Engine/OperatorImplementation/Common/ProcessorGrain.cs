@@ -64,7 +64,7 @@ namespace Engine.OperatorImplementation.Common
             // GrainFactory.GetGrain<IProcessorGrain>(this.GetPrimaryKey(out extensionKey), extensionKey).SendProcessedBatches(processedBatchList.AsImmutable(), 0).ContinueWith((t) =>
             grain.SendProcessedBatches(processedBatchList.AsImmutable(), grain).ContinueWith((t) =>
                 {
-                    if(Utils.IsTaskTimedout(t) && retryCount<Constants.max_retries)
+                    if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                         MakeSendProcessedBatchCall(processedBatchList, retryCount + 1, grain);
                 }
             );
@@ -87,7 +87,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 nextGrain.ReceiveTuples(batch.AsImmutable(), nextGrain).ContinueWith((t)=>
                 {
-                    if(Utils.IsTaskTimedout(t) && retryCount<Constants.max_retries)
+                    if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                         SendSingleBatch(batch, retryCount + 1, grain); 
                 });
             }
@@ -100,7 +100,7 @@ namespace Engine.OperatorImplementation.Common
                     var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(out extensionKey), "Random");
                     stream.OnNextAsync(batch.AsImmutable()).ContinueWith((t)=>
                     {
-                        if(Utils.IsTaskTimedout(t) && retryCount<Constants.max_retries)
+                        if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                             SendSingleBatch(batch, retryCount + 1, grain);
                     });
                 }
@@ -119,7 +119,7 @@ namespace Engine.OperatorImplementation.Common
             // GrainFactory.GetGrain<IProcessorGrain>(this.GetPrimaryKey(out extensionKey), extensionKey).ProcessReceivedTuples(batch, 0).ContinueWith((t)=>{
             grain.ProcessReceivedTuples(batch, grain).ContinueWith((t)=>
             {
-                if(Utils.IsTaskTimedout(t) && retryCount<Constants.max_retries)
+                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                     MakeProcessReceivedTuplesCall(batch,retryCount+1,grain);
             });
         }

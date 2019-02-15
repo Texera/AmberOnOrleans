@@ -39,22 +39,29 @@ namespace Engine.OperatorImplementation.Operators
                 string extensionKey = "";
                 Guid primaryKey=this.GetPrimaryKey(out extensionKey);
                 IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
-                await MakeSubmitTuples(0);
+                await TrySubmitTuples(0,self);
             }
         }
 
 
-        public async Task MakeSubmitTuples(int retryCount)
+        private async Task TrySubmitTuples(int retryCount, IScanOperatorGrain self)
         {
-            string extensionKey = "";
-            Guid primaryKey=this.GetPrimaryKey(out extensionKey);
-            IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
             self.SubmitTuples().ContinueWith((t) =>
             {
-                if(Utils.IsTaskTimedout(t) && retryCount<Constants.max_retries)
-                    MakeSubmitTuples(retryCount+1);
+                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                    TrySubmitTuples(retryCount+1, self);
             });
         }
+
+        private async Task TrySendOneBatch(Immutable<List<TexeraTuple>> batch,int retryCount)
+        {
+            nextGrain.ReceiveTuples(batch,nextGrain).ContinueWith((t)=>
+            {
+                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                    TrySendOneBatch(batch,retryCount+1);
+            });
+        } 
+
 
 
         public async Task SubmitTuples() 
@@ -84,7 +91,7 @@ namespace Engine.OperatorImplementation.Operators
                     // Guid primaryKey=this.GetPrimaryKey(out extensionKey);
                     //Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending "+seq_number.ToString());
                     batch[0].seq_token=seq_number++;
-                    await (nextGrain).ReceiveTuples(batch.AsImmutable(),nextGrain);
+                    await TrySendOneBatch(batch.AsImmutable(),0);
                     batch = new List<TexeraTuple>();
                 }
 
@@ -94,7 +101,7 @@ namespace Engine.OperatorImplementation.Operators
                     string extensionKey = "";
                     Guid primaryKey=this.GetPrimaryKey(out extensionKey);
                     IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
-                    await self.MakeSubmitTuples(0);
+                    await TrySubmitTuples(0,self);
                 }
                 else
                 {
@@ -104,7 +111,7 @@ namespace Engine.OperatorImplementation.Operators
                     Console.WriteLine("current offset: "+start.ToString()+" end offset: "+end.ToString());
                     Console.WriteLine("tuple count: "+tuple_counter.ToString());
                     batch.Add(new TexeraTuple(seq_number ,-1, null));
-                    await (nextGrain).ReceiveTuples(batch.AsImmutable(),nextGrain);
+                    await TrySendOneBatch(batch.AsImmutable(),0);
                 }
             }
             catch(Exception ex)

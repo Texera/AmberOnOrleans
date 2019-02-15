@@ -164,12 +164,7 @@ namespace OrleansClient
             Console.WriteLine("Start experiment");
             for (int i = 0; i < Constants.num_scan; ++i)
             {
-                while(true)
-                {
-                    Task t=operators[i].MakeSubmitTuples(0);
-                    t.Wait();
-                    if(t.IsCompletedSuccessfully)break;
-                }
+               StartScanOperatorGrain(0,operators[i]);
             }
             // Console.WriteLine("Pausing");
             // for (int i = 0; i < Constants.num_scan; ++i)
@@ -190,6 +185,16 @@ namespace OrleansClient
             }
             
             return so.resultsToRet;
+        }
+
+
+        private static async void StartScanOperatorGrain(int retryCount,IScanOperatorGrain grain)
+        {
+            grain.SubmitTuples().ContinueWith((t)=>
+            {
+                if(Engine.OperatorImplementation.Common.Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                    grain.SubmitTuples();
+            });
         }
     }
 }

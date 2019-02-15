@@ -12,6 +12,7 @@ using Engine.OperatorImplementation.MessagingSemantics;
 using System.Text;
 using System.IO;
 using Newtonsoft.Json.Linq;
+using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -67,7 +68,7 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        static public bool IsTaskTimedout(Task t)
+        static public bool IsTaskTimedOut(Task t)
         {
             if (t.IsFaulted)
             {
@@ -85,5 +86,10 @@ namespace Engine.OperatorImplementation.Common
             return false;
         }
         
+
+        public static bool IsTaskTimedOutAndStillNeedRetry(Task t, int retryCount)
+        {
+            return IsTaskTimedOut(t) && retryCount<Constants.max_retries;
+        }
     }
 }
