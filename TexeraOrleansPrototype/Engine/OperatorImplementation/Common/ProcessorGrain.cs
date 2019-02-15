@@ -109,7 +109,7 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task ReceiveTuples(Immutable<List<TexeraTuple>> batch, IProcessorGrain grain)
         {
-            //Console.WriteLine("Receive Tuples called. "+ batch.Value[0].seq_token);
+            if(batch.Value.Count>0)Console.WriteLine("Receive Tuples called. "+ batch.Value[0].seq_token);
             // receivedTuples.Enqueue(batch);
             await MakeProcessReceivedTuplesCall(batch, 0, grain);
         }

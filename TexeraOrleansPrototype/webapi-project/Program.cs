@@ -19,8 +19,9 @@ namespace webapi
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
-                .UseWebRoot("../new-gui/dist")
+                .UseWebRoot("../texera/core/new-gui/dist")
                 .UseStartup<Startup>()
+                .UseUrls("http://localhost:8080")
                 .Build();
     }
 }

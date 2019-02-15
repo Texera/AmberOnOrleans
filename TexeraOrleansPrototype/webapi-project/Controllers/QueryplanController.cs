@@ -45,7 +45,8 @@ namespace webapi.Controllers
             Workflow workflow = new Workflow();
 
             JObject o = JObject.Parse(json);
-            JArray operators = (JArray)o["operators"];
+            workflow.WorkflowID = o["workflowID"].ToString();
+            JArray operators = (JArray)o["logicalPlan"]["operators"];
             
             foreach (JObject operator1 in operators)
             {
@@ -81,7 +82,7 @@ namespace webapi.Controllers
                 }
             }
 
-            JArray links = (JArray)o["links"];
+            JArray links = (JArray)o["logicalPlan"]["links"];
             foreach(JObject link in links)
             {
                 Operator origin = map[(string)link["origin"]];
