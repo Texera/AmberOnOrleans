@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Engine.WorkflowImplementation;
@@ -19,14 +20,8 @@ namespace webapi.Controllers
     {
         private static ISiloHost host;
         private static IClusterClient client;
-        private static ClientWrapper client_wrapper;
         public ValuesController()
         {
-            if(client_wrapper == null)
-            {
-                client_wrapper = ClientWrapper.Instance;
-            }
-
             if(host == null)
             {
                 host = SiloWrapper.Instance.host;
@@ -51,12 +46,12 @@ namespace webapi.Controllers
             string workflowID = o["workflowID"].ToString();
             Console.WriteLine("target: "+workflowID);
             Workflow workflow;
-            if(client_wrapper.IDToWorkflowEntry.ContainsKey(workflowID))
-                workflow = client_wrapper.IDToWorkflowEntry[workflowID];
+            if(ClientWrapper.Instance.IDToWorkflowEntry.ContainsKey(workflowID))
+                workflow = ClientWrapper.Instance.IDToWorkflowEntry[workflowID];
             else
             {
                 Console.WriteLine("but not found!");
-                return new HttpResponseMessage();
+                throw new Exception();
             }
             await ClientWrapper.PauseSilo(workflow,client);
             Console.WriteLine("Paused!");
@@ -77,12 +72,12 @@ namespace webapi.Controllers
             string workflowID = o["workflowID"].ToString();
             Console.WriteLine("target: "+workflowID);
             Workflow workflow;
-            if(client_wrapper.IDToWorkflowEntry.ContainsKey(workflowID))
-                workflow = client_wrapper.IDToWorkflowEntry[workflowID];
+            if(ClientWrapper.Instance.IDToWorkflowEntry.ContainsKey(workflowID))
+                workflow = ClientWrapper.Instance.IDToWorkflowEntry[workflowID];
             else
             {
                 Console.WriteLine("but not found!");
-                return new HttpResponseMessage();
+                throw new Exception();
             }
             await ClientWrapper.ResumeSilo(workflow,client);
             Console.WriteLine("Resumed!");
