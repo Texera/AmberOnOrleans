@@ -41,7 +41,6 @@ namespace webapi.Controllers
             string json = new StreamReader(req).ReadToEnd();
 
             Console.WriteLine("JSON BODY = " + json);
-
             Dictionary<string, Operator> map = new Dictionary<string, Operator>();
             Workflow workflow = new Workflow();
 
@@ -53,7 +52,8 @@ namespace webapi.Controllers
                 if((string)operator1["operatorType"] == "ScanSource")
                 {
                     Console.WriteLine("Scan");
-                    ScanPredicate scanPredicate = new ScanPredicate();
+                    //example path to HDFS through WebHDFS API: "http://localhost:50070/webhdfs/v1/input/very_large_input.csv"
+                    ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"]);
                     ScanOperator scanOperator = (ScanOperator)scanPredicate.GetNewOperator(Constants.num_scan);
                     map.Add((string)operator1["operatorID"], scanOperator);
                     workflow.StartOperator = scanOperator;

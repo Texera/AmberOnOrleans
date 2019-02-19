@@ -13,97 +13,217 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ScanOperatorGrain : NormalGrain, IScanOperatorGrain
     {
-        public List<TexeraTuple> Rows = new List<TexeraTuple>();
-        System.IO.StreamReader file;
 
+        enum FileType{unknown,csv,pdf,txt};
+        FileType file_type;
+        System.IO.StreamReader file;
+        string file_path;
+        ulong start,end,seq_number=0,tuple_counter=0;
         public override Task OnActivateAsync()
         {
-            
-            // nextGrain = this.GrainFactory.GetGrain<IFilterOperatorGrain>(this.GetPrimaryKey(), Constants.OperatorAssemblyPathPrefix);
-
-            string p2;
-            string extensionKey = "";
-            Guid key = this.GetPrimaryKey(out extensionKey);
-            if (Constants.num_scan == 1)
-                p2 = Constants.dir + Constants.dataset + "_input.csv";
-            else
-                p2 = Constants.dir + Constants.dataset + "_input" + "_" + (Int32.Parse(extensionKey) + 1) + ".csv";
-            file = new System.IO.StreamReader(p2);
             return base.OnActivateAsync();
         }
 
         public override async Task PauseGrain()
         {
+            pause=true;
             await nextGrain.PauseGrain();
         }
 
         public override async Task ResumeGrain()
         {
+            pause=false;
             await nextGrain.ResumeGrain();
-            // ((IProcessorGrain)nextGrain).StartProcessAfterPause();
+            if(start<=end)
+            {
+                string extensionKey = "";
+                Guid primaryKey=this.GetPrimaryKey(out extensionKey);
+                IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
+                await TrySubmitTuples(0,self);
+            }
         }
+
+
+        private async Task TrySubmitTuples(int retryCount, IScanOperatorGrain self)
+        {
+            self.SubmitTuples().ContinueWith((t) =>
+            {
+                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                    TrySubmitTuples(retryCount+1, self);
+            });
+        }
+
+        private async Task TrySendOneBatch(Immutable<List<TexeraTuple>> batch,int retryCount)
+        {
+            nextGrain.ReceiveTuples(batch,nextGrain).ContinueWith((t)=>
+            {
+                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                    TrySendOneBatch(batch,retryCount+1);
+            });
+        } 
+
+
 
         public async Task SubmitTuples() 
         {
+            if(pause)
+            {
+                return;
+            }
             try
             {
                 List<TexeraTuple> batch = new List<TexeraTuple>();
-                ulong seq = 0;
-
-                for (int i = 1; i <= Rows.Count; ++i)
+                for (int i = 0; i <Constants.batchSize;)
                 {
-                    batch.Add(Rows[i-1]);
-                    if(i%Constants.batchSize == 0)
+                    if(start>end)break;
+                    TexeraTuple tx;
+                    if(ReadTuple(out tx))
                     {
-                        batch[0].seq_token = seq++;
-                        // TODO: We can't call batch.Clear() after this because it somehow ends
-                        // up clearing the memory and the next grain gets list with no tuples.
-                        await (nextGrain).ReceiveTuples(batch.AsImmutable(), nextGrain);
-                        // batch.Clear();
-                        batch = new List<TexeraTuple>();
+                        batch.Add(tx);
+                        ++i;
                     }
                 }
 
-                // Console.WriteLine(seq);
-                if(batch.Count > 0)
+                // send this batch
+                if(batch.Count>0)
                 {
-                    batch[0].seq_token = seq++;
-                    await (nextGrain).ReceiveTuples(batch.AsImmutable(), nextGrain);
-                    // batch.Clear();
+                    // string extensionKey = "";
+                    // Guid primaryKey=this.GetPrimaryKey(out extensionKey);
+                    //Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending "+seq_number.ToString());
+                    batch[0].seq_token=seq_number++;
+                    await TrySendOneBatch(batch.AsImmutable(),0);
                     batch = new List<TexeraTuple>();
                 }
 
-                // Console.WriteLine("Seq num for last tuple " + seq);
-                batch.Add(new TexeraTuple(seq ,- 1, null));
-                await (nextGrain).ReceiveTuples(batch.AsImmutable(), nextGrain);
-
-                string extensionKey = "";
-                this.GetPrimaryKey(out extensionKey);
-                Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending done");
-             // return Task.CompletedTask;
+                // Grain sends a message to itself to send the next batch
+                if(start <= end)
+                {
+                    string extensionKey = "";
+                    Guid primaryKey=this.GetPrimaryKey(out extensionKey);
+                    IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
+                    await TrySubmitTuples(0,self);
+                }
+                else
+                {
+                    file.Close();
+                    string extensionKey = "";
+                    Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending done");
+                    Console.WriteLine("current offset: "+start.ToString()+" end offset: "+end.ToString());
+                    Console.WriteLine("tuple count: "+tuple_counter.ToString());
+                    batch.Add(new TexeraTuple(seq_number ,-1, null));
+                    await TrySendOneBatch(batch.AsImmutable(),0);
+                }
             }
             catch(Exception ex)
             {
                 Console.WriteLine("EXCEPTION in Sending Tuples - "+ ex.ToString());
             }
         }
-
-
-        public Task LoadTuples()
+        
+        private void TrySkipFirst()
         {
-            string line;
-            ulong count = 0;
-            while ((line = file.ReadLine()) != null)
+            switch(file_type)
             {
-                // The sequence token filled here will be replaced later in SubmitTuples().
-                Rows.Add(new TexeraTuple(count, (int)count, line.Split(",")));
-                count++;
+                case FileType.csv:
+                if (start != 0)
+                {
+                    string res=file.ReadLine();
+                    Console.WriteLine("Skip: "+res);
+                    this.start += (ulong)(Encoding.UTF8.GetByteCount(res)+Environment.NewLine.Length);
+                }
+                break;
+                default:
+                //not implemented
+                break;
             }
+        }
+        
+        public override Task Init()
+        {
+            ulong filesize=((ScanPredicate)predicate).GetFileSize();
             string extensionKey = "";
-            this.GetPrimaryKey(out extensionKey);
-            Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " loading done");
+            Guid key = this.GetPrimaryKey(out extensionKey);
+            ulong i=UInt64.Parse(extensionKey);
+            ulong num_grains=(ulong)((ScanPredicate)predicate).GetNumberOfGrains();
+            ulong partition=filesize/num_grains;
+            ulong start_byte=i*partition;
+            ulong end_byte=num_grains-1==i?filesize:(i+1)*partition;
+            file_path = ((ScanPredicate)predicate).GetFileName();
+            if(!GetFile(file_path,start_byte))
+                return Task.FromException(new Exception("unable to get file"));
+            start=start_byte;
+            end=end_byte;
+            if(Enum.TryParse<FileType>(file_path.Substring(file_path.LastIndexOf(".")+1),out file_type))
+            {
+                if(!Enum.IsDefined(typeof(FileType),file_type))
+                    file_type=FileType.unknown;
+            }
+            else
+                file_type=FileType.unknown;
+            TrySkipFirst();
+            Console.WriteLine("Init: "+file_type.ToString()+" start byte: "+start.ToString()+" end byte: "+end.ToString());
             return Task.CompletedTask;
         }
-       
+
+        private bool GetFile(string path, ulong offset)
+        {
+            try
+            {
+                if(path.StartsWith("http://"))
+                {
+                    //HDFS RESTful read
+                    string uri_path=Utils.GenerateURLForHDFSWebAPI(path,offset);
+                    file=Utils.GetFileHandleFromHDFS(uri_path);
+                }
+                else
+                {
+                    //normal read
+                    file = new System.IO.StreamReader(file_path);
+                    if(file.BaseStream.CanSeek)
+                        file.BaseStream.Seek((long)offset,SeekOrigin.Begin);
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("EXCEPTION in Opening File - "+ ex.ToString());
+                return false;
+            }
+            return true;
+        }
+
+
+        private bool ReadTuple(out TexeraTuple tx)
+        {
+            try
+            {
+                string res = file.ReadLine();
+                start += (ulong)(Encoding.UTF8.GetByteCount(res)+Environment.NewLine.Length);
+                //Console.WriteLine("offset: "+start+" length: "+res.Length+" "+extensionKey+" "+res);
+                if (file.EndOfStream)
+                    start = end + 1;
+                try
+                {
+                    tx=new TexeraTuple(tuple_counter, (int)tuple_counter, res.Split(","));
+                    ++tuple_counter;
+                    return true;
+                }
+                catch
+                {
+                    tx=null;
+                    Console.WriteLine("Failed to parse the tuple");
+                    return false;
+                }
+            }
+            catch(Exception ex)
+            {
+                Console.WriteLine("EXCEPTION in Reading Tuples from File - "+ ex.ToString());
+                Console.WriteLine("start_offset: "+start.ToString()+" end_offset: "+end.ToString());
+                GetFile(file_path,start);
+                tx=null;
+                return false;
+            }
+        }
+
+
     }
 }

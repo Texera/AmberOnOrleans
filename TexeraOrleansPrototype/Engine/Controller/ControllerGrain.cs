@@ -28,24 +28,19 @@ namespace Engine.Controller
                     {
                         case ScanOperator o:
                             currGrain = this.GrainFactory.GetGrain<IScanOperatorGrain>(currOpOutputGrainIDs[i].PrimaryKey, currOpOutputGrainIDs[i].ExtensionKey);
-                            await currGrain.TrivialCall();
                             break;
                         case FilterOperator o:
                             currGrain = this.GrainFactory.GetGrain<IFilterOperatorGrain>(currOpOutputGrainIDs[i].PrimaryKey, currOpOutputGrainIDs[i].ExtensionKey);
-                            await currGrain.TrivialCall();
                             break;
                         case KeywordOperator o:
                             currGrain = this.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(currOpOutputGrainIDs[i].PrimaryKey, currOpOutputGrainIDs[i].ExtensionKey);
-                            await currGrain.TrivialCall();
                             break;
                         case CountOperator o:
                             currGrain = this.GrainFactory.GetGrain<ICountFinalOperatorGrain>(currOpOutputGrainIDs[i].PrimaryKey, currOpOutputGrainIDs[i].ExtensionKey);
-                            await currGrain.TrivialCall();
                             break;
                     }
-
                     await currGrain.SetPredicate(currentOperator.Predicate);
-
+                    await currGrain.Init();
                     if(nextOperator != null)
                     {
                         List<GrainIdentifier> nextOpInputGrainIDs = nextOperator.GetInputGrainIDs();
@@ -54,22 +49,22 @@ namespace Engine.Controller
                         {
                             case ScanOperator o:
                                 IScanOperatorGrain scanGrain = this.GrainFactory.GetGrain<IScanOperatorGrain>(nextGrainID.PrimaryKey, nextGrainID.ExtensionKey);
-                                await scanGrain.TrivialCall();
+                                await scanGrain.Init();
                                 // await currGrain.SetNextGrain(scanGrain);
                                 break;
                             case FilterOperator o:
                                 IFilterOperatorGrain filterGrain = this.GrainFactory.GetGrain<IFilterOperatorGrain>(nextGrainID.PrimaryKey, nextGrainID.ExtensionKey);
-                                await filterGrain.TrivialCall();
+                                await filterGrain.Init();
                                 await currGrain.SetNextGrain(filterGrain);
                                 break;
                             case KeywordOperator o:
                                 IKeywordSearchOperatorGrain keywordGrain = this.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(nextGrainID.PrimaryKey, nextGrainID.ExtensionKey);
-                                await keywordGrain.TrivialCall();
+                                await keywordGrain.Init();
                                 await currGrain.SetNextGrain(keywordGrain);
                                 break;
                             case CountOperator o:
                                 ICountOperatorGrain countGrain = this.GrainFactory.GetGrain<ICountOperatorGrain>(nextGrainID.PrimaryKey, nextGrainID.ExtensionKey);
-                                await countGrain.TrivialCall();
+                                await countGrain.Init();
                                 await currGrain.SetNextGrain(countGrain);
 
                                 //TODO: There is a bug below. It only connects those intermediary count grains to final grains which are used as an output by the currentGrain.

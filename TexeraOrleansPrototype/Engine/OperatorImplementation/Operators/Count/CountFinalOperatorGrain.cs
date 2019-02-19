@@ -26,6 +26,7 @@ namespace Engine.OperatorImplementation.Operators
         public Task SubmitIntermediateAgg(int aggregation)
         {
             count += aggregation;
+            // Console.WriteLine("Count received "+count+" tuples so far");
             intermediateAggregatorsResponded++;
 
             if (intermediateAggregatorsResponded == Constants.num_scan)

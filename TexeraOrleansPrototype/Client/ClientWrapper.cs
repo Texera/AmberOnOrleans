@@ -12,6 +12,7 @@ using Engine.OperatorImplementation.Common;
 using Engine.OperatorImplementation.Operators;
 using Engine.WorkflowImplementation;
 using TexeraUtilities;
+using System.Threading;
 
 namespace OrleansClient
 {
@@ -130,7 +131,6 @@ namespace OrleansClient
 
             ExecutionController controller = new ExecutionController(Guid.NewGuid());
             IControllerGrain controllerGrain = client.GetGrain<IControllerGrain>(controller.GrainID.PrimaryKey, controller.GrainID.ExtensionKey);
-            
             await controllerGrain.SetUpAndConnectGrains(workflow);
             await controllerGrain.CreateStreamFromLastOperator(workflow);
 
@@ -151,7 +151,6 @@ namespace OrleansClient
             Console.WriteLine("Delivery: " + Constants.delivery);
             Console.WriteLine("# of workflows: " + Constants.num_scan);
             Console.WriteLine("FIFO & exactly-once: " + Constants.ordered_on);
-            Console.WriteLine("dataset: " + Constants.dataset);
             Console.WriteLine("with conditions: " + Constants.conditions_on);
             Console.WriteLine();
 
@@ -161,28 +160,41 @@ namespace OrleansClient
                 var t = client.GetGrain<IScanOperatorGrain>(workflow.StartOperator.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix); //, "ScanOperatorWithSqNum"
                 operators.Add(t);              
             }
-            await Task.Delay(1000);
-            Console.WriteLine("Start loading tuples");
-            for (int i = 0; i < Constants.num_scan; ++i)
-                await operators[i].LoadTuples();
-            Console.WriteLine("Finish loading tuples");
             await so.Start();
             Console.WriteLine("Start experiment");
-
-            Task x = null;
             for (int i = 0; i < Constants.num_scan; ++i)
             {
-                x = operators[i].SubmitTuples();
+               StartScanOperatorGrain(0,operators[i]);
             }
-
-            await x;
-
+            // Console.WriteLine("Pausing");
+            // for (int i = 0; i < Constants.num_scan; ++i)
+            // {
+            //     await operators[i].PauseGrain();
+            // }
+            // Console.WriteLine("Paused");
+            // Thread.Sleep(10000);
+            // Console.WriteLine("Resuming");
+            // for (int i = 0; i < Constants.num_scan; ++i)
+            // {
+            //     await operators[i].ResumeGrain();
+            // }
+            // Console.WriteLine("Resumed");
             while(so.resultsToRet.Count == 0)
             {
 
             }
             
             return so.resultsToRet;
+        }
+
+
+        private static async void StartScanOperatorGrain(int retryCount,IScanOperatorGrain grain)
+        {
+            grain.SubmitTuples().ContinueWith((t)=>
+            {
+                if(Engine.OperatorImplementation.Common.Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                    grain.SubmitTuples();
+            });
         }
     }
 }

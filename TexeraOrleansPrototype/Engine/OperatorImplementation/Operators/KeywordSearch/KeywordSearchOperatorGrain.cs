@@ -35,7 +35,7 @@ namespace Engine.OperatorImplementation.Operators
         public override async Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> batch)
         {
             string extensionKey = "";
-            Console.Write(" Keyword received batch ");
+            //Console.WriteLine(" Keyword received batch "+batch.Value[0].seq_token);
             if(batch.Value.Count == 0)
             {
                 Console.WriteLine($"NOT EXPECTED: Keyword {this.GetPrimaryKey(out extensionKey)} received empty batch.");

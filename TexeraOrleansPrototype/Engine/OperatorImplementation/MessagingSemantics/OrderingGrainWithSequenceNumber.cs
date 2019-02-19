@@ -45,12 +45,12 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             if(seq_token < current_idx)
             {
                 // de-dup messages
-                Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} received duplicate message with sequence number {seq_token}: expected sequence number {current_idx}");
+                Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} {extensionKey} received duplicate message with sequence number {seq_token}: expected sequence number {current_idx}");
                 return null;
             }
             if (seq_token != current_idx)
             {
-                Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} received message ahead in sequence, being put in stash: sequence number {seq_token}, expected sequence number {current_idx}");                              
+                Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} {extensionKey} received message ahead in sequence, being put in stash: sequence number {seq_token}, expected sequence number {current_idx}");                              
                 stashed.Add(seq_token, batch);
                 return null;           
             }
