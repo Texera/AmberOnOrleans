@@ -14,11 +14,15 @@ namespace Engine.OperatorImplementation.Operators
     public class ScanOperatorGrain : NormalGrain, IScanOperatorGrain
     {
 
-        enum FileType{unknown,csv,pdf,txt};
-        FileType file_type;
-        System.IO.StreamReader file;
-        string file_path;
-        ulong start,end,seq_number=0,tuple_counter=0;
+        private enum FileType{unknown,csv,pdf,txt};
+        private FileType file_type;
+        private System.IO.StreamReader file;
+        private string file_path;
+        private ulong start,end,seq_number=0,tuple_counter=0;
+        private byte[] buffer = new byte[Constants.scan_buffer_size];
+        private int buffer_start = 0;
+        private int buffer_end = 0;
+        private Decoder decoder;
         public override Task OnActivateAsync()
         {
             return base.OnActivateAsync();
@@ -127,9 +131,10 @@ namespace Engine.OperatorImplementation.Operators
                 case FileType.csv:
                 if (start != 0)
                 {
-                    string res=file.ReadLine();
+                    ulong ByteCount;
+                    string res=ReadLine(file,out ByteCount);
                     Console.WriteLine("Skip: "+res);
-                    this.start += (ulong)(Encoding.UTF8.GetByteCount(res)+Environment.NewLine.Length);
+                    this.start += ByteCount;
                 }
                 break;
                 default:
@@ -182,6 +187,7 @@ namespace Engine.OperatorImplementation.Operators
                     if(file.BaseStream.CanSeek)
                         file.BaseStream.Seek((long)offset,SeekOrigin.Begin);
                 }
+                decoder=file.CurrentEncoding.GetDecoder();
             }
             catch(Exception ex)
             {
@@ -196,10 +202,12 @@ namespace Engine.OperatorImplementation.Operators
         {
             try
             {
-                string res = file.ReadLine();
-                start += (ulong)(Encoding.UTF8.GetByteCount(res)+Environment.NewLine.Length);
-                //Console.WriteLine("offset: "+start+" length: "+res.Length+" "+extensionKey+" "+res);
-                if (file.EndOfStream)
+                ulong ByteCount;
+                string res = ReadLine(file,out ByteCount);
+                //Console.WriteLine(res);
+                start += ByteCount;
+                //Console.WriteLine("offset: "+start+" length: "+res.Length);
+                if (file.BaseStream.Position==file.BaseStream.Length && buffer_start>=buffer_end)
                     start = end + 1;
                 try
                 {
@@ -223,7 +231,46 @@ namespace Engine.OperatorImplementation.Operators
                 return false;
             }
         }
-
-
+        string ReadLine(StreamReader Reader,out ulong ByteCount)
+        {
+            ByteCount=0;
+            StringBuilder sb=new StringBuilder();
+            char[] charbuf=new char[Constants.scan_buffer_size];
+            while(true)
+            {
+                if(buffer_start>=buffer_end)
+                {
+                    buffer_start=0;
+                    try
+                    {
+                        buffer_end=Reader.BaseStream.Read(buffer,0,Constants.scan_buffer_size);
+                    }
+                    catch(Exception e)
+                    {
+                        throw e;
+                    }
+                }
+                if(buffer_end==0)break;
+                int i;
+                int charbuf_length;
+                for(i=buffer_start;i<buffer_end;++i)
+                {
+                    if(buffer[i]=='\n')
+                    {
+                        int length=i-buffer_start+1;
+                        ByteCount+=(ulong)(length);
+                        charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
+                        sb.Append(charbuf,0,charbuf_length);
+                        buffer_start=i+1;
+                        return sb.ToString().TrimEnd();
+                    }
+                }
+                ByteCount+=(ulong)(buffer_end-buffer_start);
+                charbuf_length=decoder.GetChars(buffer,buffer_start,buffer_end-buffer_start,charbuf,0);
+                sb.Append(charbuf,0,charbuf_length);
+                buffer_start=buffer_end;
+            }
+            return sb.ToString().TrimEnd();
+        }
     }
 }

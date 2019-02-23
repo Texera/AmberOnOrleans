@@ -18,5 +18,6 @@ namespace TexeraUtilities
         public const bool conditions_on = false;
         public const bool ordered_on = true;
         public const string delivery = "RPC";
+        public const int scan_buffer_size=4096;
     }
 }

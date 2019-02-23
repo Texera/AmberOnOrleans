@@ -76,5 +76,6 @@ namespace Engine.OperatorImplementation.Operators
             }
             return null;
         }
+
     }
 }
