@@ -13,16 +13,8 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ScanOperatorGrain : NormalGrain, IScanOperatorGrain
     {
-
-        private enum FileType{unknown,csv,pdf,txt};
-        private FileType file_type;
-        private System.IO.StreamReader file;
-        private string file_path;
         private ulong start,end,seq_number=0,tuple_counter=0;
-        private byte[] buffer = new byte[Constants.scan_buffer_size];
-        private int buffer_start = 0;
-        private int buffer_end = 0;
-        private Decoder decoder;
+        private ScanStreamReader reader;
         public override Task OnActivateAsync()
         {
             return base.OnActivateAsync();
@@ -91,8 +83,6 @@ namespace Engine.OperatorImplementation.Operators
                 // send this batch
                 if(batch.Count>0)
                 {
-                    // string extensionKey = "";
-                    // Guid primaryKey=this.GetPrimaryKey(out extensionKey);
                     Console.WriteLine("Scan" + " sending "+seq_number.ToString());
                     batch[0].seq_token=seq_number++;
                     await TrySendOneBatch(batch.AsImmutable(),0);
@@ -109,7 +99,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 else
                 {
-                    file.Close();
+                    reader.Close();
                     string extensionKey = "";
                     Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending done");
                     Console.WriteLine("current offset: "+start.ToString()+" end offset: "+end.ToString());
@@ -124,24 +114,7 @@ namespace Engine.OperatorImplementation.Operators
             }
         }
         
-        private void TrySkipFirst()
-        {
-            switch(file_type)
-            {
-                case FileType.csv:
-                if (start != 0)
-                {
-                    ulong ByteCount;
-                    string res=ReadLine(file,out ByteCount);
-                    Console.WriteLine("Skip: "+res);
-                    this.start += ByteCount;
-                }
-                break;
-                default:
-                //not implemented
-                break;
-            }
-        }
+        
         
         public override Task Init()
         {
@@ -153,49 +126,18 @@ namespace Engine.OperatorImplementation.Operators
             ulong partition=filesize/num_grains;
             ulong start_byte=i*partition;
             ulong end_byte=num_grains-1==i?filesize:(i+1)*partition;
-            file_path = ((ScanPredicate)predicate).GetFileName();
-            if(!GetFile(file_path,start_byte))
+            reader=new ScanStreamReader(((ScanPredicate)predicate).GetFileName());
+            if(!reader.GetFile(start_byte))
                 return Task.FromException(new Exception("unable to get file"));
             start=start_byte;
             end=end_byte;
-            if(Enum.TryParse<FileType>(file_path.Substring(file_path.LastIndexOf(".")+1),out file_type))
-            {
-                if(!Enum.IsDefined(typeof(FileType),file_type))
-                    file_type=FileType.unknown;
-            }
-            else
-                file_type=FileType.unknown;
-            TrySkipFirst();
-            Console.WriteLine("Init: "+file_type.ToString()+" start byte: "+start.ToString()+" end byte: "+end.ToString());
+            if(start!=0)
+                start+=reader.TrySkipFirst();
+            Console.WriteLine("Init: start byte: "+start.ToString()+" end byte: "+end.ToString());
             return Task.CompletedTask;
         }
 
-        private bool GetFile(string path, ulong offset)
-        {
-            try
-            {
-                if(path.StartsWith("http://"))
-                {
-                    //HDFS RESTful read
-                    string uri_path=Utils.GenerateURLForHDFSWebAPI(path,offset);
-                    file=Utils.GetFileHandleFromHDFS(uri_path);
-                }
-                else
-                {
-                    //normal read
-                    file = new System.IO.StreamReader(file_path);
-                    if(file.BaseStream.CanSeek)
-                        file.BaseStream.Seek((long)offset,SeekOrigin.Begin);
-                }
-                decoder=file.CurrentEncoding.GetDecoder();
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine("EXCEPTION in Opening File - "+ ex.ToString());
-                return false;
-            }
-            return true;
-        }
+        
 
 
         private bool ReadTuple(out TexeraTuple tx)
@@ -203,12 +145,16 @@ namespace Engine.OperatorImplementation.Operators
             try
             {
                 ulong ByteCount;
-                string res = ReadLine(file,out ByteCount);
+                string res = reader.ReadLine(out ByteCount);
                 //Console.WriteLine(res);
                 start += ByteCount;
                 //Console.WriteLine("offset: "+start+" length: "+res.Length);
-                if (file.BaseStream.Position==file.BaseStream.Length && buffer_start>=buffer_end)
+                if (reader.IsEOF())
+                {
                     start = end + 1;
+                    tx=null;
+                    return false;
+                }
                 try
                 {
                     tx=new TexeraTuple(tuple_counter, (int)tuple_counter, res.Split(","));
@@ -226,51 +172,11 @@ namespace Engine.OperatorImplementation.Operators
             {
                 Console.WriteLine("EXCEPTION in Reading Tuples from File - "+ ex.ToString());
                 Console.WriteLine("start_offset: "+start.ToString()+" end_offset: "+end.ToString());
-                GetFile(file_path,start);
+                if(!reader.GetFile(start))throw new Exception("Reading Tuple: Cannot Get File");
                 tx=null;
                 return false;
             }
         }
-        string ReadLine(StreamReader Reader,out ulong ByteCount)
-        {
-            ByteCount=0;
-            StringBuilder sb=new StringBuilder();
-            char[] charbuf=new char[Constants.scan_buffer_size];
-            while(true)
-            {
-                if(buffer_start>=buffer_end)
-                {
-                    buffer_start=0;
-                    try
-                    {
-                        buffer_end=Reader.BaseStream.Read(buffer,0,Constants.scan_buffer_size);
-                    }
-                    catch(Exception e)
-                    {
-                        throw e;
-                    }
-                }
-                if(buffer_end==0)break;
-                int i;
-                int charbuf_length;
-                for(i=buffer_start;i<buffer_end;++i)
-                {
-                    if(buffer[i]=='\n')
-                    {
-                        int length=i-buffer_start+1;
-                        ByteCount+=(ulong)(length);
-                        charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
-                        sb.Append(charbuf,0,charbuf_length);
-                        buffer_start=i+1;
-                        return sb.ToString().TrimEnd();
-                    }
-                }
-                ByteCount+=(ulong)(buffer_end-buffer_start);
-                charbuf_length=decoder.GetChars(buffer,buffer_start,buffer_end-buffer_start,charbuf,0);
-                sb.Append(charbuf,0,charbuf_length);
-                buffer_start=buffer_end;
-            }
-            return sb.ToString().TrimEnd();
-        }
+        
     }
 }
