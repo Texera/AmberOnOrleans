@@ -89,7 +89,7 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     // string extensionKey = "";
                     // Guid primaryKey=this.GetPrimaryKey(out extensionKey);
-                    //Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending "+seq_number.ToString());
+                    Console.WriteLine("Scan" + " sending "+seq_number.ToString());
                     batch[0].seq_token=seq_number++;
                     await TrySendOneBatch(batch.AsImmutable(),0);
                     batch = new List<TexeraTuple>();

@@ -25,8 +25,8 @@ namespace OrleansClient
         private static int attempt = 0;
         private static ClientWrapper instance;
         public IClusterClient client;
-         
-
+        private Dictionary<string,Workflow> _IDToWorkflowEntry = new Dictionary<string,Workflow>();
+        public Dictionary<string, Workflow> IDToWorkflowEntry { get => _IDToWorkflowEntry; }
         public static ClientWrapper Instance
         {
             get 
@@ -158,13 +158,15 @@ namespace OrleansClient
             for (int i = 0; i < Constants.num_scan; ++i)
             {
                 var t = client.GetGrain<IScanOperatorGrain>(workflow.StartOperator.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix); //, "ScanOperatorWithSqNum"
-                operators.Add(t);              
+                operators.Add(t);
             }
+            Console.WriteLine("registered "+workflow.WorkflowID);
+            instance.IDToWorkflowEntry[workflow.WorkflowID]=workflow;
             await so.Start();
             Console.WriteLine("Start experiment");
             for (int i = 0; i < Constants.num_scan; ++i)
             {
-               StartScanOperatorGrain(0,operators[i]);
+                StartScanOperatorGrain(0, operators[i]);
             }
             // Console.WriteLine("Pausing");
             // for (int i = 0; i < Constants.num_scan; ++i)
@@ -179,14 +181,18 @@ namespace OrleansClient
             //     await operators[i].ResumeGrain();
             // }
             // Console.WriteLine("Resumed");
-            while(so.resultsToRet.Count == 0)
+            while (so.resultsToRet.Count == 0)
             {
 
             }
-            
+            instance.IDToWorkflowEntry.Remove(workflow.WorkflowID);
             return so.resultsToRet;
         }
 
+        private static List<IScanOperatorGrain> GetOperators(List<IScanOperatorGrain> operators)
+        {
+            return operators;
+        }
 
         private static async void StartScanOperatorGrain(int retryCount,IScanOperatorGrain grain)
         {

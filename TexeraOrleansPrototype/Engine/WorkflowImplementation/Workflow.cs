@@ -6,6 +6,8 @@ namespace Engine.WorkflowImplementation
     {
         public Operator StartOperator {get; set;}
 
+        public string WorkflowID {get; set;}
+
         public Workflow(Operator startingOperator)
         {
             this.StartOperator = startingOperator;
