@@ -12,8 +12,8 @@ namespace TexeraUtilities
     {
         public const string OperatorAssemblyPathPrefix = "Engine.OperatorImplementation.Operators";
         public const string ControllerAssemblyPathPrefix = "Engine.Controller";
-        public const int batchSize = 100;
-        public const int num_scan = 2;
+        public const int batchSize = 1000;
+        public const int num_scan = 10;
         public const int max_retries = 60;
         public const bool conditions_on = false;
         public const bool ordered_on = true;
