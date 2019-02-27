@@ -69,9 +69,19 @@ namespace Engine.OperatorImplementation.Operators
                 batchList.Add(batchToForward);
             }
             List<List<TexeraTuple>> stashedBatches = await orderingEnforcer.ProcessStashed(this);
-            batchList.AddRange(stashedBatches);
+            if(stashedBatches.Count > 0)
+            {
+                batchList.AddRange(stashedBatches);
+            }
 
-            return batchList;
+            if(batchList.Count > 0)
+            {
+                return batchList;
+            }
+            else
+            {
+                return null;
+            }
             // var streamProvider = GetStreamProvider("SMSProvider");
             // var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(out extensionKey), "Random");
         }

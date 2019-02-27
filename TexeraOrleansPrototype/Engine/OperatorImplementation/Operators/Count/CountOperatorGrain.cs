@@ -51,6 +51,8 @@ namespace Engine.OperatorImplementation.Operators
                 }
             }
 
+            List<List<TexeraTuple>> stashedBatches = await orderingEnforcer.ProcessStashed(this);
+
             return null;
             // var streamProvider = GetStreamProvider("SMSProvider");
             // var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(), "Random");
