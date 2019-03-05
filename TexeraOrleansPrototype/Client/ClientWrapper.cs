@@ -194,13 +194,13 @@ namespace OrleansClient
             return operators;
         }
 
-        private static async void StartScanOperatorGrain(int retryCount,IScanOperatorGrain grain)
-        {
-            grain.SubmitTuples().ContinueWith((t)=>
-            {
-                if(Engine.OperatorImplementation.Common.Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                    grain.SubmitTuples();
-            });
-        }
+        // private static async void StartScanOperatorGrain(int retryCount,IScanOperatorGrain grain)
+        // {
+        //     grain.SubmitTuples().ContinueWith((t)=>
+        //     {
+        //         if(Engine.OperatorImplementation.Common.Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+        //             grain.SubmitTuples();
+        //     });
+        // }
     }
 }
