@@ -1,4 +1,3 @@
 [submodule "TexeraOrleansPrototype/texera"]
 	path = TexeraOrleansPrototype/texera
 	url = https://github.com/Texera/texera
-	ignore = dirty
