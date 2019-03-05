@@ -6,8 +6,10 @@ namespace Engine.OperatorImplementation.Common
 {
     public abstract class Operator : IOperator
     {
+        private string PRINCIPAL_GRAIN_NAME = "principal";
         public int NumberOfGrains {get; set;}
         protected List<GrainIdentifier> grainIDs;
+        protected GrainIdentifier principalGrain;
         private readonly Guid operatorGuid;
         public PredicateBase Predicate {get; set;}
         public Operator NextOperator {get; set;}
@@ -23,6 +25,7 @@ namespace Engine.OperatorImplementation.Common
             this.Predicate = predicate;
             this.NumberOfGrains = numberOfGrains;
             this.grainIDs = new List<GrainIdentifier>();
+            this.principalGrain =  new GrainIdentifier(GetOperatorGuid(), PRINCIPAL_GRAIN_NAME);
             for(int i=0; i<numberOfGrains; i++)
             {
                 grainIDs.Add(new GrainIdentifier(GetOperatorGuid(), i.ToString()));
