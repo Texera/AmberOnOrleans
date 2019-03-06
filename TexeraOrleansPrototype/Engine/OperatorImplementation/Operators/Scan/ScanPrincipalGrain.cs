@@ -13,8 +13,11 @@ namespace Engine.OperatorImplementation.Operators
     {
         public async Task StartScanGrain()
         {
+            Console.WriteLine($"Start method invoked in Scan Principal Grain");
             foreach(INormalGrain scanGrain in operatorGrains)
             {
+                String extensionKey = "";
+                Console.WriteLine($"Start method being sent to scan grain {scanGrain.GetPrimaryKey(out extensionKey)} - {extensionKey}");
                 await StartScanOperatorGrain(0, (IScanOperatorGrain)scanGrain);
             }
         }

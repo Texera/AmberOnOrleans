@@ -62,6 +62,8 @@ namespace Engine.OperatorImplementation.Operators
 
         public async Task SubmitTuples() 
         {
+            String exKey = "";
+            Console.WriteLine($"Start method received by scan grain {this.GetPrimaryKey(out exKey)} - {exKey}");
             if(pause)
             {
                 return;

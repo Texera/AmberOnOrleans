@@ -10,6 +10,8 @@ namespace Engine.OperatorImplementation.Common
 {
     public interface IPrincipalGrain : IGrainWithGuidCompoundKey
     {
+        Task<Operator> GetOperator(); 
+        Task SetOperator(Operator op);
         Task SetNextPrincipalGrain(IPrincipalGrain nextGrain);
         Task<IPrincipalGrain> GetNextPrincipalGrain();
         Task SetOperatorGrains(List<INormalGrain> operatorGrains);
@@ -17,6 +19,7 @@ namespace Engine.OperatorImplementation.Common
         Task<bool> GetIsLastPrincipalGrain();
         Task PauseGrain();
         Task ResumeGrain();
+        Task SetUpAndConnectOperatorGrains();
         Task Init();
     }
 }
