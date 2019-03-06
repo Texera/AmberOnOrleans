@@ -92,21 +92,25 @@ namespace OrleansClient
         public static async Task PauseSilo(Workflow workflow, IClusterClient client)
         {
             Operator op = workflow.StartOperator;
-            for (int i = 0; i < Constants.num_scan; ++i)
-            {
-                IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
-                await t.PauseGrain();
-            }
+            IScanPrincipalGrain scanPrincipalGrain = client.GetGrain<IScanPrincipalGrain>(op.GetPrincipalGrainID().PrimaryKey, op.GetPrincipalGrainID().ExtensionKey);
+            await scanPrincipalGrain.PauseGrain();
+            // for (int i = 0; i < Constants.num_scan; ++i)
+            // {
+            //     IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
+            //     await t.PauseGrain();
+            // }
         }
 
         public static async Task ResumeSilo(Workflow workflow, IClusterClient client)
         {
             Operator op = workflow.StartOperator;
-            for (int i = 0; i < Constants.num_scan; ++i)
-            {
-                IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
-                await t.ResumeGrain();
-            }
+            IScanPrincipalGrain scanPrincipalGrain = client.GetGrain<IScanPrincipalGrain>(op.GetPrincipalGrainID().PrimaryKey, op.GetPrincipalGrainID().ExtensionKey);
+            await scanPrincipalGrain.ResumeGrain();
+            // for (int i = 0; i < Constants.num_scan; ++i)
+            // {
+            //     IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
+            //     await t.ResumeGrain();
+            // }
         }
 
         public static async Task<List<TexeraTuple>> DoClientWork(IClusterClient client, Workflow workflow)
