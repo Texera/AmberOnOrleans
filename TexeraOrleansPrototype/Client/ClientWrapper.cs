@@ -92,21 +92,25 @@ namespace OrleansClient
         public static async Task PauseSilo(Workflow workflow, IClusterClient client)
         {
             Operator op = workflow.StartOperator;
-            for (int i = 0; i < Constants.num_scan; ++i)
-            {
-                IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
-                await t.PauseGrain();
-            }
+            IScanPrincipalGrain scanPrincipalGrain = client.GetGrain<IScanPrincipalGrain>(op.GetPrincipalGrainID().PrimaryKey, op.GetPrincipalGrainID().ExtensionKey);
+            await scanPrincipalGrain.PauseGrain();
+            // for (int i = 0; i < Constants.num_scan; ++i)
+            // {
+            //     IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
+            //     await t.PauseGrain();
+            // }
         }
 
         public static async Task ResumeSilo(Workflow workflow, IClusterClient client)
         {
             Operator op = workflow.StartOperator;
-            for (int i = 0; i < Constants.num_scan; ++i)
-            {
-                IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
-                await t.ResumeGrain();
-            }
+            IScanPrincipalGrain scanPrincipalGrain = client.GetGrain<IScanPrincipalGrain>(op.GetPrincipalGrainID().PrimaryKey, op.GetPrincipalGrainID().ExtensionKey);
+            await scanPrincipalGrain.ResumeGrain();
+            // for (int i = 0; i < Constants.num_scan; ++i)
+            // {
+            //     IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
+            //     await t.ResumeGrain();
+            // }
         }
 
         public static async Task<List<TexeraTuple>> DoClientWork(IClusterClient client, Workflow workflow)
@@ -154,20 +158,26 @@ namespace OrleansClient
             Console.WriteLine("with conditions: " + Constants.conditions_on);
             Console.WriteLine();
 
-            List<IScanOperatorGrain> operators = new List<IScanOperatorGrain>();
-            for (int i = 0; i < Constants.num_scan; ++i)
-            {
-                var t = client.GetGrain<IScanOperatorGrain>(workflow.StartOperator.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix); //, "ScanOperatorWithSqNum"
-                operators.Add(t);
-            }
+            // List<IScanOperatorGrain> operators = new List<IScanOperatorGrain>();
+            // for (int i = 0; i < Constants.num_scan; ++i)
+            // {
+            //     var t = client.GetGrain<IScanOperatorGrain>(workflow.StartOperator.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix); //, "ScanOperatorWithSqNum"
+            //     operators.Add(t);
+            // }
             Console.WriteLine("registered "+workflow.WorkflowID);
             instance.IDToWorkflowEntry[workflow.WorkflowID]=workflow;
             await so.Start();
             Console.WriteLine("Start experiment");
-            for (int i = 0; i < Constants.num_scan; ++i)
-            {
-                StartScanOperatorGrain(0, operators[i]);
-            }
+
+            ScanOperator scanOperator = (ScanOperator)workflow.StartOperator;
+            IScanPrincipalGrain scanPrincipalGrain = client.GetGrain<IScanPrincipalGrain>(scanOperator.GetPrincipalGrainID().PrimaryKey, scanOperator.GetPrincipalGrainID().ExtensionKey);
+            await scanPrincipalGrain.StartScanGrain();
+
+            // for (int i = 0; i < Constants.num_scan; ++i)
+            // {
+            //     StartScanOperatorGrain(0, operators[i]);
+            // }
+
             // Console.WriteLine("Pausing");
             // for (int i = 0; i < Constants.num_scan; ++i)
             // {
@@ -194,13 +204,13 @@ namespace OrleansClient
             return operators;
         }
 
-        private static async void StartScanOperatorGrain(int retryCount,IScanOperatorGrain grain)
-        {
-            grain.SubmitTuples().ContinueWith((t)=>
-            {
-                if(Engine.OperatorImplementation.Common.Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                    grain.SubmitTuples();
-            });
-        }
+        // private static async void StartScanOperatorGrain(int retryCount,IScanOperatorGrain grain)
+        // {
+        //     grain.SubmitTuples().ContinueWith((t)=>
+        //     {
+        //         if(Engine.OperatorImplementation.Common.Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+        //             grain.SubmitTuples();
+        //     });
+        // }
     }
 }

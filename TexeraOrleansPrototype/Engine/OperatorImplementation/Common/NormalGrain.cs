@@ -55,23 +55,23 @@ namespace Engine.OperatorImplementation.Common
         {
             pause = true;
 
-            if(nextGrain != null)
-            {
-                await nextGrain.PauseGrain();
-            }   
+            // if(nextGrain != null)
+            // {
+            //     await nextGrain.PauseGrain();
+            // }   
         }
 
         public virtual async Task ResumeGrain()
         {
             pause = false;
-            if(nextGrain != null)
-            {
-                await nextGrain.ResumeGrain();
-                List<TexeraTuple> batch = new List<TexeraTuple>();
+            // if(nextGrain != null)
+            // {
+            //     await nextGrain.ResumeGrain();
+                // List<TexeraTuple> batch = new List<TexeraTuple>();
 
-                // make a call with empty batch so that rows received during pause get processed
-                await nextGrain.ReceiveTuples(batch.AsImmutable(), nextGrain);
-            }
+                // // make a call with empty batch so that rows received during pause get processed
+                // await nextGrain.ReceiveTuples(batch.AsImmutable(), nextGrain);
+            // }
         }
     }
 }

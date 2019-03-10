@@ -27,6 +27,15 @@ namespace Engine.OperatorImplementation.Common
             return Task.FromResult(typeof(IProcessorGrain));
         }
 
+        public override async Task ResumeGrain()
+        {
+            pause = false;
+
+            List<TexeraTuple> batch = new List<TexeraTuple>();
+            // make a call with empty batch so that rows received during pause get processed
+            await ReceiveTuples(batch.AsImmutable(), nextGrain);
+        }
+
         public async Task ProcessReceivedTuples(Immutable<List<TexeraTuple>> batch, IProcessorGrain grain)
         {
             if(!pause)
@@ -109,6 +118,11 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task ReceiveTuples(Immutable<List<TexeraTuple>> batch, IProcessorGrain grain)
         {
+            if(batch.Value.Count == 0)
+            {
+                return;
+            }
+
             if(batch.Value.Count>0)Console.WriteLine("Receive Tuples called. "+ batch.Value[0].seq_token);
             // receivedTuples.Enqueue(batch);
             await MakeProcessReceivedTuplesCall(batch, 0, grain);
