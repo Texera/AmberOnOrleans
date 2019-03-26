@@ -91,106 +91,40 @@ namespace OrleansClient
 
         public static async Task PauseSilo(Workflow workflow, IClusterClient client)
         {
-            Operator op = workflow.StartOperator;
-            IScanPrincipalGrain scanPrincipalGrain = client.GetGrain<IScanPrincipalGrain>(op.GetPrincipalGrainID().PrimaryKey, op.GetPrincipalGrainID().ExtensionKey);
-            await scanPrincipalGrain.PauseGrain();
-            // for (int i = 0; i < Constants.num_scan; ++i)
-            // {
-            //     IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
-            //     await t.PauseGrain();
-            // }
+            HashSet<Operator> ops = workflow.StartOperators;
+            foreach(Operator op in ops)
+            {
+                await op.PrincipalGrain.Pause();
+            }
         }
 
         public static async Task ResumeSilo(Workflow workflow, IClusterClient client)
         {
-            Operator op = workflow.StartOperator;
-            IScanPrincipalGrain scanPrincipalGrain = client.GetGrain<IScanPrincipalGrain>(op.GetPrincipalGrainID().PrimaryKey, op.GetPrincipalGrainID().ExtensionKey);
-            await scanPrincipalGrain.ResumeGrain();
-            // for (int i = 0; i < Constants.num_scan; ++i)
-            // {
-            //     IScanOperatorGrain t = client.GetGrain<IScanOperatorGrain>(op.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix);
-            //     await t.ResumeGrain();
-            // }
+            HashSet<Operator> ops = workflow.StartOperators;
+            foreach(Operator op in ops)
+            {
+                await op.PrincipalGrain.Resume();
+            }
         }
 
         public static async Task<List<TexeraTuple>> DoClientWork(IClusterClient client, Workflow workflow)
         {
-            // ScanPredicate scanPredicate = new ScanPredicate();
-            // FilterPredicate filterPredicate = new FilterPredicate(0);
-            // KeywordPredicate keywordPredicate = new KeywordPredicate("");
-            // CountPredicate countPredicate = new CountPredicate();
-
-            // ScanOperator scanOperator = (ScanOperator)scanPredicate.GetNewOperator(Constants.num_scan);
-            // FilterOperator filterOperator = (FilterOperator)filterPredicate.GetNewOperator(Constants.num_scan);
-            // KeywordOperator keywordOperator = (KeywordOperator)keywordPredicate.GetNewOperator(Constants.num_scan);
-            // CountOperator countOperator = (CountOperator)countPredicate.GetNewOperator(Constants.num_scan);
-
-            // scanOperator.NextOperator = filterOperator;
-            // filterOperator.NextOperator = keywordOperator;
-            // keywordOperator.NextOperator = countOperator;
-
-            // Workflow workflow = new Workflow(scanOperator);
-
-
-
-            ExecutionController controller = new ExecutionController(Guid.NewGuid());
-            IControllerGrain controllerGrain = client.GetGrain<IControllerGrain>(controller.GrainID.PrimaryKey, controller.GrainID.ExtensionKey);
-            await controllerGrain.SetUpAndConnectGrains(workflow);
-            await controllerGrain.CreateStreamFromLastOperator(workflow);
-
-            // Guid streamGuid = countOperator.GetStreamGuid();
-
-            Guid streamGuid = workflow.GetLastOperator().GetStreamGuid();
-
-            // Guid streamGuid = await client.GetGrain<ICountFinalOperatorGrain>(1, Constants.OperatorAssemblyPathPrefix).GetStreamGuid();
-
-            Console.WriteLine("Client side guid is " + streamGuid);
-            var stream = client.GetStreamProvider("SMSProvider")
-            .GetStream<Immutable<List<TexeraTuple>>>(streamGuid, "Random");
+            IControllerGrain controllerGrain = client.GetGrain<IControllerGrain>(workflow.WorkflowID);
+            await controllerGrain.Init(workflow);
+            var streamProvider = client.GetStreamProvider("SMSProvider");
             var so = new StreamObserver();
-            await stream.SubscribeAsync(so);
-
-            Console.WriteLine();
-            Console.WriteLine("Configuration:");
-            Console.WriteLine("Delivery: " + Constants.delivery);
-            Console.WriteLine("# of workflows: " + Constants.num_scan);
-            Console.WriteLine("FIFO & exactly-once: " + Constants.ordered_on);
-            Console.WriteLine("with conditions: " + Constants.conditions_on);
-            Console.WriteLine();
-
-            // List<IScanOperatorGrain> operators = new List<IScanOperatorGrain>();
-            // for (int i = 0; i < Constants.num_scan; ++i)
-            // {
-            //     var t = client.GetGrain<IScanOperatorGrain>(workflow.StartOperator.GetOperatorGuid(), i.ToString(), Constants.OperatorAssemblyPathPrefix); //, "ScanOperatorWithSqNum"
-            //     operators.Add(t);
-            // }
-            Console.WriteLine("registered "+workflow.WorkflowID);
+            foreach(Operator o in workflow.EndOperators)
+            {
+                var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(o.GetStreamGuid(), "OutputStream");
+                await stream.SubscribeAsync(so);
+            }
             instance.IDToWorkflowEntry[workflow.WorkflowID]=workflow;
             await so.Start();
-            Console.WriteLine("Start experiment");
+            foreach(Operator op in workflow.StartOperators)
+            {
+                op.PrincipalGrain.Start();
+            }
 
-            ScanOperator scanOperator = (ScanOperator)workflow.StartOperator;
-            IScanPrincipalGrain scanPrincipalGrain = client.GetGrain<IScanPrincipalGrain>(scanOperator.GetPrincipalGrainID().PrimaryKey, scanOperator.GetPrincipalGrainID().ExtensionKey);
-            await scanPrincipalGrain.StartScanGrain();
-
-            // for (int i = 0; i < Constants.num_scan; ++i)
-            // {
-            //     StartScanOperatorGrain(0, operators[i]);
-            // }
-
-            // Console.WriteLine("Pausing");
-            // for (int i = 0; i < Constants.num_scan; ++i)
-            // {
-            //     await operators[i].PauseGrain();
-            // }
-            // Console.WriteLine("Paused");
-            // Thread.Sleep(10000);
-            // Console.WriteLine("Resuming");
-            // for (int i = 0; i < Constants.num_scan; ++i)
-            // {
-            //     await operators[i].ResumeGrain();
-            // }
-            // Console.WriteLine("Resumed");
             while (so.resultsToRet.Count == 0)
             {
 
@@ -203,14 +137,5 @@ namespace OrleansClient
         {
             return operators;
         }
-
-        // private static async void StartScanOperatorGrain(int retryCount,IScanOperatorGrain grain)
-        // {
-        //     grain.SubmitTuples().ContinueWith((t)=>
-        //     {
-        //         if(Engine.OperatorImplementation.Common.Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-        //             grain.SubmitTuples();
-        //     });
-        // }
     }
 }
