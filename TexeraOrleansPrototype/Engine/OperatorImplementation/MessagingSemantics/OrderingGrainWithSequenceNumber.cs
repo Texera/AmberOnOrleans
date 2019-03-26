@@ -63,9 +63,8 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             }
         }       
 
-        public List<TexeraTuple> CheckStashed(INormalGrain sender)
+        public void CheckStashed(ref List<TexeraTuple> batchList,INormalGrain sender)
         {
-            List<TexeraTuple> batchList = new List<TexeraTuple>();
             if(stashed.ContainsKey(sender))
             {
                 if(!in_map.ContainsKey(sender))
@@ -74,13 +73,16 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                 }
                 while(stashed[sender].ContainsKey(in_map[sender]))
                 {
+                    if(batchList==null)
+                    {
+                        batchList=new List<TexeraTuple>();
+                    }
                     List<TexeraTuple> batch = stashed[sender][in_map[sender]];
                     batchList.AddRange(batch);
                     stashed[sender].Remove(in_map[sender]);
                     in_map[sender]++;
                 }
             }
-            return batchList;
         }
 
     }
