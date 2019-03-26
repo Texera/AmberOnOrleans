@@ -1,66 +1,73 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using Engine.Common;
+using System.Threading.Tasks;
+using System.Diagnostics;
+using Orleans;
 
 namespace Engine.OperatorImplementation.Common
 {
-    public abstract class Operator : IOperator
+    public abstract class Operator
     {
-        private string PRINCIPAL_GRAIN_NAME = "principal";
-        public int NumberOfGrains {get; set;}
-        protected List<GrainIdentifier> grainIDs;
-        protected GrainIdentifier principalGrainID;
-        private readonly Guid operatorGuid;
+        public readonly Guid OperatorGuid;
         public PredicateBase Predicate {get; set;}
-        public Operator NextOperator {get; set;}
+        private List<Operator> outOperators=new List<Operator>();
+        public IPrincipalGrain PrincipalGrain=null;
+        public readonly bool IsStartOperator;
+        public bool IsEndOperator {get{return outOperators.Count==0;}}
 
-        public virtual void setNextOperator(Operator nextOperator)
+        public void AddOutOperator(Operator operatorToAdd)
         {
-            this.NextOperator = nextOperator;
+            outOperators.Add(operatorToAdd);
         }
 
-        public Operator(PredicateBase predicate, int numberOfGrains)
+        public List<Operator> GetAllOutOperators()
         {
-            this.operatorGuid = Guid.NewGuid();
-            this.Predicate = predicate;
-            this.NumberOfGrains = numberOfGrains;
-            this.grainIDs = new List<GrainIdentifier>();
-            this.principalGrainID =  new GrainIdentifier(GetOperatorGuid(), PRINCIPAL_GRAIN_NAME);
-            for(int i=0; i<numberOfGrains; i++)
+            return outOperators;
+        }
+
+        public async Task Init()
+        {
+            Trace.Assert(PrincipalGrain!=null, "PrincipalGrain should not be null when calling Init()");
+            foreach(Operator o in outOperators)
             {
-                grainIDs.Add(new GrainIdentifier(GetOperatorGuid(), i.ToString()));
+                Trace.Assert(o.PrincipalGrain!=null,"PricipalGrain of the next Operator should not be null when calling Init()");
+                await PrincipalGrain.AddNextPrincipalGrain(o.PrincipalGrain);
             }
+            await PrincipalGrain.Init(Predicate);
+        }
+        
+        public Operator(PredicateBase predicate, bool isStartOperator=false)
+        {
+            this.IsStartOperator = isStartOperator;
+            this.OperatorGuid = Guid.NewGuid();
+            this.Predicate = predicate;
         }
 
-        public virtual GrainIdentifier GetPrincipalGrainID()
+        public bool Equals(Operator obj)
         {
-            return principalGrainID;
+            return obj.OperatorGuid==OperatorGuid;
         }
 
-        public virtual List<GrainIdentifier> GetInputGrainIDs()
+        public override bool Equals(object obj)
         {
-            return grainIDs;
+            if (obj == null || GetType() != obj.GetType()) { return false; }
+            return this.Equals(obj as Operator);
         }
 
-        public virtual List<GrainIdentifier> GetOutputGrainIDs()
+        public override int GetHashCode()
         {
-            return grainIDs;
-        }
-
-        public virtual ReadOnlyCollection<GrainIdentifier>  GetAllGrainsIDs()
-        {
-            return grainIDs.AsReadOnly();
+            return OperatorGuid.GetHashCode();
         }
 
         public Guid GetStreamGuid()
         {
-            return operatorGuid;
+            return OperatorGuid;
         }
 
-        public Guid GetOperatorGuid()
+        public async Task Link()
         {
-            return operatorGuid;
+            await PrincipalGrain.Link();
         }
     }
 }
