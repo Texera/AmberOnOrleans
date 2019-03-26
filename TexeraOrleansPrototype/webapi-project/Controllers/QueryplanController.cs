@@ -82,7 +82,7 @@ namespace webapi.Controllers
                 origin.AddOutOperator(dest);
             }
 
-            Workflow workflow=new Workflow(o["workflowID"].ToString(),new List<Operator>(map.Values));
+            Workflow workflow=new Workflow(o["workflowID"].ToString(),new HashSet<Operator>(map.Values));
 
             List<TexeraTuple> results = ClientWrapper.DoClientWork(client, workflow).Result;
             TexeraResult texeraResult = new TexeraResult();

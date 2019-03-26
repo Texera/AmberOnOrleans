@@ -5,12 +5,12 @@ namespace Engine.WorkflowImplementation
 {
     public class Workflow
     {
-        public readonly List<Operator> StartOperators = new List<Operator>();
-        public readonly List<Operator> WorkflowGraph;
-        public readonly List<Operator> EndOperators=new List<Operator>();
+        public readonly HashSet<Operator> StartOperators = new HashSet<Operator>();
+        public readonly HashSet<Operator> WorkflowGraph;
+        public readonly HashSet<Operator> EndOperators=new HashSet<Operator>();
         public readonly string WorkflowID;
 
-        public Workflow(string workflowID, List<Operator> allOperators)
+        public Workflow(string workflowID, HashSet<Operator> allOperators)
         {
             this.WorkflowGraph=allOperators;
             this.WorkflowID=workflowID;
