@@ -5,10 +5,13 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class FilterOperator : Operator
     {
-        public FilterOperator(FilterPredicate predicate,IGrainFactory factory) : base(predicate)
+        public FilterOperator(FilterPredicate predicate) : base(predicate)
+        {
+
+        }
+        public override void SetUpPrincipalGrain(IGrainFactory factory)
         {
             PrincipalGrain = factory.GetGrain<IPrincipalGrain>(OperatorGuid,"Principal");
         }
-        
     }
 }

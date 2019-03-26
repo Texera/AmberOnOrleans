@@ -25,7 +25,11 @@ namespace Engine.OperatorImplementation.Common
         {
             return outOperators;
         }
-
+        
+        public virtual void SetUpPrincipalGrain(IGrainFactory factory)
+        {
+            PrincipalGrain = factory.GetGrain<IPrincipalGrain>(OperatorGuid,"Principal");
+        }
         public async Task Init()
         {
             Trace.Assert(PrincipalGrain!=null, "PrincipalGrain should not be null when calling Init()");
