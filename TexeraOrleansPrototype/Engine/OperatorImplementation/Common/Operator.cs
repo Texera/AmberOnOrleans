@@ -11,7 +11,7 @@ namespace Engine.OperatorImplementation.Common
     {
         public readonly Guid OperatorGuid;
         public PredicateBase Predicate {get; set;}
-        private List<Operator> outOperators=new List<Operator>();
+        private HashSet<Operator> outOperators=new HashSet<Operator>();
         public IPrincipalGrain PrincipalGrain=null;
         public readonly bool IsStartOperator;
         public bool IsEndOperator {get{return outOperators.Count==0;}}
@@ -21,7 +21,7 @@ namespace Engine.OperatorImplementation.Common
             outOperators.Add(operatorToAdd);
         }
 
-        public List<Operator> GetAllOutOperators()
+        public HashSet<Operator> GetAllOutOperators()
         {
             return outOperators;
         }
