@@ -6,7 +6,11 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ScanOperator : Operator
     {
-        public ScanOperator(ScanPredicate predicate,IGrainFactory factory) : base(predicate,true)
+        public ScanOperator(ScanPredicate predicate) : base(predicate,true)
+        {
+        }
+
+        public override void SetUpPrincipalGrain(IGrainFactory factory)
         {
             PrincipalGrain = factory.GetGrain<IScanPrincipalGrain>(OperatorGuid,"Principal");
         }

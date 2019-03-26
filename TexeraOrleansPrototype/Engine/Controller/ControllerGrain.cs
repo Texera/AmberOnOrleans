@@ -15,6 +15,10 @@ namespace Engine.Controller
         {
             foreach(Operator o in workflow.WorkflowGraph)
             {
+                o.SetUpPrincipalGrain(this.GrainFactory);
+            }
+            foreach(Operator o in workflow.WorkflowGraph)
+            {
                 await o.Init();
             }
             foreach(Operator o in workflow.WorkflowGraph)

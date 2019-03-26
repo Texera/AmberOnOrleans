@@ -7,7 +7,12 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class CountOperator : Operator
     {
-        public CountOperator(CountPredicate predicate,IGrainFactory factory) : base(predicate)
+        public CountOperator(CountPredicate predicate) : base(predicate)
+        {
+            
+        }
+
+        public override void SetUpPrincipalGrain(IGrainFactory factory)
         {
             PrincipalGrain = factory.GetGrain<IPrincipalGrain>(OperatorGuid,"Principal");
         }

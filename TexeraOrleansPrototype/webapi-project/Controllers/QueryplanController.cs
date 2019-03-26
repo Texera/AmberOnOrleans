@@ -53,22 +53,22 @@ namespace webapi.Controllers
                 {
                     //example path to HDFS through WebHDFS API: "http://localhost:50070/webhdfs/v1/input/very_large_input.csv"
                     ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"],table_id++);
-                    op = new ScanOperator(scanPredicate,client);
+                    op = new ScanOperator(scanPredicate);
                 }
                 else if((string)operator1["operatorType"] == "KeywordMatcher")
                 {
                     KeywordPredicate keywordPredicate = new KeywordPredicate((string)operator1["query"]);
-                    op = new KeywordOperator(keywordPredicate,client);
+                    op = new KeywordOperator(keywordPredicate);
                 }
                 else if((string)operator1["operatorType"] == "Aggregation")
                 {
                     CountPredicate countPredicate = new CountPredicate();
-                    op = new CountOperator(countPredicate,client);
+                    op = new CountOperator(countPredicate);
                 }
                 else if((string)operator1["operatorType"] == "Comparison")
                 {
                     FilterPredicate filterPredicate = new FilterPredicate((int)operator1["compareTo"]);
-                    op = new FilterOperator(filterPredicate,client);
+                    op = new FilterOperator(filterPredicate);
                 }
                 if(op!=null)
                     map.Add((string)operator1["operatorID"],op);
