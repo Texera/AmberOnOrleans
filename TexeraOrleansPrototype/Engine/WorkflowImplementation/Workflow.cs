@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using Engine.OperatorImplementation.Common;
+using Engine.Controller;
 
 namespace Engine.WorkflowImplementation
 {
@@ -9,6 +10,7 @@ namespace Engine.WorkflowImplementation
         public readonly HashSet<Operator> WorkflowGraph;
         public readonly HashSet<Operator> EndOperators=new HashSet<Operator>();
         public readonly string WorkflowID;
+        public IControllerGrain workflowController;
 
         public Workflow(string workflowID, HashSet<Operator> allOperators)
         {
