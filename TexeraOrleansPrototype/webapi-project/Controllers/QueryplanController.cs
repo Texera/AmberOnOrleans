@@ -42,44 +42,36 @@ namespace webapi.Controllers
 
             Console.WriteLine("JSON BODY = " + json);
             Dictionary<string, Operator> map = new Dictionary<string, Operator>();
-            Workflow workflow = new Workflow();
 
             JObject o = JObject.Parse(json);
-            workflow.WorkflowID = o["workflowID"].ToString();
             JArray operators = (JArray)o["logicalPlan"]["operators"];
-            
+            int table_id=0;
             foreach (JObject operator1 in operators)
             {
+                Operator op=null;
                 if((string)operator1["operatorType"] == "ScanSource")
                 {
-                    Console.WriteLine("Scan");
                     //example path to HDFS through WebHDFS API: "http://localhost:50070/webhdfs/v1/input/very_large_input.csv"
-                    ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"]);
-                    ScanOperator scanOperator = (ScanOperator)scanPredicate.GetNewOperator(Constants.num_scan);
-                    map.Add((string)operator1["operatorID"], scanOperator);
-                    workflow.StartOperator = scanOperator;
+                    ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"],table_id++);
+                    op = new ScanOperator(scanPredicate,client);
                 }
                 else if((string)operator1["operatorType"] == "KeywordMatcher")
                 {
-                    Console.WriteLine("Keyword - " + (string)operator1["query"]);
                     KeywordPredicate keywordPredicate = new KeywordPredicate((string)operator1["query"]);
-                    KeywordOperator keywordOperator = (KeywordOperator)keywordPredicate.GetNewOperator(Constants.num_scan);
-                    map.Add((string)operator1["operatorID"], keywordOperator);
+                    op = new KeywordOperator(keywordPredicate,client);
                 }
                 else if((string)operator1["operatorType"] == "Aggregation")
                 {
-                    Console.WriteLine("Count");
                     CountPredicate countPredicate = new CountPredicate();
-                    CountOperator countOperator = (CountOperator)countPredicate.GetNewOperator(Constants.num_scan);
-                    map.Add((string)operator1["operatorID"], countOperator);
+                    op = new CountOperator(countPredicate,client);
                 }
                 else if((string)operator1["operatorType"] == "Comparison")
                 {
-                    Console.WriteLine("Filter - " + (string)operator1["compareTo"]);
                     FilterPredicate filterPredicate = new FilterPredicate((int)operator1["compareTo"]);
-                    FilterOperator filterOperator = (FilterOperator)filterPredicate.GetNewOperator(Constants.num_scan);
-                    map.Add((string)operator1["operatorID"], filterOperator);
+                    op = new FilterOperator(filterPredicate,client);
                 }
+                if(op!=null)
+                    map.Add((string)operator1["operatorID"],op);
             }
 
             JArray links = (JArray)o["logicalPlan"]["links"];
@@ -87,8 +79,10 @@ namespace webapi.Controllers
             {
                 Operator origin = map[(string)link["origin"]];
                 Operator dest = map[(string)link["destination"]];
-                origin.NextOperator = dest;
+                origin.AddOutOperator(dest);
             }
+
+            Workflow workflow=new Workflow(o["workflowID"].ToString(),new List<Operator>(map.Values));
 
             List<TexeraTuple> results = ClientWrapper.DoClientWork(client, workflow).Result;
             TexeraResult texeraResult = new TexeraResult();

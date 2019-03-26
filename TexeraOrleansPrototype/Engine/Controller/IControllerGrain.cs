@@ -4,9 +4,8 @@ using Engine.WorkflowImplementation;
 
 namespace Engine.Controller
 {
-    public interface IControllerGrain : IGrainWithGuidCompoundKey
+    public interface IControllerGrain : IGrainWithStringKey
     {
-        Task SetUpAndConnectGrains(Workflow workflow);
-        Task CreateStreamFromLastOperator(Workflow workflow);
+        Task Init(Workflow workflow);
     }
 }
