@@ -8,106 +8,79 @@ using Orleans.Concurrency;
 using TexeraUtilities;
 using Engine.OperatorImplementation.Common;
 
+
 namespace Engine.OperatorImplementation.MessagingSemantics
 {
     public class OrderingGrainWithSequenceNumber : IOrderingEnforcer
     {
-        private Dictionary<ulong, List<TexeraTuple>> stashed = new Dictionary<ulong, List<TexeraTuple>>();
-        private ulong current_idx = 0;
-        private ulong current_seq_num = 0;
-
-
-        public ulong GetOutgoingSequenceNumber()
+        private Dictionary<INormalGrain,Dictionary<ulong, List<TexeraTuple>>> stashed = new Dictionary<INormalGrain, Dictionary<ulong, List<TexeraTuple>>>();
+        private Dictionary<INormalGrain,ulong> in_map=new Dictionary<INormalGrain, ulong>();
+        private Dictionary<INormalGrain,ulong> out_map=new Dictionary<INormalGrain, ulong>();
+        public List<TexeraTuple> PreProcess(Immutable<TexeraMessage> message)
         {
-            return current_seq_num;
-        }
-
-        public ulong GetExpectedSequenceNumber()
-        {
-            return current_idx;
-        }
-
-        public void IncrementOutgoingSequenceNumber()
-        {
-            current_seq_num++;
-        }
-
-        public void IncrementExpectedSequenceNumber()
-        {
-            current_idx++;
-        }
-        
-        public List<TexeraTuple> PreProcess(List<TexeraTuple> batch, IProcessorGrain currentOperator)
-        {
-            var seq_token = batch[0].seq_token;
-            string extensionKey = "";      
-
-            if(seq_token < current_idx)
+            INormalGrain sender=message.Value.sender;
+            ulong sequenceNum=message.Value.sequenceNumber;
+            if(!in_map.ContainsKey(sender))
+            {
+                in_map[sender]=0;
+            }
+            //string extensionKey = "";      
+            if(sequenceNum < in_map[sender])
             {
                 // de-dup messages
-                Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} {extensionKey} received duplicate message with sequence number {seq_token}: expected sequence number {current_idx}");
+                //Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} {extensionKey} received duplicate message with sequence number {seq_token}: expected sequence number {in_map[sender]}");
                 return null;
             }
-            if (seq_token != current_idx)
+            if (sequenceNum != in_map[sender])
             {
-                Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} {extensionKey} received message ahead in sequence, being put in stash: sequence number {seq_token}, expected sequence number {current_idx}");                              
-                stashed.Add(seq_token, batch);
+                //Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} {extensionKey} received message ahead in sequence, being put in stash: sequence number {seq_token}, expected sequence number {in_map[sender]}");                              
+                if(!stashed.ContainsKey(sender))
+                {
+                    stashed[sender]=new Dictionary<ulong, List<TexeraTuple>>();
+                }
+                stashed[sender].Add(sequenceNum, message.Value.tuples);
                 return null;           
             }
             else
             {
-                current_idx++;
-                return batch;
+                in_map[sender]++;
+                return message.Value.tuples;
             }
+
         }
 
-        public void PostProcess(ref List<TexeraTuple> batchToForward, IProcessorGrain currentOperator)
+        public ulong GetOutMessageSequenceNumber(INormalGrain nextOperator)
         {
-            if (batchToForward.Count > 0)
+            if(out_map.ContainsKey(nextOperator))
             {
-                // INormalGrain nextGrain = await currentOperator.GetNextGrain();
-                // if (nextGrain != null)
-                // {
-                    batchToForward[0].seq_token = current_seq_num;
-                    current_seq_num++;
-                    // ((IProcessorGrain)nextGrain).Process(batchToForward.AsImmutable());
-                // }
+                out_map.Add(nextOperator,0);
+                return 0;
             }
-
-            // await ProcessStashed(currentOperator);
+            else
+            {
+                ulong res=out_map[nextOperator]++;
+                return res;
+            }
         }       
 
-        public async Task<List<List<TexeraTuple>>> ProcessStashed(IProcessorGrain currentOperator)
+        public List<TexeraTuple> CheckStashed(INormalGrain sender)
         {
-            List<List<TexeraTuple>> batchList = new List<List<TexeraTuple>>();
-            while(stashed.ContainsKey(current_idx))
+            List<TexeraTuple> batchList = new List<TexeraTuple>();
+            if(stashed.ContainsKey(sender))
             {
-                List<TexeraTuple> batch = stashed[current_idx];
-                List<TexeraTuple> batchToForward = new List<TexeraTuple>();
-                foreach(TexeraTuple tuple in batch)
+                if(!in_map.ContainsKey(sender))
                 {
-                    TexeraTuple ret = await currentOperator.Process_impl(tuple);
-                    if(ret != null)
-                    {
-                        batchToForward.Add(ret);
-                    }                
+                    in_map[sender]=0;
                 }
-                if (batchToForward.Count > 0)
+                while(stashed[sender].ContainsKey(in_map[sender]))
                 {
-                    // INormalGrain nextGrain = await currentOperator.GetNextGrain();
-                    // if(nextGrain != null)
-                    // {
-                        batchToForward[0].seq_token = current_seq_num++;
-                        batchList.Add(batchToForward);
-                        // ((IProcessorGrain)nextGrain).Process(batchToForward.AsImmutable());
-                    // }
+                    List<TexeraTuple> batch = stashed[sender][in_map[sender]];
+                    batchList.AddRange(batch);
+                    stashed[sender].Remove(in_map[sender]);
+                    in_map[sender]++;
                 }
-                stashed.Remove(current_idx);
-                current_idx++;
             }
-
             return batchList;
-
         }
 
     }

@@ -12,12 +12,8 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 {
     public interface IOrderingEnforcer
     {
-        ulong GetOutgoingSequenceNumber();
-        ulong GetExpectedSequenceNumber();
-        void IncrementOutgoingSequenceNumber();
-        void IncrementExpectedSequenceNumber();
-        List<TexeraTuple> PreProcess(List<TexeraTuple> batch, IProcessorGrain currentOperator);
-        void PostProcess(ref List<TexeraTuple> batchToForward, IProcessorGrain currentOperator);
-        Task<List<List<TexeraTuple>>> ProcessStashed(IProcessorGrain currentOperator);
+        List<TexeraTuple> PreProcess(Immutable<TexeraMessage> message);
+        ulong GetOutMessageSequenceNumber(INormalGrain nextOperator);
+        List<TexeraTuple> CheckStashed(INormalGrain sender);
     }
 }
