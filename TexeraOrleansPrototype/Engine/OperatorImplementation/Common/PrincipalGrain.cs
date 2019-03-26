@@ -5,228 +5,165 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
-using Engine.Common;
 using Engine.OperatorImplementation.Operators;
 using TexeraUtilities;
+using System.Collections.ObjectModel;
 
 namespace Engine.OperatorImplementation.Common
 {
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
-        public IPrincipalGrain nextPrincipalGrain = null;
-        public bool IsLastPrincipalGrain = false;
-        protected bool pause = false;
+        protected virtual int DefaultNumGrainsInOneLayer { get { return 10; } }
+        private List<IPrincipalGrain> NextPrincipalGrains = new List<IPrincipalGrain>();
+        protected bool isPaused = false;
         protected List<INormalGrain> operatorGrains = new List<INormalGrain>();
-        protected Operator holdingOperator = null;
-
-        public Task SetOperator(Operator op)
-        {
-            this.holdingOperator = op;
-            return Task.CompletedTask;
-        }
-
-        public Task<Operator> GetOperator()
-        {
-            return Task.FromResult(holdingOperator);
-        }
-
-        public virtual async Task<IPrincipalGrain> GetNextPrincipalGrain()
-        {
-            return nextPrincipalGrain;
-        }
-
-        /**
-        Does two things:
-        1. Connects principal grain to operator grains
-        2. Connects operators grains to next operators grains
-         */
-        public async Task SetUpAndConnectOperatorGrains()
-        {
-            Trace.Assert(holdingOperator!=null, "Holding operator not set in principal grain before calling SetupAndConnectOperatorGrains");
-            await ConnectPrincipalGrainToOperatorGrains();
-
-            if(IsLastPrincipalGrain)
-            {
-                return;
-            }
-
-            Trace.Assert(nextPrincipalGrain!=null, "NextPrincipalGrain is null but IsLastPrincipalGrain property is not set to null");
-            Operator nextOperator = await nextPrincipalGrain.GetOperator();
-
-            await ConnectOperatorGrainsToNextOperatorGrains(nextOperator);
-        }
-
-        private async Task ConnectPrincipalGrainToOperatorGrains()
-        {
-            List<INormalGrain> grainsInOperator = new List<INormalGrain>();
-
-            // connect to member grains
-            /***
-            * TODO: What will happen if there are more internal grains other than input and output.
-            * These grains will also have to be connected to principal grain.
-                */
-            List<GrainIdentifier> operatorOutputGrainIDs = holdingOperator.GetOutputGrainIDs();
-            foreach(GrainIdentifier grainID in operatorOutputGrainIDs)
-            {
-                INormalGrain currGrain = GetOperatorGrainByType(holdingOperator, grainID, true);
-                await currGrain.SetPredicate(holdingOperator.Predicate);
-                await currGrain.Init();
-                grainsInOperator.Add(currGrain);
-            }
-
-            List<GrainIdentifier> operatorInputGrainIDs = holdingOperator.GetInputGrainIDs();
-            foreach(GrainIdentifier grainID in operatorInputGrainIDs)
-            {
-                INormalGrain currGrain = GetOperatorGrainByType(holdingOperator, grainID, false);
-                grainsInOperator.Add(currGrain);
-            }
-
-            operatorGrains = grainsInOperator;
-        }
-
-        private async Task ConnectOperatorGrainsToNextOperatorGrains(Operator nextOperator)
-        {
-            List<GrainIdentifier> currOpOutputGrainIDs = holdingOperator.GetOutputGrainIDs();
-            
-            for(int i=0; i<currOpOutputGrainIDs.Count; i++)
-            {
-                INormalGrain currGrain = GetOperatorGrainByType(holdingOperator, currOpOutputGrainIDs[i], true);
-                
-                if(nextOperator != null)
-                {
-                    List<GrainIdentifier> nextOpInputGrainIDs = nextOperator.GetInputGrainIDs();
-                    GrainIdentifier nextGrainID = nextOpInputGrainIDs[i%nextOpInputGrainIDs.Count];
-                    switch(nextOperator)
-                    {
-                        case ScanOperator o:
-                            IScanOperatorGrain scanGrain = this.GrainFactory.GetGrain<IScanOperatorGrain>(nextGrainID.PrimaryKey, nextGrainID.ExtensionKey);
-                            // await currGrain.SetNextGrain(scanGrain);
-                            break;
-                        case FilterOperator o:
-                            IFilterOperatorGrain filterGrain = this.GrainFactory.GetGrain<IFilterOperatorGrain>(nextGrainID.PrimaryKey, nextGrainID.ExtensionKey);
-                            await currGrain.SetNextGrain(filterGrain);
-                            break;
-                        case KeywordOperator o:
-                            IKeywordSearchOperatorGrain keywordGrain = this.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(nextGrainID.PrimaryKey, nextGrainID.ExtensionKey);
-                            await currGrain.SetNextGrain(keywordGrain);
-                            break;
-                        case CountOperator o:
-                            ICountOperatorGrain countGrain = this.GrainFactory.GetGrain<ICountOperatorGrain>(nextGrainID.PrimaryKey, nextGrainID.ExtensionKey);
-                            await currGrain.SetNextGrain(countGrain);
-
-                            //TODO: There is a bug below. It only connects those intermediary count grains to final grains which are used as an output by the currentGrain.
-                            // Ideally this linking of grains within an operator should be done somewhere else.
-                            ICountFinalOperatorGrain countFinalGrain = this.GrainFactory.GetGrain<ICountFinalOperatorGrain>(o.finalGrain.PrimaryKey, o.finalGrain.ExtensionKey);
-                            await countGrain.SetNextGrain(countFinalGrain);
-                            break;
-                    }
-                }
-                
-            }
-        }
-
-        private INormalGrain GetOperatorGrainByType(Operator currOperator, GrainIdentifier gid, bool outputGrain)
+        protected List<INormalGrain> inputGrains = new List<INormalGrain>();
+        protected List<INormalGrain> outputGrains=new List<INormalGrain>();
+        private PredicateBase predicate = null;
+        private INormalGrain GetOperatorGrain(string extension)
         {
             INormalGrain currGrain = null;
-
-            switch(currOperator)
+            Guid primary = this.GetPrimaryKey();
+            switch(predicate)
             {
-                case ScanOperator o:
-                    currGrain = this.GrainFactory.GetGrain<IScanOperatorGrain>(gid.PrimaryKey, gid.ExtensionKey);
+                case ScanPredicate o:
+                    currGrain = this.GrainFactory.GetGrain<IScanOperatorGrain>(primary, extension);
                     break;
-                case FilterOperator o:
-                    currGrain = this.GrainFactory.GetGrain<IFilterOperatorGrain>(gid.PrimaryKey, gid.ExtensionKey);
+                case FilterPredicate o:
+                    currGrain = this.GrainFactory.GetGrain<IFilterOperatorGrain>(primary, extension);
                     break;
-                case KeywordOperator o:
-                    currGrain = this.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(gid.PrimaryKey, gid.ExtensionKey);
+                case KeywordPredicate o:
+                    currGrain = this.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(primary, extension);
                     break;
-                case CountOperator o:
-                    if(outputGrain)
-                    {
-                        currGrain = this.GrainFactory.GetGrain<ICountFinalOperatorGrain>(gid.PrimaryKey, gid.ExtensionKey);
-                    }
-                    else
-                    {
-                        currGrain = this.GrainFactory.GetGrain<ICountOperatorGrain>(gid.PrimaryKey, gid.ExtensionKey);
-                    }
-                    break;
+                default:
+                    //others
+                    throw new NotImplementedException();
             }
 
             return currGrain;
         }
 
-        public virtual Task SetNextPrincipalGrain(IPrincipalGrain nextPrincipalGrain)
+        public Task AddNextPrincipalGrain(IPrincipalGrain nextGrain)
         {
-            this.nextPrincipalGrain = nextPrincipalGrain;
+            NextPrincipalGrains.Add(nextGrain);
             return Task.CompletedTask;
         }
 
-        public Task SetIsLastPrincipalGrain(bool isLastPrincipalGrain)
+        public virtual async Task Init(PredicateBase pred)
         {
-            this.IsLastPrincipalGrain = isLastPrincipalGrain;
-            return Task.CompletedTask;
+            predicate=pred;
+            //one-layer init
+            for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
+            {
+                INormalGrain grain=GetOperatorGrain(i.ToString());
+                await grain.Init(pred);
+                inputGrains.Add(grain);
+                operatorGrains.Add(grain);
+                outputGrains.Add(grain);
+            }
+            // for multiple-layer init, do some linking inside...
         }
 
-        public async Task<bool> GetIsLastPrincipalGrain()
+        public async Task Link()
         {
-            return IsLastPrincipalGrain;
+            if(NextPrincipalGrains.Count!=0)
+            {
+                foreach(IPrincipalGrain principal in NextPrincipalGrains)
+                {
+                    List<INormalGrain> nextInputGrains=await principal.GetInputGrains();
+                    await Link2Layers(outputGrains,nextInputGrains);
+                }
+            }
+            else
+            {
+                //last operator, build stream
+                var streamProvider = GetStreamProvider("SMSProvider");
+                foreach(INormalGrain grain in outputGrains)
+                    await grain.AddNextStream(streamProvider.GetStream<Immutable<TexeraMessage>>(this.GetPrimaryKey(),"OutputStream"));
+            }
         }
 
-        public virtual Task Init()
+        protected async Task Link2Layers(List<INormalGrain> currentLayer,List<INormalGrain> nextLayer)
         {
-            return Task.CompletedTask;
+            for(int i=0;i<currentLayer.Count;++i)
+            {
+                if(await currentLayer[i].NeedCustomSending())
+                {
+                    //custom(e.g. distributed equi-hash join)
+                    await currentLayer[i].AddNextGrain(nextLayer);
+                }
+                else
+                {
+                    if(currentLayer.Count==nextLayer.Count)
+                    {
+                        //one-to-one
+                        await currentLayer[i].AddNextGrain(nextLayer[i]);
+                    }
+                    else if(currentLayer.Count>nextLayer.Count)
+                    {
+                        //many-to-one
+                        await currentLayer[i].AddNextGrain(nextLayer[i%nextLayer.Count]);
+                    }
+                    else
+                    {
+                        //one-to-many (round-robin)
+                        for(int j=i;j<nextLayer.Count;j+=currentLayer.Count)
+                        {
+                            await currentLayer[i].AddNextGrain(nextLayer[j]);
+                        }
+                    }
+                }
+            }
         }
 
-        public Task SetOperatorGrains(List<INormalGrain> operatorGrains)
+        public Task<List<INormalGrain>> GetInputGrains()
         {
-            this.operatorGrains = operatorGrains;
-            return Task.CompletedTask;
+            return Task.FromResult(inputGrains);
         }
 
-        public virtual async Task PauseGrain()
+        public virtual async Task Pause()
         {
-            pause = true;
+            isPaused = true;
             foreach(INormalGrain grain in operatorGrains)
             {
-                await grain.PauseGrain();
+                await grain.Pause();
             }
-            
-            if(nextPrincipalGrain != null)
+             foreach(IPrincipalGrain next in NextPrincipalGrains)
             {
-                await SendPauseToNextPrincipalGrain(nextPrincipalGrain,0);
+                await SendPauseToNextPrincipalGrain(next,0);
             }
         }
 
         private async Task SendPauseToNextPrincipalGrain(IPrincipalGrain nextGrain, int retryCount)
         {
-            nextGrain.PauseGrain().ContinueWith((t)=>
+            nextGrain.Pause().ContinueWith((t)=>
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                     SendPauseToNextPrincipalGrain(nextGrain,retryCount+1);
             });
         }
 
-        public virtual async Task ResumeGrain()
+        public virtual async Task Resume()
         {
-            pause = false;
+            isPaused = false;
+            foreach(IPrincipalGrain next in NextPrincipalGrains)
+            {
+                await SendResumeToNextPrincipalGrain(next,0);
+            }
             foreach(INormalGrain grain in operatorGrains)
             {
-                await grain.ResumeGrain();
-            }
-
-            if(nextPrincipalGrain != null)
-            {
-                await SendResumeToNextPrincipalGrain(nextPrincipalGrain,0);
+                await grain.Resume();
             }
         }
 
         private async Task SendResumeToNextPrincipalGrain(IPrincipalGrain nextGrain, int retryCount)
         {
-            nextGrain.ResumeGrain().ContinueWith((t)=>
+            nextGrain.Resume().ContinueWith((t)=>
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                     SendResumeToNextPrincipalGrain(nextGrain,retryCount+1);
             });
         }
+
     }
 }
