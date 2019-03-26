@@ -5,73 +5,125 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using TexeraUtilities;
+using Orleans.Streams;
+using System.Diagnostics;
+using Engine.OperatorImplementation.MessagingSemantics;
 
 namespace Engine.OperatorImplementation.Common
 {
     public class NormalGrain : Grain, INormalGrain
     {
-        private ulong current_seq_num = 0;
-        public IProcessorGrain nextGrain = null;
         protected PredicateBase predicate = null;
-        public bool IsLastOperatorGrain = false;
-
-        protected bool pause = false;
-        protected List<Immutable<List<TexeraTuple>>> pausedRows = new List<Immutable<List<TexeraTuple>>>();
-
-        public virtual async Task<IProcessorGrain> GetNextGrain()
+        protected bool isPaused = false;
+        protected List<Immutable<TexeraMessage>> pausedRows = new List<Immutable<TexeraMessage>>();
+        protected IAsyncStream<Immutable<TexeraMessage>> stream=null;
+        protected List<INormalGrain> nextGrains=new List<INormalGrain>();
+        protected IPrincipalGrain root;//for reporting status
+        protected INormalGrain self = null;
+        IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
+        public virtual Task Init(PredicateBase predicate)
         {
-            return nextGrain;
-        }
-
-        public Task SetIsLastOperatorGrain(bool isLastOperatorGrain)
-        {
-            this.IsLastOperatorGrain = isLastOperatorGrain;
+            this.root=this.GrainFactory.GetGrain<IPrincipalGrain>(this.GetPrimaryKey(),"Principal");
+            this.predicate=predicate;
             return Task.CompletedTask;
         }
 
-        public async Task<bool> GetIsLastOperatorGrain()
+        public virtual Task InitSelf()
         {
-            return IsLastOperatorGrain;
-        }
-
-        public Task SetPredicate(PredicateBase predicate)
-        {
-            this.predicate = predicate;
+            string extension;
+            this.self=this.GrainFactory.GetGrain<INormalGrain>(this.GetPrimaryKey(out extension),extension);
             return Task.CompletedTask;
         }
 
-        public virtual Task SetNextGrain(IProcessorGrain nextGrain)
+        public Task AddNextGrain(INormalGrain grain)
         {
-            this.nextGrain = nextGrain;
+            nextGrains.Add(grain);
             return Task.CompletedTask;
         }
 
-        public virtual Task Init()
+        public virtual async Task Pause()
         {
+            isPaused = true;
+        }
+
+        public virtual async Task Resume()
+        {
+            isPaused = false;
+        }
+
+        public Task AddNextGrain(List<INormalGrain> grains)
+        {
+            nextGrains.AddRange(grains);
             return Task.CompletedTask;
         }
 
-        public virtual async Task PauseGrain()
+        public virtual Task<bool> NeedCustomSending()
         {
-            pause = true;
-
-            // if(nextGrain != null)
-            // {
-            //     await nextGrain.PauseGrain();
-            // }   
+            return Task.FromResult(false);
         }
 
-        public virtual async Task ResumeGrain()
+        public Task AddNextStream(IAsyncStream<Immutable<TexeraMessage>> stream)
         {
-            pause = false;
-            // if(nextGrain != null)
-            // {
-            //     await nextGrain.ResumeGrain();
-                // List<TexeraTuple> batch = new List<TexeraTuple>();
+            Trace.Assert(stream==null, "Overwritting output stream!");
+            this.stream=stream;
+            return Task.CompletedTask;
+        }
 
-                // // make a call with empty batch so that rows received during pause get processed
-                // await nextGrain.ReceiveTuples(batch.AsImmutable(), nextGrain);
-            // }
+        public virtual Task Start()
+        {
+            throw new NotImplementedException();
+        }
+
+        public virtual Task Receive(Immutable<TexeraMessage> message)
+        {
+            Trace.Assert(self!=null,"Worker Grain should have its own address to send message to itself!");
+            List<TexeraTuple> tuples=orderingEnforcer.PreProcess(message);
+            orderingEnforcer.CheckStashed(ref tuples,message.Value.sender);
+            //assume message send to itself will never fail
+            if(tuples!=null)
+                self.Process(tuples.AsImmutable()).ContinueWith((t)=>
+                {
+                    if(t.IsCompleted)
+                    {
+                        //make an new texera message then send it to next worker with retry
+                        INormalGrain receiver=GetNextOperatorGrain();
+                        TexeraMessage messageToNext=new TexeraMessage();
+                        messageToNext.sender=self;
+                        messageToNext.sequenceNumber=orderingEnforcer.GetOutMessageSequenceNumber(receiver);
+                        messageToNext.tuples=t.Result;
+                        receiver.Receive(messageToNext.AsImmutable()).ContinueWith((t)=>
+                        {
+                            //retry logic 
+                        });
+                    }
+                    else
+                        throw new NotImplementedException();
+                });
+            
+            return Task.CompletedTask;
+        }
+
+        public virtual List<TexeraTuple> Process(Immutable<List<TexeraTuple>> message)
+        {
+            List<TexeraTuple> output = new List<TexeraTuple>();
+            foreach(TexeraTuple tuple in message.Value)
+            {
+                List<TexeraTuple> results=Process_impl(tuple);
+                if(results!=null)
+                    output.AddRange(results);
+            }
+            return output;
+        }
+
+        public virtual List<TexeraTuple> Process_impl(TexeraTuple tuple)
+        {
+            return null;
+        }
+
+
+        public virtual INormalGrain GetNextOperatorGrain()
+        {
+            return nextGrains[0];
         }
     }
 }
