@@ -40,21 +40,19 @@ namespace webapi.Controllers
         {
             Console.WriteLine("action: pause");
             Stream req = Request.Body;
-            //req.Seek(0, System.IO.SeekOrigin.Begin);
             string json = new StreamReader(req).ReadToEnd();
             JObject o = JObject.Parse(json);
             string workflowID = o["workflowID"].ToString();
             Console.WriteLine("target: "+workflowID);
-            Workflow workflow;
-            if(ClientWrapper.Instance.IDToWorkflowEntry.ContainsKey(workflowID))
-                workflow = ClientWrapper.Instance.IDToWorkflowEntry[workflowID];
-            else
+            try
             {
-                Console.WriteLine("but not found!");
-                throw new Exception();
+                await ClientWrapper.Instance.PauseWorkflow(workflowID);
+                Console.WriteLine("Paused!");
             }
-            await ClientWrapper.PauseSilo(workflow,client);
-            Console.WriteLine("Paused!");
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+            }
             return new HttpResponseMessage();
         }
 
@@ -71,16 +69,15 @@ namespace webapi.Controllers
             JObject o = JObject.Parse(json);
             string workflowID = o["workflowID"].ToString();
             Console.WriteLine("target: "+workflowID);
-            Workflow workflow;
-            if(ClientWrapper.Instance.IDToWorkflowEntry.ContainsKey(workflowID))
-                workflow = ClientWrapper.Instance.IDToWorkflowEntry[workflowID];
-            else
+            try
             {
-                Console.WriteLine("but not found!");
-                throw new Exception();
+                await ClientWrapper.Instance.ResumeWorkflow(workflowID);
+                Console.WriteLine("Resumed!");
             }
-            await ClientWrapper.ResumeSilo(workflow,client);
-            Console.WriteLine("Resumed!");
+            catch(Exception e)
+            {
+                Console.WriteLine(e);
+            }
             return new HttpResponseMessage();
         }
     }

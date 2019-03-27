@@ -21,12 +21,8 @@ namespace OrleansClient
     /// </summary>
     public class ClientWrapper
     {
-        const int initializeAttemptsBeforeFailing = 5;
-        private static int attempt = 0;
+        //singleton design
         private static ClientWrapper instance;
-        public IClusterClient client;
-        private Dictionary<string,Workflow> _IDToWorkflowEntry = new Dictionary<string,Workflow>();
-        public Dictionary<string, Workflow> IDToWorkflowEntry { get => _IDToWorkflowEntry; }
         public static ClientWrapper Instance
         {
             get 
@@ -39,6 +35,8 @@ namespace OrleansClient
             }
         }
 
+
+        public IClusterClient client;
         private ClientWrapper()
         {
             try
@@ -50,8 +48,11 @@ namespace OrleansClient
                 Console.WriteLine(e);
             }
         }
+        private Dictionary<string,Workflow> IDToWorkflowEntry = new Dictionary<string,Workflow>();
+        private const int initializeAttemptsBeforeFailing = 5;
+        private int attempt = 0;
 
-        private static async Task<IClusterClient> StartClientWithRetries()
+        private async Task<IClusterClient> StartClientWithRetries()
         {
             attempt = 0;
             IClusterClient client;
@@ -72,7 +73,7 @@ namespace OrleansClient
             return client;
         }
 
-        private static async Task<bool> RetryFilter(Exception exception)
+        private async Task<bool> RetryFilter(Exception exception)
         {
             if (exception.GetType() != typeof(SiloUnavailableException))
             {
@@ -89,28 +90,33 @@ namespace OrleansClient
             return true;
         }
 
-        public static async Task PauseSilo(Workflow workflow, IClusterClient client)
+        public async Task PauseWorkflow(String workflowID)
         {
-            HashSet<Operator> ops = workflow.StartOperators;
-            foreach(Operator op in ops)
+            if(IDToWorkflowEntry.ContainsKey(workflowID))
             {
-                await op.PrincipalGrain.Pause();
+                await IDToWorkflowEntry[workflowID].Pause();
+            }
+            else
+            {
+                throw new Exception("Workflow Not Found");
             }
         }
 
-        public static async Task ResumeSilo(Workflow workflow, IClusterClient client)
+        public async Task ResumeWorkflow(String workflowID)
         {
-            HashSet<Operator> ops = workflow.StartOperators;
-            foreach(Operator op in ops)
+            if(IDToWorkflowEntry.ContainsKey(workflowID))
             {
-                await op.PrincipalGrain.Resume();
+                await IDToWorkflowEntry[workflowID].Pause();
+            }
+            else
+            {
+                throw new Exception("Workflow Not Found");
             }
         }
 
-        public static async Task<List<TexeraTuple>> DoClientWork(IClusterClient client, Workflow workflow)
+        public async Task<List<TexeraTuple>> DoClientWork(IClusterClient client, Workflow workflow)
         {
-            IControllerGrain controllerGrain = client.GetGrain<IControllerGrain>(workflow.WorkflowID);
-            await controllerGrain.Init(workflow);
+            await workflow.Init(client);
             var streamProvider = client.GetStreamProvider("SMSProvider");
             var so = new StreamObserver();
             foreach(Operator o in workflow.EndOperators)
@@ -131,11 +137,6 @@ namespace OrleansClient
             }
             instance.IDToWorkflowEntry.Remove(workflow.WorkflowID);
             return so.resultsToRet;
-        }
-
-        private static List<IScanOperatorGrain> GetOperators(List<IScanOperatorGrain> operators)
-        {
-            return operators;
         }
     }
 }

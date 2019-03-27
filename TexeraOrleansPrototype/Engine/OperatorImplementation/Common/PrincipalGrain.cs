@@ -18,29 +18,13 @@ namespace Engine.OperatorImplementation.Common
         protected bool isPaused = false;
         protected List<INormalGrain> operatorGrains = new List<INormalGrain>();
         protected List<INormalGrain> inputGrains = new List<INormalGrain>();
-        protected List<INormalGrain> outputGrains=new List<INormalGrain>();
+        protected List<INormalGrain> outputGrains = new List<INormalGrain>();
         private PredicateBase predicate = null;
-        private INormalGrain GetOperatorGrain(string extension)
-        {
-            INormalGrain currGrain = null;
-            Guid primary = this.GetPrimaryKey();
-            switch(predicate)
-            {
-                case ScanPredicate o:
-                    currGrain = this.GrainFactory.GetGrain<IScanOperatorGrain>(primary, extension);
-                    break;
-                case FilterPredicate o:
-                    currGrain = this.GrainFactory.GetGrain<IFilterOperatorGrain>(primary, extension);
-                    break;
-                case KeywordPredicate o:
-                    currGrain = this.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(primary, extension);
-                    break;
-                default:
-                    //others
-                    throw new NotImplementedException();
-            }
 
-            return currGrain;
+
+        public virtual INormalGrain GetOperatorGrain(string extension)
+        {
+            throw new NotImplementedException();
         }
 
         public Task AddNextPrincipalGrain(IPrincipalGrain nextGrain)
@@ -49,16 +33,21 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public virtual async Task Init(PredicateBase pred)
+        public Task SetPredicate(PredicateBase predicate)
         {
-            predicate=pred;
+            this.predicate=predicate;
+            return Task.CompletedTask;
+        }
+
+        public virtual async Task Init(PredicateBase predicate)
+        {
             //one-layer init
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
                 INormalGrain grain=GetOperatorGrain(i.ToString());
-                await grain.Init(pred);
-                inputGrains.Add(grain);
+                await grain.Init(predicate);
                 operatorGrains.Add(grain);
+                inputGrains.Add(grain);
                 outputGrains.Add(grain);
             }
             // for multiple-layer init, do some linking inside...
@@ -87,32 +76,7 @@ namespace Engine.OperatorImplementation.Common
         {
             for(int i=0;i<currentLayer.Count;++i)
             {
-                if(await currentLayer[i].NeedCustomSending())
-                {
-                    //custom(e.g. distributed equi-hash join)
-                    await currentLayer[i].AddNextGrain(nextLayer);
-                }
-                else
-                {
-                    if(currentLayer.Count==nextLayer.Count)
-                    {
-                        //one-to-one
-                        await currentLayer[i].AddNextGrain(nextLayer[i]);
-                    }
-                    else if(currentLayer.Count>nextLayer.Count)
-                    {
-                        //many-to-one
-                        await currentLayer[i].AddNextGrain(nextLayer[i%nextLayer.Count]);
-                    }
-                    else
-                    {
-                        //one-to-many (round-robin)
-                        for(int j=i;j<nextLayer.Count;j+=currentLayer.Count)
-                        {
-                            await currentLayer[i].AddNextGrain(nextLayer[j]);
-                        }
-                    }
-                }
+                await currentLayer[i].Link(await currentLayer[i].GetNextGrains(nextLayer));
             }
         }
 
@@ -165,5 +129,12 @@ namespace Engine.OperatorImplementation.Common
             });
         }
 
+        public virtual async Task Start()
+        {
+            foreach(INormalGrain op in operatorGrains)
+            {
+                await op.Start();
+            }
+        }
     }
 }

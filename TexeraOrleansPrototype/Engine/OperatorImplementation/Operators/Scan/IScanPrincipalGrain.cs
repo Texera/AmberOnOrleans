@@ -10,7 +10,6 @@ using Engine.OperatorImplementation.Common;
 namespace Engine.OperatorImplementation.Operators
 {
     public interface IScanPrincipalGrain : IPrincipalGrain
-    {
-        Task StartScanGrain();        
+    {      
     }
 }

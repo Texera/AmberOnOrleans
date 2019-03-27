@@ -11,7 +11,7 @@ namespace Engine.OperatorImplementation.Operators
         }
         public override void SetUpPrincipalGrain(IGrainFactory factory)
         {
-            PrincipalGrain = factory.GetGrain<IPrincipalGrain>(OperatorGuid,"Principal");
+            PrincipalGrain = factory.GetGrain<IFilterPrincipalGrain>(OperatorGuid);
         }
     }
 }

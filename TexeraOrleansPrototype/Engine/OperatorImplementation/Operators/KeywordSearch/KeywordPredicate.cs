@@ -19,10 +19,5 @@ namespace Engine.OperatorImplementation.Operators
         {
             return query;
         }
-
-        public override Operator GetNewOperator(int numberOfGrains)
-        {
-            return new KeywordOperator(this, numberOfGrains);
-        }
     }
 }

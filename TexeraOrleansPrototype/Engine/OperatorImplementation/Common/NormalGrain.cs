@@ -69,7 +69,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public virtual Task Start()
+        public virtual async Task Start()
         {
             throw new NotImplementedException();
         }
@@ -79,7 +79,7 @@ namespace Engine.OperatorImplementation.Common
             Trace.Assert(self!=null,"Worker Grain should have its own address to send message to itself!");
             List<TexeraTuple> tuples=orderingEnforcer.PreProcess(message);
             orderingEnforcer.CheckStashed(ref tuples,message.Value.sender);
-            //assume message send to itself will never fail
+            //TODO: I assume message send to itself will never fail, but it may fail
             if(tuples!=null)
                 self.Process(tuples.AsImmutable()).ContinueWith((t)=>
                 {
@@ -91,10 +91,8 @@ namespace Engine.OperatorImplementation.Common
                         messageToNext.sender=self;
                         messageToNext.sequenceNumber=orderingEnforcer.GetOutMessageSequenceNumber(receiver);
                         messageToNext.tuples=t.Result;
-                        receiver.Receive(messageToNext.AsImmutable()).ContinueWith((t)=>
-                        {
-                            //retry logic 
-                        });
+                        //TODO: add retry logic here
+                        receiver.Receive(messageToNext.AsImmutable());
                     }
                     else
                         throw new NotImplementedException();
@@ -103,7 +101,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public virtual List<TexeraTuple> Process(Immutable<List<TexeraTuple>> message)
+        public virtual Task<List<TexeraTuple>> Process(Immutable<List<TexeraTuple>> message)
         {
             List<TexeraTuple> output = new List<TexeraTuple>();
             foreach(TexeraTuple tuple in message.Value)
@@ -112,7 +110,7 @@ namespace Engine.OperatorImplementation.Common
                 if(results!=null)
                     output.AddRange(results);
             }
-            return output;
+            return Task.FromResult(output);
         }
 
         public virtual List<TexeraTuple> Process_impl(TexeraTuple tuple)
@@ -124,6 +122,17 @@ namespace Engine.OperatorImplementation.Common
         public virtual INormalGrain GetNextOperatorGrain()
         {
             return nextGrains[0];
+        }
+
+        public Task Link(List<INormalGrain> candidates)
+        {
+            nextGrains.AddRange(candidates);
+            return Task.CompletedTask;
+        }
+
+        public Task<List<INormalGrain>> GetNextGrains(List<INormalGrain> nextLayer)
+        {
+            throw new NotImplementedException();
         }
     }
 }
