@@ -14,6 +14,6 @@ namespace Engine.OperatorImplementation.MessagingSemantics
     {
         List<TexeraTuple> PreProcess(Immutable<TexeraMessage> message);
         ulong GetOutMessageSequenceNumber(INormalGrain nextOperator);
-        List<TexeraTuple> CheckStashed(ref List<TexeraTuple> batchList, INormalGrain sender);
+        void CheckStashed(ref List<TexeraTuple> batchList, INormalGrain sender);
     }
 }

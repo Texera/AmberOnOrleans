@@ -9,11 +9,11 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class ScanPrinicipalGrain : PrincipalGrain, IPrincipalGrain
+    public class KeywordPrinicipalGrain : PrincipalGrain, IKeywordPrincipalGrain
     {
         public override INormalGrain GetOperatorGrain(string extension)
         {
-            return this.GrainFactory.GetGrain<IScanOperatorGrain>(this.GetPrimaryKey(), extension);
+            return this.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(this.GetPrimaryKey(), extension);
         }
     }
 }

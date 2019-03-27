@@ -30,15 +30,14 @@ namespace Engine.OperatorImplementation.Common
         {
             PrincipalGrain = factory.GetGrain<IPrincipalGrain>(OperatorGuid,"Principal");
         }
-        public async Task Init()
+        public async Task LinkToDownstreamPrincipleGrains()
         {
-            Trace.Assert(PrincipalGrain!=null, "PrincipalGrain should not be null when calling Init()");
+            Trace.Assert(PrincipalGrain!=null, "PrincipalGrain should not be null when calling LinkToDownstreamPrincipleGrains()");
             foreach(Operator o in outOperators)
             {
-                Trace.Assert(o.PrincipalGrain!=null,"PricipalGrain of the next Operator should not be null when calling Init()");
+                Trace.Assert(o.PrincipalGrain!=null,"PricipalGrain of the next Operator should not be null when calling LinkToDownstreamPrincipleGrains()");
                 await PrincipalGrain.AddNextPrincipalGrain(o.PrincipalGrain);
             }
-            await PrincipalGrain.Init(Predicate);
         }
         
         public Operator(PredicateBase predicate, bool isStartOperator=false)
@@ -73,5 +72,16 @@ namespace Engine.OperatorImplementation.Common
         {
             await PrincipalGrain.Link();
         }
+
+        public async Task Pause()
+        {
+            await PrincipalGrain.Pause();
+        }
+
+        public async Task Resume()
+        {
+            await PrincipalGrain.Resume();
+        }
+
     }
 }

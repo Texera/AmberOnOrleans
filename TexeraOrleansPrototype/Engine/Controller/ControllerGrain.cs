@@ -11,17 +11,19 @@ namespace Engine.Controller
 {
     public class ControllerGrain : Grain, IControllerGrain
     {
-        public async Task Init(Workflow workflow)
+        public async Task Init(HashSet<Operator> graph)
         {
-            foreach(Operator o in workflow.WorkflowGraph)
+            foreach(Operator o in graph)
             {
                 o.SetUpPrincipalGrain(this.GrainFactory);
+                await o.PrincipalGrain.SetPredicate(o.Predicate);
+                await o.PrincipalGrain.Init(o.Predicate);
             }
-            foreach(Operator o in workflow.WorkflowGraph)
+            foreach(Operator o in graph)
             {
-                await o.Init();
+                await o.LinkToDownstreamPrincipleGrains();
             }
-            foreach(Operator o in workflow.WorkflowGraph)
+            foreach(Operator o in graph)
             {
                 await o.Link();
             }

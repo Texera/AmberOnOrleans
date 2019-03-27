@@ -84,7 +84,7 @@ namespace webapi.Controllers
 
             Workflow workflow=new Workflow(o["workflowID"].ToString(),new HashSet<Operator>(map.Values));
 
-            List<TexeraTuple> results = ClientWrapper.DoClientWork(client, workflow).Result;
+            List<TexeraTuple> results = ClientWrapper.Instance.DoClientWork(client, workflow).Result;
             TexeraResult texeraResult = new TexeraResult();
             texeraResult.code = 0;
             if(results == null)

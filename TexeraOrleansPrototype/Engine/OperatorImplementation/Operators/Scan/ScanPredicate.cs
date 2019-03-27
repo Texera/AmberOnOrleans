@@ -8,8 +8,8 @@ namespace Engine.OperatorImplementation.Operators
         
         string file;
         ulong filesize;
-        int num_grains;
-        public ScanPredicate(string file)
+        int tableID;
+        public ScanPredicate(string file,int tableID)
         {
             if(file == null)
             {
@@ -26,6 +26,7 @@ namespace Engine.OperatorImplementation.Operators
                 else
                     filesize=(ulong)new System.IO.FileInfo(file).Length;
             }
+            this.tableID=tableID;
         }
 
         public string GetFileName()
@@ -37,17 +38,6 @@ namespace Engine.OperatorImplementation.Operators
         public ulong GetFileSize()
         {
             return filesize;
-        }
-
-        public int GetNumberOfGrains()
-        {
-            return num_grains;
-        }
-
-        public override Operator GetNewOperator(int numberOfGrains)
-        {
-            num_grains=numberOfGrains;
-            return new ScanOperator(this, numberOfGrains);
         }
     }
 }

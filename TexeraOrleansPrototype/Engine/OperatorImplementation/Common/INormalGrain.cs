@@ -14,7 +14,6 @@ namespace Engine.OperatorImplementation.Common
         Task AddNextStream(IAsyncStream<Immutable<TexeraMessage>> stream);
         Task AddNextGrain(INormalGrain grain);
         Task AddNextGrain(List<INormalGrain> grains);
-        Task<bool> NeedCustomSending();
         Task Pause();
         Task Resume();
         Task Init(PredicateBase predicate);
@@ -22,7 +21,8 @@ namespace Engine.OperatorImplementation.Common
         Task Receive(Immutable<TexeraMessage> message);
         Task InitSelf();
         Task<List<TexeraTuple>> Process(Immutable<List<TexeraTuple>> message);
-        //Task<List<TexeraTuple>> Process_impl(TexeraTuple tuple);
+        Task Link(List<INormalGrain> candidates);
+        Task<List<INormalGrain>> GetNextGrains(List<INormalGrain> nextLayer);//?
 
     }
 }

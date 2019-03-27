@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 using Engine.OperatorImplementation.Common;
 using Engine.Controller;
+using Orleans;
+using System.Threading.Tasks;
 
 namespace Engine.WorkflowImplementation
 {
@@ -10,7 +12,7 @@ namespace Engine.WorkflowImplementation
         public readonly HashSet<Operator> WorkflowGraph;
         public readonly HashSet<Operator> EndOperators=new HashSet<Operator>();
         public readonly string WorkflowID;
-        public IControllerGrain workflowController;
+        public IControllerGrain workflowController=null;
 
         public Workflow(string workflowID, HashSet<Operator> allOperators)
         {
@@ -22,6 +24,28 @@ namespace Engine.WorkflowImplementation
                     EndOperators.Add(o);
                 if(o.IsStartOperator)
                     StartOperators.Add(o);
+            }
+        }
+
+        public async Task Init(IGrainFactory factory)
+        {
+            workflowController=factory.GetGrain<IControllerGrain>(WorkflowID);
+            await workflowController.Init(WorkflowGraph);
+        }
+
+        public async Task Pause()
+        {
+            foreach(Operator o in StartOperators)
+            {
+                await o.Pause();
+            }
+        }
+
+        public async Task Resume()
+        {
+            foreach(Operator o in StartOperators)
+            {
+                await o.Resume();
             }
         }
     }
