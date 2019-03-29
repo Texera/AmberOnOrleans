@@ -12,7 +12,7 @@ namespace Engine.OperatorImplementation.Common
     public interface IWorkerGrain : IGrainWithGuidCompoundKey
     {
         #region used by end operators
-        Task InitializeOutputStream(IAsyncStream<Immutable<TexeraMessage>> stream);
+        Task InitializeOutputStream(IAsyncStream<Immutable<PayloadMessage>> stream);
         #endregion
 
         #region used by operators that have subsequent operators

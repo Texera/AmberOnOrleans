@@ -36,6 +36,10 @@ namespace Engine.WorkflowImplementation
         public async Task Init(IGrainFactory factory)
         {
             workflowControllerGrain=factory.GetGrain<IControllerGrain>(WorkflowID);
+            foreach(Operator o in AllOperators)
+            {
+                o.SetUpPrincipalGrain(factory);
+            }
             await workflowControllerGrain.Init(workflowControllerGrain,WorkflowID,AllOperators);
 
         }

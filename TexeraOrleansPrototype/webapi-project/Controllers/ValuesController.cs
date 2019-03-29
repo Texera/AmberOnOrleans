@@ -43,9 +43,9 @@ namespace webapi.Controllers
             string json = new StreamReader(req).ReadToEnd();
             JObject o = JObject.Parse(json);
             Guid workflowID;
-            if(!Guid.TryParse(o["workflowID"].ToString(),out workflowID))
+            if(!Guid.TryParse(o["workflowID"].ToString().Substring(16),out workflowID))
             {
-                throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString()}");
+                throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString().Substring(16)}");
             }
             Console.WriteLine("target: "+workflowID);
             try
@@ -72,9 +72,9 @@ namespace webapi.Controllers
             string json = new StreamReader(req).ReadToEnd();
             JObject o = JObject.Parse(json);
             Guid workflowID;
-            if(!Guid.TryParse(o["workflowID"].ToString(),out workflowID))
+            if(!Guid.TryParse(o["workflowID"].ToString().Substring(16),out workflowID))
             {
-                throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString()}");
+                throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString().Substring(16)}");
             }
             Console.WriteLine("target: "+workflowID);
             try

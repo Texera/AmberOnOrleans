@@ -15,14 +15,13 @@ namespace Engine.OperatorImplementation.Common
 {
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
-        public virtual int DefaultNumGrainsInOneLayer { get { return 10; } }
+        public virtual int DefaultNumGrainsInOneLayer { get { return 2; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
         protected bool isPaused = false;
         protected List<List<IWorkerGrain>> operatorGrains = new List<List<IWorkerGrain>>();
         protected List<IWorkerGrain> outputGrains {get{return operatorGrains.Last();}}
         protected List<IWorkerGrain> inputGrains {get{return operatorGrains.First();}}
-        private PredicateBase predicate = null; 
         private IPrincipalGrain self=null;
         private Guid workflowID;
         private IControllerGrain controllerGrain;
@@ -50,9 +49,10 @@ namespace Engine.OperatorImplementation.Common
         {
             this.controllerGrain=controllerGrain;
             this.workflowID=workflowID;
-            this.predicate=currentOperator.Predicate;
             this.self=currentOperator.PrincipalGrain;
-            BuildWorkerTopology();
+            PredicateBase predicate=currentOperator.Predicate;
+            await BuildWorkerTopology();
+            PassExtraParametersByPredicate(ref predicate);
             foreach(List<IWorkerGrain> grainList in operatorGrains)
             {
                 foreach(IWorkerGrain grain in grainList)
@@ -62,9 +62,15 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        public virtual void BuildWorkerTopology()
+
+        protected virtual void PassExtraParametersByPredicate(ref PredicateBase predicate)
         {
-            operatorGrains=new List<List<IWorkerGrain>>(1);
+            
+        }
+
+        public virtual async Task BuildWorkerTopology()
+        {
+            operatorGrains=Enumerable.Range(0, 1).Select(x=>new List<IWorkerGrain>()).ToList();
             //one-layer init
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
@@ -76,6 +82,20 @@ namespace Engine.OperatorImplementation.Common
 
         public async Task Link()
         {
+            int count=0;
+            foreach(IPrincipalGrain principal in prevPrincipalGrains)
+            {
+                List<IWorkerGrain> prevOutputGrains=await principal.GetOutputGrains();
+                count+=prevOutputGrains.Count;
+            }
+            if(count>0)
+            {
+                foreach(IWorkerGrain grain in inputGrains)
+                {
+                    await grain.SetTargetEndFlagCount(count);
+                }
+            }
+
             if(nextPrincipalGrains.Count!=0)
             {
                 foreach(IPrincipalGrain principal in nextPrincipalGrains)
@@ -83,26 +103,13 @@ namespace Engine.OperatorImplementation.Common
                     List<IWorkerGrain> nextInputGrains=await principal.GetInputGrains();
                     await Link2Layers(principal.GetPrimaryKey(),outputGrains,nextInputGrains);
                 }
-                int count=0;
-                foreach(IPrincipalGrain principal in prevPrincipalGrains)
-                {
-                    List<IWorkerGrain> prevOutputGrains=await principal.GetOutputGrains();
-                    count+=prevOutputGrains.Count;
-                }
-                if(count>0)
-                {
-                    foreach(IWorkerGrain grain in inputGrains)
-                    {
-                        await grain.SetTargetEndFlagCount(count);
-                    }
-                }
             }
             else
             {
                 //last operator, build stream
                 var streamProvider = GetStreamProvider("SMSProvider");
                 foreach(IWorkerGrain grain in outputGrains)
-                    await grain.InitializeOutputStream(streamProvider.GetStream<Immutable<TexeraMessage>>(workflowID,"OutputStream"));
+                    await grain.InitializeOutputStream(streamProvider.GetStream<Immutable<PayloadMessage>>(workflowID,"OutputStream"));
             }
         }
 

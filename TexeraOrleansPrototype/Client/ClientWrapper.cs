@@ -13,6 +13,7 @@ using Engine.OperatorImplementation.Operators;
 using Engine.WorkflowImplementation;
 using TexeraUtilities;
 using System.Threading;
+using Engine;
 
 namespace OrleansClient
 {
@@ -116,16 +117,24 @@ namespace OrleansClient
 
         public async Task<List<TexeraTuple>> DoClientWork(IClusterClient client, Workflow workflow)
         {
+            // code for testing the correctness of sequnece number:
+
+            // IWorkerGrain grain=client.GetGrain<IWorkerGrain>(new Guid(),"2");
+            // await grain.Init(grain,null,null);
+            // List<ulong> seqnum=new List<ulong>{0,1,3,2,4,10,9,8,7,5,4,6};
+            // foreach(ulong seq in seqnum)
+            //     grain.ReceivePayloadMessage(new Immutable<PayloadMessage>(new PayloadMessage("123",seq,null,seq==10)));
+
             await workflow.Init(client);
             var streamProvider = client.GetStreamProvider("SMSProvider");
             var so = new StreamObserver();
-            var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(workflow.GetStreamGuid(), "OutputStream");
+            var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflow.GetStreamGuid(), "OutputStream");
             await stream.SubscribeAsync(so);
             instance.IDToWorkflowEntry[workflow.WorkflowID]=workflow;
             await so.Start();
             foreach(Operator op in workflow.StartOperators)
             {
-                op.PrincipalGrain.Start();
+                await op.PrincipalGrain.Start();
             }
 
             while (so.resultsToRet.Count == 0)

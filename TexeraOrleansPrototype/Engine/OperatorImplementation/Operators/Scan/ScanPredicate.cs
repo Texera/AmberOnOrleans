@@ -5,38 +5,28 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ScanPredicate : PredicateBase
     {
-        string file;
-        ulong filesize;
-        int tableID;
+        public int NumberOfGrains;
+        public string File;
+        public ulong FileSize;
+        public int TableID;
         public ScanPredicate(string file,int tableID)
         {
             if(file == null)
             {
-                file = "";
-                filesize=0;
+                File = "";
+                FileSize=0;
             }
             else
             {
-                this.file = file;
+                File = file;
                 if(file.StartsWith("http://"))
                 {
-                    filesize=Utils.GetFileLengthFromHDFS(file);
+                    FileSize=Utils.GetFileLengthFromHDFS(file);
                 }
                 else
-                    filesize=(ulong)new System.IO.FileInfo(file).Length;
+                    FileSize=(ulong)new System.IO.FileInfo(file).Length;
             }
-            this.tableID=tableID;
-        }
-
-        public string GetFileName()
-        {
-            return file;
-        }
-
-
-        public ulong GetFileSize()
-        {
-            return filesize;
+            TableID=tableID;
         }
     }
 }

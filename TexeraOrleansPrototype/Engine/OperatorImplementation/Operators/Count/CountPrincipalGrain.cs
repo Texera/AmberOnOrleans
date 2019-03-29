@@ -6,16 +6,17 @@ using System.Text;
 using System.Threading.Tasks;
 using TexeraUtilities;
 using Engine.OperatorImplementation.Common;
+using System.Linq;
 
 namespace Engine.OperatorImplementation.Operators
 {
     public class CountPrinicipalGrain : PrincipalGrain, ICountPrincipalGrain
     {
-        public override async void BuildWorkerTopology()
+        public override async Task BuildWorkerTopology()
         {
             //build backward
             //2-layer
-            operatorGrains=new List<List<IWorkerGrain>>(2);
+            operatorGrains=Enumerable.Range(0, 2).Select(x=>new List<IWorkerGrain>()).ToList();
             //last layer
             IWorkerGrain finalGrain=this.GrainFactory.GetGrain<ICountFinalOperatorGrain>(this.GetPrimaryKey(),"final");
             operatorGrains[1].Add(finalGrain);            

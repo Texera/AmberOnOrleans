@@ -80,7 +80,7 @@ namespace Engine.OperatorImplementation.Common
         //     return OperatorGuid;
         // }
 
-        public async Task Link()
+        public async Task LinkWorkerGrains()
         {
             await PrincipalGrain.Link();
         }
