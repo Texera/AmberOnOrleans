@@ -5,7 +5,6 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ScanPredicate : PredicateBase
     {
-        
         string file;
         ulong filesize;
         int tableID;

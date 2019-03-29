@@ -42,7 +42,11 @@ namespace webapi.Controllers
             Stream req = Request.Body;
             string json = new StreamReader(req).ReadToEnd();
             JObject o = JObject.Parse(json);
-            string workflowID = o["workflowID"].ToString();
+            Guid workflowID;
+            if(!Guid.TryParse(o["workflowID"].ToString(),out workflowID))
+            {
+                throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString()}");
+            }
             Console.WriteLine("target: "+workflowID);
             try
             {
@@ -67,7 +71,11 @@ namespace webapi.Controllers
             //req.Seek(0, System.IO.SeekOrigin.Begin);
             string json = new StreamReader(req).ReadToEnd();
             JObject o = JObject.Parse(json);
-            string workflowID = o["workflowID"].ToString();
+            Guid workflowID;
+            if(!Guid.TryParse(o["workflowID"].ToString(),out workflowID))
+            {
+                throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString()}");
+            }
             Console.WriteLine("target: "+workflowID);
             try
             {

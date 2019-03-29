@@ -12,8 +12,11 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 {
     public interface IOrderingEnforcer
     {
-        List<TexeraTuple> PreProcess(Immutable<TexeraMessage> message);
-        ulong GetOutMessageSequenceNumber(INormalGrain nextOperator);
-        void CheckStashed(ref List<TexeraTuple> batchList, INormalGrain sender);
+        bool PreProcess(Immutable<PayloadMessage> message);
+        List<ControlMessage.ControlMessageType> PreProcess(Immutable<ControlMessage> message);
+        void IndeedReceivePayloadMessage(string sender);
+        ulong GetOutMessageSequenceNumber(string nextOperator);
+        void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, string sender);
+        void CheckStashed(ref List<ControlMessage.ControlMessageType> controlMessages, string sender);
     }
 }

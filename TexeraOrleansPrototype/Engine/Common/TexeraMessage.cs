@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Engine.Common;
 using Engine.OperatorImplementation.Common;
 using Orleans;
 using Orleans.Concurrency;
@@ -9,8 +10,12 @@ namespace Engine
 {
     public class TexeraMessage
     {
-        public ulong sequenceNumber;
-        public INormalGrain sender;
-        public List<TexeraTuple> tuples;
+        public TexeraMessage(string sender,ulong sequenceNumber)
+        {
+            SequenceNumber=sequenceNumber;
+            SenderIdentifer=sender;
+        }
+        public ulong SequenceNumber;
+        public string SenderIdentifer;
     }    
 }

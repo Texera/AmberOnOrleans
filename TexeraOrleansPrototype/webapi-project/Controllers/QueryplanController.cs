@@ -45,6 +45,12 @@ namespace webapi.Controllers
 
             JObject o = JObject.Parse(json);
             JArray operators = (JArray)o["logicalPlan"]["operators"];
+            Guid workflowID;
+            if(!Guid.TryParse(o["workflowID"].ToString(),out workflowID))
+            {
+                throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString()}");
+            }
+            Workflow workflow=new Workflow(workflowID);
             int table_id=0;
             foreach (JObject operator1 in operators)
             {
@@ -80,9 +86,10 @@ namespace webapi.Controllers
                 Operator origin = map[(string)link["origin"]];
                 Operator dest = map[(string)link["destination"]];
                 origin.AddOutOperator(dest);
+                dest.AddInOperator(origin);
             }
 
-            Workflow workflow=new Workflow(o["workflowID"].ToString(),new HashSet<Operator>(map.Values));
+            workflow.InitializeOperatorSet(new HashSet<Operator>(map.Values));
 
             List<TexeraTuple> results = ClientWrapper.Instance.DoClientWork(client, workflow).Result;
             TexeraResult texeraResult = new TexeraResult();

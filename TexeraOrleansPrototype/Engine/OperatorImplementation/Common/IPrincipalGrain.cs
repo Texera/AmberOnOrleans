@@ -1,3 +1,4 @@
+using Engine.Controller;
 using Orleans;
 using Orleans.Concurrency;
 using System;
@@ -10,11 +11,12 @@ namespace Engine.OperatorImplementation.Common
     public interface IPrincipalGrain : IGrainWithGuidKey
     {
         Task AddNextPrincipalGrain(IPrincipalGrain nextGrain);
+        Task AddPrevPrincipalGrain(IPrincipalGrain prevGrain);
         Task Pause();
         Task Resume();
-        Task Init(PredicateBase predicate);
-        Task SetPredicate(PredicateBase predicate);
-        Task<List<INormalGrain>> GetInputGrains();
+        Task Init(IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator);
+        Task<List<IWorkerGrain>> GetInputGrains();
+        Task<List<IWorkerGrain>> GetOutputGrains();
         Task Link();
         Task Start();
     }

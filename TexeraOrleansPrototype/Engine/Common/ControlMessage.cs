@@ -1,0 +1,25 @@
+using System.Collections.Generic;
+using Engine.OperatorImplementation.Common;
+using Orleans;
+using Orleans.Concurrency;
+using Orleans.Core;
+using TexeraUtilities;
+
+namespace Engine
+{
+    public class ControlMessage: TexeraMessage
+    {
+        public ControlMessage(string sender, ulong sequenceNumber, ControlMessageType type):base(sender,sequenceNumber)
+        {
+            Type=type;
+        }
+        public enum ControlMessageType
+        {
+            Pause,
+            Resume,
+            Start,
+            End,
+        }
+        public ControlMessageType Type;
+    }    
+}

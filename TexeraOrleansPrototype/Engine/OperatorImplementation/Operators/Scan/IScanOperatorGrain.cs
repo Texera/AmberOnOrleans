@@ -7,8 +7,7 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public interface IScanOperatorGrain : INormalGrain
+    public interface IScanOperatorGrain : IWorkerGrain
     {
-        Task SubmitTuples();
     }
 }

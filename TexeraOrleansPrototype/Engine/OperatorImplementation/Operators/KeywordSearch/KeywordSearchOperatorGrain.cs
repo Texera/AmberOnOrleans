@@ -16,90 +16,15 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class KeywordSearchOperatorGrain : ProcessorGrain, IKeywordSearchOperatorGrain
+    public class KeywordSearchOperatorGrain : WorkerGrain, IKeywordSearchOperatorGrain
     {
-        bool finished=false;
-        IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
-
-        public override Task OnActivateAsync()
+        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
-            // nextGrain = this.GrainFactory.GetGrain<ICountOperatorGrain>(this.GetPrimaryKey(), Constants.OperatorAssemblyPathPrefix);
-            return base.OnActivateAsync();
-        }
-
-        public override Task<Type> GetGrainInterfaceType()
-        {
-            return Task.FromResult(typeof(IKeywordSearchOperatorGrain));
-        }
-
-        public override async Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> batch)
-        {
-            string extensionKey = "";
-            //Console.WriteLine(" Keyword received batch "+batch.Value[0].seq_token);
-            if(batch.Value.Count == 0)
+            if(tuple.FieldList!=null && tuple.FieldList[0].Contains("Asia"))
             {
-                Console.WriteLine($"NOT EXPECTED: Keyword {this.GetPrimaryKey(out extensionKey)} received empty batch.");
-                return null;
+                return new List<TexeraTuple>{tuple};
             }
-
-            // if(pause == true)
-            // {
-            //     pausedRows.Add(batch);
-            //     return;
-            // }
-
-            List<TexeraTuple> batchReceived = orderingEnforcer.PreProcess(batch.Value, this);
-            List<TexeraTuple> batchToForward = new List<TexeraTuple>();
-            if(batchReceived != null)
-            {
-                foreach(TexeraTuple tuple in batchReceived)
-                {
-                    TexeraTuple ret = await Process_impl(tuple);
-                    if(ret != null)
-                    {
-                        batchToForward.Add(ret);
-                    }
-                }
-            }
-
-            List<List<TexeraTuple>> batchList = new List<List<TexeraTuple>>();
-
-            if(batchToForward.Count > 0)
-            {
-                orderingEnforcer.PostProcess(ref batchToForward, this);
-                batchList.Add(batchToForward);
-            }
-            List<List<TexeraTuple>> stashedBatches = await orderingEnforcer.ProcessStashed(this);
-            if(stashedBatches.Count > 0)
-            {
-                batchList.AddRange(stashedBatches);
-            }
-
-            if(batchList.Count > 0)
-            {
-                return batchList;
-            }
-            else
-            {
-                return null;
-            }
-        }
-
-        public override async Task<TexeraTuple> Process_impl(TexeraTuple tuple)
-        {
-            if(tuple.id != -1 && !tuple.region.Contains(((KeywordPredicate)predicate).GetQuery()))
-            {
-                return null;
-            }
-            
-            if (tuple.id == -1)
-            {
-                Console.WriteLine("Ordered Keyword done");
-                finished = true;
-                return tuple;
-            }
-
-            return tuple;
+            return null;
         }
     }
 }

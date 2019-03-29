@@ -7,11 +7,12 @@ using Orleans;
 
 namespace Engine.OperatorImplementation.Common
 {
-    public abstract class Operator
+    public class Operator
     {
         public readonly Guid OperatorGuid;
         public PredicateBase Predicate {get; set;}
         private HashSet<Operator> outOperators=new HashSet<Operator>();
+        private HashSet<Operator> inOperators=new HashSet<Operator>();
         public IPrincipalGrain PrincipalGrain=null;
         public readonly bool IsStartOperator;
         public bool IsEndOperator {get{return outOperators.Count==0;}}
@@ -20,23 +21,34 @@ namespace Engine.OperatorImplementation.Common
         {
             outOperators.Add(operatorToAdd);
         }
-
+        public void AddInOperator(Operator operatorToAdd)
+        {
+            inOperators.Add(operatorToAdd);
+        }
         public HashSet<Operator> GetAllOutOperators()
         {
             return outOperators;
         }
-        
+        public HashSet<Operator> GetAllInOperators()
+        {
+            return inOperators;
+        }
         public virtual void SetUpPrincipalGrain(IGrainFactory factory)
         {
             PrincipalGrain = factory.GetGrain<IPrincipalGrain>(OperatorGuid,"Principal");
         }
-        public async Task LinkToDownstreamPrincipleGrains()
+        public async Task LinkPrincipleGrain()
         {
-            Trace.Assert(PrincipalGrain!=null, "PrincipalGrain should not be null when calling LinkToDownstreamPrincipleGrains()");
+            Trace.Assert(PrincipalGrain!=null, "PrincipalGrain should not be null when calling LinkPrincipleGrain()");
             foreach(Operator o in outOperators)
             {
-                Trace.Assert(o.PrincipalGrain!=null,"PricipalGrain of the next Operator should not be null when calling LinkToDownstreamPrincipleGrains()");
+                Trace.Assert(o.PrincipalGrain!=null,"PricipalGrain of the next Operator should not be null when calling LinkPrincipleGrain()");
                 await PrincipalGrain.AddNextPrincipalGrain(o.PrincipalGrain);
+            }
+            foreach(Operator o in inOperators)
+            {
+                Trace.Assert(o.PrincipalGrain!=null,"PricipalGrain of the next Operator should not be null when calling LinkPrincipleGrain()");
+                await PrincipalGrain.AddPrevPrincipalGrain(o.PrincipalGrain);
             }
         }
         
@@ -63,10 +75,10 @@ namespace Engine.OperatorImplementation.Common
             return OperatorGuid.GetHashCode();
         }
 
-        public Guid GetStreamGuid()
-        {
-            return OperatorGuid;
-        }
+        // public Guid GetStreamGuid()
+        // {
+        //     return OperatorGuid;
+        // }
 
         public async Task Link()
         {

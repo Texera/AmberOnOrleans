@@ -8,91 +8,140 @@ using System.Threading.Tasks;
 using Engine.OperatorImplementation.Operators;
 using TexeraUtilities;
 using System.Collections.ObjectModel;
+using Engine.Controller;
+using System.Linq;
 
 namespace Engine.OperatorImplementation.Common
 {
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
-        protected virtual int DefaultNumGrainsInOneLayer { get { return 10; } }
-        private List<IPrincipalGrain> NextPrincipalGrains = new List<IPrincipalGrain>();
+        public virtual int DefaultNumGrainsInOneLayer { get { return 10; } }
+        private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
+        private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
         protected bool isPaused = false;
-        protected List<INormalGrain> operatorGrains = new List<INormalGrain>();
-        protected List<INormalGrain> inputGrains = new List<INormalGrain>();
-        protected List<INormalGrain> outputGrains = new List<INormalGrain>();
-        private PredicateBase predicate = null;
+        protected List<List<IWorkerGrain>> operatorGrains = new List<List<IWorkerGrain>>();
+        protected List<IWorkerGrain> outputGrains {get{return operatorGrains.Last();}}
+        protected List<IWorkerGrain> inputGrains {get{return operatorGrains.First();}}
+        private PredicateBase predicate = null; 
+        private IPrincipalGrain self=null;
+        private Guid workflowID;
+        private IControllerGrain controllerGrain;
+        private ulong sequenceNumber=0;
 
 
-        public virtual INormalGrain GetOperatorGrain(string extension)
+        public virtual IWorkerGrain GetOperatorGrain(string extension)
         {
             throw new NotImplementedException();
         }
 
         public Task AddNextPrincipalGrain(IPrincipalGrain nextGrain)
         {
-            NextPrincipalGrains.Add(nextGrain);
+            nextPrincipalGrains.Add(nextGrain);
             return Task.CompletedTask;
         }
 
-        public Task SetPredicate(PredicateBase predicate)
+        public Task AddPrevPrincipalGrain(IPrincipalGrain prevGrain)
         {
-            this.predicate=predicate;
+            prevPrincipalGrains.Add(prevGrain);
             return Task.CompletedTask;
         }
 
-        public virtual async Task Init(PredicateBase predicate)
+        public async Task Init(IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator)
         {
+            this.controllerGrain=controllerGrain;
+            this.workflowID=workflowID;
+            this.predicate=currentOperator.Predicate;
+            this.self=currentOperator.PrincipalGrain;
+            BuildWorkerTopology();
+            foreach(List<IWorkerGrain> grainList in operatorGrains)
+            {
+                foreach(IWorkerGrain grain in grainList)
+                {
+                    await grain.Init(grain,predicate,self);
+                }
+            }
+        }
+
+        public virtual void BuildWorkerTopology()
+        {
+            operatorGrains=new List<List<IWorkerGrain>>(1);
             //one-layer init
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
-                INormalGrain grain=GetOperatorGrain(i.ToString());
-                await grain.Init(predicate);
-                operatorGrains.Add(grain);
-                inputGrains.Add(grain);
-                outputGrains.Add(grain);
+                IWorkerGrain grain=GetOperatorGrain(i.ToString());
+                operatorGrains[0].Add(grain);
             }
             // for multiple-layer init, do some linking inside...
         }
 
         public async Task Link()
         {
-            if(NextPrincipalGrains.Count!=0)
+            if(nextPrincipalGrains.Count!=0)
             {
-                foreach(IPrincipalGrain principal in NextPrincipalGrains)
+                foreach(IPrincipalGrain principal in nextPrincipalGrains)
                 {
-                    List<INormalGrain> nextInputGrains=await principal.GetInputGrains();
-                    await Link2Layers(outputGrains,nextInputGrains);
+                    List<IWorkerGrain> nextInputGrains=await principal.GetInputGrains();
+                    await Link2Layers(principal.GetPrimaryKey(),outputGrains,nextInputGrains);
+                }
+                int count=0;
+                foreach(IPrincipalGrain principal in prevPrincipalGrains)
+                {
+                    List<IWorkerGrain> prevOutputGrains=await principal.GetOutputGrains();
+                    count+=prevOutputGrains.Count;
+                }
+                if(count>0)
+                {
+                    foreach(IWorkerGrain grain in inputGrains)
+                    {
+                        await grain.SetTargetEndFlagCount(count);
+                    }
                 }
             }
             else
             {
                 //last operator, build stream
                 var streamProvider = GetStreamProvider("SMSProvider");
-                foreach(INormalGrain grain in outputGrains)
-                    await grain.AddNextStream(streamProvider.GetStream<Immutable<TexeraMessage>>(this.GetPrimaryKey(),"OutputStream"));
+                foreach(IWorkerGrain grain in outputGrains)
+                    await grain.InitializeOutputStream(streamProvider.GetStream<Immutable<TexeraMessage>>(workflowID,"OutputStream"));
             }
         }
 
-        protected async Task Link2Layers(List<INormalGrain> currentLayer,List<INormalGrain> nextLayer)
+        protected async Task Link2Layers(Guid nextOperatorGuid, List<IWorkerGrain> currentLayer,List<IWorkerGrain> nextLayer)
         {
             for(int i=0;i<currentLayer.Count;++i)
             {
-                await currentLayer[i].Link(await currentLayer[i].GetNextGrains(nextLayer));
+                await currentLayer[i].AddNextGrainList(nextOperatorGuid,nextLayer);
             }
         }
 
-        public Task<List<INormalGrain>> GetInputGrains()
+        public Task<List<IWorkerGrain>> GetInputGrains()
         {
             return Task.FromResult(inputGrains);
+        }
+
+        public Task<List<IWorkerGrain>> GetOutputGrains()
+        {
+            return Task.FromResult(outputGrains);
+        }
+
+        public string MakeIndentifier(IPrincipalGrain grain)
+        {
+            string extension;
+            return grain.GetPrimaryKey(out extension).ToString()+extension;
         }
 
         public virtual async Task Pause()
         {
             isPaused = true;
-            foreach(INormalGrain grain in operatorGrains)
+            foreach(List<IWorkerGrain> grainList in operatorGrains)
             {
-                await grain.Pause();
+                foreach(IWorkerGrain grain in grainList)
+                {
+                    await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(MakeIndentifier(this),sequenceNumber,ControlMessage.ControlMessageType.Pause)));
+                }
             }
-             foreach(IPrincipalGrain next in NextPrincipalGrains)
+            sequenceNumber++;
+             foreach(IPrincipalGrain next in nextPrincipalGrains)
             {
                 await SendPauseToNextPrincipalGrain(next,0);
             }
@@ -110,14 +159,18 @@ namespace Engine.OperatorImplementation.Common
         public virtual async Task Resume()
         {
             isPaused = false;
-            foreach(IPrincipalGrain next in NextPrincipalGrains)
+            foreach(IPrincipalGrain next in nextPrincipalGrains)
             {
                 await SendResumeToNextPrincipalGrain(next,0);
             }
-            foreach(INormalGrain grain in operatorGrains)
+            foreach(List<IWorkerGrain> grainList in operatorGrains)
             {
-                await grain.Resume();
+                foreach(IWorkerGrain grain in grainList)
+                {
+                 await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(MakeIndentifier(this),sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                }
             }
+            sequenceNumber++;
         }
 
         private async Task SendResumeToNextPrincipalGrain(IPrincipalGrain nextGrain, int retryCount)
@@ -131,10 +184,11 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Start()
         {
-            foreach(INormalGrain op in operatorGrains)
+            foreach(IWorkerGrain grain in inputGrains)
             {
-                await op.Start();
+                 await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(MakeIndentifier(this),sequenceNumber,ControlMessage.ControlMessageType.Start)));
             }
+            sequenceNumber++;
         }
     }
 }

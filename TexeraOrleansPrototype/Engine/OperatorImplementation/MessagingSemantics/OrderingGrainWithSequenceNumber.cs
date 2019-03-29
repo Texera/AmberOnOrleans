@@ -13,77 +13,139 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 {
     public class OrderingGrainWithSequenceNumber : IOrderingEnforcer
     {
-        private Dictionary<INormalGrain,Dictionary<ulong, List<TexeraTuple>>> stashed = new Dictionary<INormalGrain, Dictionary<ulong, List<TexeraTuple>>>();
-        private Dictionary<INormalGrain,ulong> in_map=new Dictionary<INormalGrain, ulong>();
-        private Dictionary<INormalGrain,ulong> out_map=new Dictionary<INormalGrain, ulong>();
-        public List<TexeraTuple> PreProcess(Immutable<TexeraMessage> message)
+        private Dictionary<string,Dictionary<ulong, Pair<bool,List<TexeraTuple>>>> stashedPayloadMessages = new Dictionary<string, Dictionary<ulong, Pair<bool, List<TexeraTuple>>>>();
+        private Dictionary<string,Dictionary<ulong, ControlMessage.ControlMessageType>> stashedControlMessages = new Dictionary<string, Dictionary<ulong, ControlMessage.ControlMessageType>>();
+        private Dictionary<string,ulong> inSequenceNumberMap=new Dictionary<string, ulong>();
+        private Dictionary<string,ulong> outSequenceNumberMap=new Dictionary<string, ulong>();
+        private enum MessageStatus
         {
-            INormalGrain sender=message.Value.sender;
-            ulong sequenceNum=message.Value.sequenceNumber;
-            if(!in_map.ContainsKey(sender))
-            {
-                in_map[sender]=0;
-            }
-            //string extensionKey = "";      
-            if(sequenceNum < in_map[sender])
-            {
-                // de-dup messages
-                //Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} {extensionKey} received duplicate message with sequence number {seq_token}: expected sequence number {in_map[sender]}");
-                return null;
-            }
-            if (sequenceNum != in_map[sender])
-            {
-                //Console.WriteLine($"Grain {currentOperator.GetPrimaryKey(out extensionKey)} {extensionKey} received message ahead in sequence, being put in stash: sequence number {seq_token}, expected sequence number {in_map[sender]}");                              
-                if(!stashed.ContainsKey(sender))
-                {
-                    stashed[sender]=new Dictionary<ulong, List<TexeraTuple>>();
-                }
-                stashed[sender].Add(sequenceNum, message.Value.tuples);
-                return null;           
-            }
-            else
-            {
-                in_map[sender]++;
-                return message.Value.tuples;
-            }
-
+            Vaild,
+            Duplicated,
+            Ahead,
         }
 
-        public ulong GetOutMessageSequenceNumber(INormalGrain nextOperator)
+        private MessageStatus CheckMessage(string sender, ulong sequenceNum)
         {
-            if(out_map.ContainsKey(nextOperator))
+            if(!inSequenceNumberMap.ContainsKey(sender))
             {
-                out_map.Add(nextOperator,0);
+                inSequenceNumberMap[sender]=0;
+            }  
+            ulong currentSequenceNumber=inSequenceNumberMap[sender];
+            if(sequenceNum < currentSequenceNumber)
+            {
+                // de-dup messages
+                return MessageStatus.Duplicated;
+            }
+            if (sequenceNum != currentSequenceNumber)
+            {
+                return MessageStatus.Ahead;           
+            }
+            return MessageStatus.Vaild;
+        }
+
+        public bool PreProcess(Immutable<PayloadMessage> message)
+        {
+            string sender=message.Value.SenderIdentifer;
+            ulong sequenceNum=message.Value.SequenceNumber;
+            switch(CheckMessage(sender,sequenceNum))
+            {
+                case MessageStatus.Vaild:
+                    return true;
+                case MessageStatus.Ahead:
+                    if(!stashedPayloadMessages.ContainsKey(sender))
+                    {
+                        stashedPayloadMessages[sender]=new Dictionary<ulong, Pair<bool, List<TexeraTuple>>>();
+                    }
+                    stashedPayloadMessages[sender].Add(sequenceNum, new Pair<bool, List<TexeraTuple>>(message.Value.IsEnd,message.Value.Payload));
+                    break;
+                case MessageStatus.Duplicated:
+                    break;
+            }
+            return false;
+        }
+
+        public ulong GetOutMessageSequenceNumber(string nextOperator)
+        {
+            if(outSequenceNumberMap.ContainsKey(nextOperator))
+            {
+                outSequenceNumberMap.Add(nextOperator,0);
                 return 0;
             }
             else
             {
-                ulong res=out_map[nextOperator]++;
+                ulong res=outSequenceNumberMap[nextOperator]++;
                 return res;
             }
         }       
 
-        public void CheckStashed(ref List<TexeraTuple> batchList,INormalGrain sender)
+        public void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, string sender)
         {
-            if(stashed.ContainsKey(sender))
+            if(stashedPayloadMessages.ContainsKey(sender))
             {
-                if(!in_map.ContainsKey(sender))
+                if(!inSequenceNumberMap.ContainsKey(sender))
                 {
-                    in_map[sender]=0;
+                    inSequenceNumberMap[sender]=0;
                 }
-                while(stashed[sender].ContainsKey(in_map[sender]))
+                ulong currentSequenceNumber=inSequenceNumberMap[sender];
+                Dictionary<ulong, Pair<bool,List<TexeraTuple>>> currentMap=stashedPayloadMessages[sender];
+                while(currentMap.ContainsKey(currentSequenceNumber))
                 {
                     if(batchList==null)
                     {
                         batchList=new List<TexeraTuple>();
                     }
-                    List<TexeraTuple> batch = stashed[sender][in_map[sender]];
-                    batchList.AddRange(batch);
-                    stashed[sender].Remove(in_map[sender]);
-                    in_map[sender]++;
+                    Pair<bool, List<TexeraTuple>> pair = currentMap[currentSequenceNumber];
+                    isEnd |= pair.First;
+                    batchList.AddRange(pair.Second);
+                    currentMap.Remove(currentSequenceNumber);
+                    inSequenceNumberMap[sender]++;
                 }
             }
         }
 
+        public List<ControlMessage.ControlMessageType> PreProcess(Immutable<ControlMessage> message)
+        {
+            string sender=message.Value.SenderIdentifer;
+            ulong sequenceNum=message.Value.SequenceNumber;
+            switch(CheckMessage(sender,sequenceNum))
+            {
+                case MessageStatus.Vaild:
+                    return new List<ControlMessage.ControlMessageType>{message.Value.Type};
+                case MessageStatus.Ahead:
+                    if(!stashedControlMessages.ContainsKey(sender))
+                    {
+                        stashedControlMessages[sender]=new Dictionary<ulong, ControlMessage.ControlMessageType>();
+                    }
+                    stashedControlMessages[sender].Add(sequenceNum, message.Value.Type);
+                    break;
+                case MessageStatus.Duplicated:
+                    break;
+            }
+            return null;
+        }
+
+        public void CheckStashed(ref List<ControlMessage.ControlMessageType> controlMessages, string sender)
+        {
+            if(stashedControlMessages.ContainsKey(sender))
+            {
+                if(!inSequenceNumberMap.ContainsKey(sender))
+                {
+                    inSequenceNumberMap[sender]=0;
+                }
+                ulong currentSequenceNumber=inSequenceNumberMap[sender];
+                Dictionary<ulong, ControlMessage.ControlMessageType> currentMap=stashedControlMessages[sender];
+                while(currentMap.ContainsKey(currentSequenceNumber))
+                {
+                    controlMessages.Add(currentMap[currentSequenceNumber]);
+                    currentMap.Remove(currentSequenceNumber);
+                    inSequenceNumberMap[sender]++;
+                }
+            }
+        }
+
+        public void IndeedReceivePayloadMessage(string sender)
+        {
+            inSequenceNumberMap[sender]++;
+        }
     }
 }

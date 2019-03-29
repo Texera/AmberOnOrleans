@@ -3,21 +3,27 @@ using Engine.OperatorImplementation.Common;
 using Engine.Controller;
 using Orleans;
 using System.Threading.Tasks;
+using System;
 
 namespace Engine.WorkflowImplementation
 {
     public class Workflow
     {
-        public readonly HashSet<Operator> StartOperators = new HashSet<Operator>();
-        public readonly HashSet<Operator> WorkflowGraph;
-        public readonly HashSet<Operator> EndOperators=new HashSet<Operator>();
-        public readonly string WorkflowID;
-        public IControllerGrain workflowController=null;
+        public HashSet<Operator> StartOperators = new HashSet<Operator>();
+        public HashSet<Operator> AllOperators;
+        public HashSet<Operator> EndOperators=new HashSet<Operator>();
+        public readonly Guid WorkflowID;
+        private IControllerGrain workflowControllerGrain=null;
 
-        public Workflow(string workflowID, HashSet<Operator> allOperators)
+        public Workflow(Guid workflowID)
         {
-            this.WorkflowGraph=allOperators;
             this.WorkflowID=workflowID;
+            
+        }
+
+        public void InitializeOperatorSet(HashSet<Operator> allOperators)
+        {
+            this.AllOperators=allOperators;
             foreach(Operator o in allOperators)
             {
                 if(o.GetAllOutOperators().Count==0)
@@ -29,8 +35,9 @@ namespace Engine.WorkflowImplementation
 
         public async Task Init(IGrainFactory factory)
         {
-            workflowController=factory.GetGrain<IControllerGrain>(WorkflowID);
-            await workflowController.Init(WorkflowGraph);
+            workflowControllerGrain=factory.GetGrain<IControllerGrain>(WorkflowID);
+            await workflowControllerGrain.Init(workflowControllerGrain,WorkflowID,AllOperators);
+
         }
 
         public async Task Pause()
@@ -47,6 +54,12 @@ namespace Engine.WorkflowImplementation
             {
                 await o.Resume();
             }
+        }
+
+
+        public Guid GetStreamGuid()
+        {
+            return WorkflowID;
         }
     }
 }
