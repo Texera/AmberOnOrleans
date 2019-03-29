@@ -48,7 +48,7 @@ namespace OrleansClient
                 Console.WriteLine(e);
             }
         }
-        private Dictionary<string,Workflow> IDToWorkflowEntry = new Dictionary<string,Workflow>();
+        private Dictionary<Guid,Workflow> IDToWorkflowEntry = new Dictionary<Guid,Workflow>();
         private const int initializeAttemptsBeforeFailing = 5;
         private int attempt = 0;
 
@@ -90,7 +90,7 @@ namespace OrleansClient
             return true;
         }
 
-        public async Task PauseWorkflow(String workflowID)
+        public async Task PauseWorkflow(Guid workflowID)
         {
             if(IDToWorkflowEntry.ContainsKey(workflowID))
             {
@@ -102,7 +102,7 @@ namespace OrleansClient
             }
         }
 
-        public async Task ResumeWorkflow(String workflowID)
+        public async Task ResumeWorkflow(Guid workflowID)
         {
             if(IDToWorkflowEntry.ContainsKey(workflowID))
             {
@@ -119,11 +119,8 @@ namespace OrleansClient
             await workflow.Init(client);
             var streamProvider = client.GetStreamProvider("SMSProvider");
             var so = new StreamObserver();
-            foreach(Operator o in workflow.EndOperators)
-            {
-                var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(o.GetStreamGuid(), "OutputStream");
-                await stream.SubscribeAsync(so);
-            }
+            var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(workflow.GetStreamGuid(), "OutputStream");
+            await stream.SubscribeAsync(so);
             instance.IDToWorkflowEntry[workflow.WorkflowID]=workflow;
             await so.Start();
             foreach(Operator op in workflow.StartOperators)

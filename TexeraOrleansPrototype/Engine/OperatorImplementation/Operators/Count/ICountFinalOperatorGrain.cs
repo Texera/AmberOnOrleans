@@ -7,10 +7,8 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public interface ICountFinalOperatorGrain : INormalGrain
+    public interface ICountFinalOperatorGrain : IWorkerGrain
     {
-        // Task SetAggregatorLevel(bool isIntermediate);
-        Task SubmitIntermediateAgg(int aggregation);
         
     }
 

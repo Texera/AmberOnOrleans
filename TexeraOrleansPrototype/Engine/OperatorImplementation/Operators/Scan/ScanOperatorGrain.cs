@@ -11,120 +11,49 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class ScanOperatorGrain : NormalGrain, IScanOperatorGrain
+    public class ScanOperatorGrain : WorkerGrain, IScanOperatorGrain
     {
         private ulong start,end,seq_number=0,tuple_counter=0;
         private ScanStreamReader reader;
-        public override Task OnActivateAsync()
+        private int tableId;
+
+        protected override void Start()
         {
-            return base.OnActivateAsync();
+            StartGenerate(0);
         }
 
-        public override async Task PauseGrain()
+        protected override void Resume()
         {
-            pause=true;
-            await nextGrain.PauseGrain();
+            base.Resume();
+            StartGenerate(0);
         }
 
-        public override async Task ResumeGrain()
+        protected override List<TexeraTuple> GenerateTuples()
         {
-            pause=false;
-            await nextGrain.ResumeGrain();
-            if(start<=end)
+            List<TexeraTuple> tuples=new List<TexeraTuple>();
+            int i=0;
+            while(i<BatchingLimit)
             {
-                string extensionKey = "";
-                Guid primaryKey=this.GetPrimaryKey(out extensionKey);
-                IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
-                await TrySubmitTuples(0,self);
-            }
-        }
-
-
-        private async Task TrySubmitTuples(int retryCount, IScanOperatorGrain self)
-        {
-            self.SubmitTuples().ContinueWith((t) =>
-            {
-                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                    TrySubmitTuples(retryCount+1, self);
-            });
-        }
-
-        private async Task TrySendOneBatch(Immutable<List<TexeraTuple>> batch,int retryCount)
-        {
-            nextGrain.ReceiveTuples(batch,nextGrain).ContinueWith((t)=>
-            {
-                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                    TrySendOneBatch(batch,retryCount+1);
-            });
-        } 
-
-
-
-        public async Task SubmitTuples() 
-        {
-            String exKey = "";
-            Console.WriteLine($"Start method received by scan grain {this.GetPrimaryKey(out exKey)} - {exKey}");
-            if(pause)
-            {
-                return;
-            }
-            try
-            {
-                List<TexeraTuple> batch = new List<TexeraTuple>();
-                for (int i = 0; i <Constants.batchSize;)
+                TexeraTuple tuple;
+                if(ReadTuple(out tuple))
                 {
-                    if(start>end)break;
-                    TexeraTuple tx;
-                    if(ReadTuple(out tx))
-                    {
-                        batch.Add(tx);
-                        ++i;
-                    }
-                }
-
-                // send this batch
-                if(batch.Count>0)
-                {
-                    Console.WriteLine("Scan" + " sending "+seq_number.ToString());
-                    batch[0].seq_token=seq_number++;
-                    await TrySendOneBatch(batch.AsImmutable(),0);
-                    batch = new List<TexeraTuple>();
-                }
-
-                // Grain sends a message to itself to send the next batch
-                if(start <= end)
-                {
-                    string extensionKey = "";
-                    Guid primaryKey=this.GetPrimaryKey(out extensionKey);
-                    IScanOperatorGrain self=GrainFactory.GetGrain<IScanOperatorGrain>(primaryKey,extensionKey);
-                    await TrySubmitTuples(0,self);
-                }
-                else
-                {
-                    reader.Close();
-                    string extensionKey = "";
-                    Console.WriteLine("Scan " + (this.GetPrimaryKey(out extensionKey)).ToString() +" "+extensionKey + " sending done");
-                    Console.WriteLine("current offset: "+start.ToString()+" end offset: "+end.ToString());
-                    Console.WriteLine("tuple count: "+tuple_counter.ToString());
-                    batch.Add(new TexeraTuple(seq_number ,-1, null));
-                    await TrySendOneBatch(batch.AsImmutable(),0);
+                    tuples.Add(tuple);
+                    i++;
                 }
             }
-            catch(Exception ex)
-            {
-                Console.WriteLine("EXCEPTION in Sending Tuples - "+ ex.ToString());
-            }
+            return tuples;
         }
+
         
-        
-        
-        public override Task Init()
+
+        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
+            base.Init(self,predicate,principalGrain);
             ulong filesize=((ScanPredicate)predicate).GetFileSize();
             string extensionKey = "";
             Guid key = this.GetPrimaryKey(out extensionKey);
             ulong i=UInt64.Parse(extensionKey);
-            ulong num_grains=(ulong)((ScanPredicate)predicate).GetNumberOfGrains();
+            ulong num_grains=(ulong)(principalGrain.GetInputGrains().Result.Count);
             ulong partition=filesize/num_grains;
             ulong start_byte=i*partition;
             ulong end_byte=num_grains-1==i?filesize:(i+1)*partition;
@@ -148,9 +77,7 @@ namespace Engine.OperatorImplementation.Operators
             {
                 ulong ByteCount;
                 string res = reader.ReadLine(out ByteCount);
-                //Console.WriteLine(res);
                 start += ByteCount;
-                //Console.WriteLine("offset: "+start+" length: "+res.Length);
                 if (reader.IsEOF())
                 {
                     start = end + 1;
@@ -159,7 +86,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 try
                 {
-                    tx=new TexeraTuple(tuple_counter, (int)tuple_counter, res.Split(","));
+                    tx=new TexeraTuple(tableId, res.Split(","));
                     ++tuple_counter;
                     return true;
                 }

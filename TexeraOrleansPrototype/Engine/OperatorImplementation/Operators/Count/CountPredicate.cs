@@ -7,10 +7,5 @@ namespace Engine.OperatorImplementation.Operators
         public CountPredicate()
         {
         }
-
-        public override Operator GetNewOperator(int numberOfGrains)
-        {
-            return new CountOperator(this, numberOfGrains);
-        }
     }
 }

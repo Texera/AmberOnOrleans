@@ -43,7 +43,7 @@ namespace OrleansClient
             resultsToRet.AddRange(results);
             for(int i=0; i<results.Count; i++)
             {
-                Console.WriteLine($"=={results[i].seq_token}, {results[i].id}, {results[i].region}, {results[i].unit_cost}, {results[i].unit_price}, {results[i].units_sold}== count received: by client");
+                Console.WriteLine($"=={results[i].CustomResult}, {results[i].TableID}, {results[i].FieldList}== count received: by client");
             }
 
             return Task.CompletedTask;

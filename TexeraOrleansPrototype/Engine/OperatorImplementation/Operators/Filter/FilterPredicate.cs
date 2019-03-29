@@ -15,10 +15,5 @@ namespace Engine.OperatorImplementation.Operators
         {
             return threshold;
         }
-
-        public override Operator GetNewOperator(int numberOfGrains)
-        {
-            return new FilterOperator(this, numberOfGrains);
-        }
     }
 }

@@ -11,7 +11,7 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class FilterPrinicipalGrain : PrincipalGrain, IFilterPrincipalGrain
     {
-        public override INormalGrain GetOperatorGrain(string extension)
+        public override IWorkerGrain GetOperatorGrain(string extension)
         {
             return this.GrainFactory.GetGrain<IFilterOperatorGrain>(this.GetPrimaryKey(), extension);
         }

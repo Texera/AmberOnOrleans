@@ -16,95 +16,16 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class FilterOperatorGrain : ProcessorGrain, IFilterOperatorGrain
+    public class FilterOperatorGrain : WorkerGrain, IFilterOperatorGrain
     {
-        bool finished = false;
-        IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
-
-        public override Task OnActivateAsync()
+        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
-            return base.OnActivateAsync();
+            if(tuple.FieldList!=null && int.Parse(tuple.FieldList[9])>50)
+            {
+                return new List<TexeraTuple>{tuple};
+            }
+            return null;
         }
-
-        public override Task<Type> GetGrainInterfaceType()
-        {
-            return Task.FromResult(typeof(IFilterOperatorGrain));
-        }
-
-        public override async Task<List<List<TexeraTuple>>> Process(Immutable<List<TexeraTuple>> batch)
-        {
-            string extensionKey = "";
-            // Console.Write(" Filter received batch ");
-            if(batch.Value.Count == 0)
-            {
-                Console.WriteLine($"NOT EXPECTED: Filter {this.GetPrimaryKey(out extensionKey)} received empty batch.");
-                return null;
-            }
-
-            // if(pause == true)
-            // {
-            //     pausedRows.Add(batch);
-            //     return;
-            // }
-
-            List<TexeraTuple> batchReceived = orderingEnforcer.PreProcess(batch.Value, this);
-            List<TexeraTuple> batchToForward = new List<TexeraTuple>();
-            if(batchReceived != null)
-            {
-                foreach(TexeraTuple tuple in batchReceived)
-                {
-                    TexeraTuple ret = await Process_impl(tuple);
-                    if(ret != null)
-                    {
-                        batchToForward.Add(ret);
-                    }
-                }
-            }
-
-            List<List<TexeraTuple>> batchList = new List<List<TexeraTuple>>();
-
-            if(batchToForward.Count > 0)
-            {
-                orderingEnforcer.PostProcess(ref batchToForward, this);
-                batchList.Add(batchToForward);
-            }
-            List<List<TexeraTuple>> stashedBatches = await orderingEnforcer.ProcessStashed(this);
-            if(stashedBatches.Count > 0)
-            {
-                batchList.AddRange(stashedBatches);
-            }
-
-            if(batchList.Count > 0)
-            {
-                return batchList;
-            }
-            else
-            {
-                return null;
-            }
-            // var streamProvider = GetStreamProvider("SMSProvider");
-            // var stream = streamProvider.GetStream<Immutable<List<TexeraTuple>>>(this.GetPrimaryKey(out extensionKey), "Random");
-        }
-
-        public override async Task<TexeraTuple> Process_impl(TexeraTuple tuple)
-        {
-            if(tuple.id != -1 && tuple.unit_cost < ((FilterPredicate)predicate).GetThreshold())
-            {
-                return null;
-            }
-
-            // bool cond = Program.conditions_on ? (row as Tuple).unit_cost > 50 : true;
-            if (tuple.id == -1)
-            {
-                // Console.WriteLine("Ordered Filter done");
-                finished = true;
-                return tuple;
-            }
-
-            return tuple;
-        }
-
-        
     }
 
 }

@@ -7,7 +7,7 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public interface IFilterOperatorGrain : INormalGrain
+    public interface IFilterOperatorGrain : IWorkerGrain
     {
     }
 
