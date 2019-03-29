@@ -30,7 +30,7 @@ namespace Engine.OperatorImplementation.Common
         protected bool isPaused = false;
         protected List<Immutable<PayloadMessage>> pausedMessages = new List<Immutable<PayloadMessage>>();
         protected Queue<TexeraTuple> outputRows = new Queue<TexeraTuple>();
-        protected IAsyncStream<Immutable<TexeraMessage>> stream = null;
+        protected IAsyncStream<Immutable<PayloadMessage>> stream = null;
         protected Dictionary<Guid,Pair<int,List<IWorkerGrain>>> nextGrains = new Dictionary<Guid, Pair<int,List<IWorkerGrain>>>();
         protected IPrincipalGrain principalGrain;//for reporting status
         protected IWorkerGrain self = null;
@@ -56,7 +56,7 @@ namespace Engine.OperatorImplementation.Common
         }
 
 
-        public Task InitializeOutputStream(IAsyncStream<Immutable<TexeraMessage>> stream)
+        public Task InitializeOutputStream(IAsyncStream<Immutable<PayloadMessage>> stream)
         {
             this.stream=stream;
             return Task.CompletedTask;
@@ -72,27 +72,28 @@ namespace Engine.OperatorImplementation.Common
 
         public Task Process(Immutable<PayloadMessage> message)
         {
+            Console.WriteLine(MakeIdentifier(self) + " process message from "+message.Value.SenderIdentifer +"with seqnum "+message.Value.SequenceNumber);
             List<TexeraTuple> batch;
             bool isEnd;
             PreProcess(message,out batch,out isEnd);
-            List<TexeraTuple> output=ProcessBatch(batch);
-            if(output!=null)
+            Console.WriteLine("isEnd: "+isEnd.ToString());
+            List<TexeraTuple> output=new List<TexeraTuple>();
+            if(batch!=null)
             {
-                BuildPayloadMessagesThenSend(output,isEnd);
+                ProcessBatch(batch,ref output);
             }
+            BuildPayloadMessagesThenSend(output,isEnd);
             return Task.CompletedTask;
         }
 
-        protected virtual List<TexeraTuple> ProcessBatch(List<TexeraTuple> batch)
+        protected virtual void ProcessBatch(List<TexeraTuple> batch, ref List<TexeraTuple> output)
         {
-            List<TexeraTuple> result=new List<TexeraTuple>();
             foreach(TexeraTuple tuple in batch)
             {
                 List<TexeraTuple> results=ProcessTuple(tuple);
                 if(results!=null)
-                    result.AddRange(results);
+                    output.AddRange(results);
             }
-            return result.Count==0?null:result;
         }
 
         protected virtual List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
@@ -135,6 +136,7 @@ namespace Engine.OperatorImplementation.Common
 
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
+            Console.WriteLine(MakeIdentifier(self) + " received message from "+message.Value.SenderIdentifer+"with seqnum "+message.Value.SequenceNumber);
             if(orderingEnforcer.PreProcess(message))
             {
                 if(isPaused)
@@ -145,6 +147,10 @@ namespace Engine.OperatorImplementation.Common
                 {
                     SendPayloadMessageToSelf(message, 0);
                 }
+            }
+            else
+            {
+                Console.WriteLine(MakeIdentifier(self)+" error");
             }
             return Task.CompletedTask;
         }
@@ -159,7 +165,7 @@ namespace Engine.OperatorImplementation.Common
             });
         }
 
-        protected void BuildPayloadMessagesThenSend(List<TexeraTuple> outputBatch,bool isEnd)
+        protected async void BuildPayloadMessagesThenSend(List<TexeraTuple> outputBatch,bool isEnd)
         {
             if(isEnd)
             {
@@ -172,7 +178,12 @@ namespace Engine.OperatorImplementation.Common
                     entry.Value.First+=1;
                     IWorkerGrain receiver=entry.Value.Second[entry.Value.First%entry.Value.Second.Count];
                     message.SequenceNumber=orderingEnforcer.GetOutMessageSequenceNumber(MakeIdentifier(receiver));
-                    SendPayloadMessageTo(receiver,message.AsImmutable(),0);
+                    Console.WriteLine(MakeIdentifier(self)+" sending message to "+MakeIdentifier(receiver) +"with seqnum "+message.SequenceNumber);
+                    await SendPayloadMessageTo(receiver,message.AsImmutable(),0);
+                }
+                if(stream != null)
+                {
+                    await stream.OnNextAsync(message.AsImmutable());
                 }
             }
             if(currentEndFlagCount==targetEndFlagCount)
@@ -181,38 +192,50 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        protected void BuildPayloadMessagesWithEndFlagThenSend()
+        protected async void BuildPayloadMessagesWithEndFlagThenSend()
         {
-            PayloadMessage message = new PayloadMessage(MakeIdentifier(this),0,null,true);
+            PayloadMessage message = new PayloadMessage(MakeIdentifier(self),0,null,true);
             foreach(KeyValuePair<Guid, Pair<int,List<IWorkerGrain>>> entry in nextGrains)
             {
                 foreach(IWorkerGrain grain in entry.Value.Second)
                 {
                     message.SequenceNumber=orderingEnforcer.GetOutMessageSequenceNumber(MakeIdentifier(grain));
-                    SendPayloadMessageTo(grain,message.AsImmutable(),0);
+                    Console.WriteLine(MakeIdentifier(self)+" sending end message to "+MakeIdentifier(grain) +"with seqnum "+message.SequenceNumber);
+                    await SendPayloadMessageTo(grain,message.AsImmutable(),0);
+                }
+                if(stream != null)
+                {
+                    await stream.OnNextAsync(message.AsImmutable());
                 }
             }
         }
 
         protected virtual void MakeFinalPayloadMessage(ref List<PayloadMessage> outputMessages)
         {
-            List<TexeraTuple> payload=new List<TexeraTuple>(outputRows);
-            outputMessages.Add(new PayloadMessage(MakeIdentifier(this),0,payload,false));
+            if(outputRows.Count>0)
+            {
+                List<TexeraTuple> payload=new List<TexeraTuple>(outputRows);
+                outputMessages.Add(new PayloadMessage(MakeIdentifier(self),0,payload,false));
+            }
         }
 
-        private void SendPayloadMessageTo(IWorkerGrain nextGrain, Immutable<PayloadMessage> message, int retryCount)
+        private async Task SendPayloadMessageTo(IWorkerGrain nextGrain, Immutable<PayloadMessage> message, int retryCount)
         {
-            nextGrain.ReceivePayloadMessage(message).ContinueWith((t)=>
+            await nextGrain.ReceivePayloadMessage(message).ContinueWith(async (t)=>
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                    SendPayloadMessageTo(nextGrain,message, retryCount + 1);
+                {
+                    await SendPayloadMessageTo(nextGrain,message, retryCount + 1);
+                }
             });
         }
 
         public string MakeIdentifier(IWorkerGrain grain)
         {
+            //string a="Engine.OperatorImplementation.Operators.OrleansCodeGen";
             string extension;
-            return grain.GetPrimaryKey(out extension).ToString()+extension;
+            //grain.GetPrimaryKey(out extension);
+            return grain.GetPrimaryKey(out extension).ToString()+" "+extension;
         }
 
         protected virtual List<PayloadMessage> BuildBatchedPayloadMessage(List<TexeraTuple> tuples,bool isEnd)
@@ -223,14 +246,14 @@ namespace Engine.OperatorImplementation.Common
             {
                 outputRows.Enqueue(t);
             }
-            while(outputMessages.Count>=BatchingLimit)
+            while(outputRows.Count>=BatchingLimit)
             {
                 List<TexeraTuple> payload=new List<TexeraTuple>();
                 for(int i=0;i<BatchingLimit;++i)
                 {
                     payload.Add(outputRows.Dequeue());
                 }
-                outputMessages.Add(new PayloadMessage(MakeIdentifier(this),0,payload,false));
+                outputMessages.Add(new PayloadMessage(MakeIdentifier(self),0,payload,false));
             }
             if(isEnd)
             {

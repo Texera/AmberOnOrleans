@@ -19,7 +19,6 @@ namespace Engine.Controller
             WorkflowID=workflowID;
             foreach(Operator o in graph)
             {
-                o.SetUpPrincipalGrain(this.GrainFactory);
                 await o.PrincipalGrain.Init(self,workflowID,o);
             }
             foreach(Operator o in graph)
@@ -28,7 +27,7 @@ namespace Engine.Controller
             }
             foreach(Operator o in graph)
             {
-                await o.Link();
+                await o.LinkWorkerGrains();
             }
         }
     }

@@ -24,7 +24,7 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void Resume()
         {
-            base.Resume();
+            isPaused=false;
             StartGenerate(0);
         }
 
@@ -40,8 +40,10 @@ namespace Engine.OperatorImplementation.Operators
                     tuples.Add(tuple);
                     i++;
                 }
+                if(reader.IsEOF())
+                    break;
             }
-            return tuples;
+            return tuples.Count==0?null:tuples;
         }
 
         
@@ -49,15 +51,16 @@ namespace Engine.OperatorImplementation.Operators
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);
-            ulong filesize=((ScanPredicate)predicate).GetFileSize();
+            ulong filesize=((ScanPredicate)predicate).FileSize;
+            tableId=((ScanPredicate)predicate).TableID;
             string extensionKey = "";
             Guid key = this.GetPrimaryKey(out extensionKey);
             ulong i=UInt64.Parse(extensionKey);
-            ulong num_grains=(ulong)(principalGrain.GetInputGrains().Result.Count);
+            ulong num_grains=(ulong)((ScanPredicate)predicate).NumberOfGrains;
             ulong partition=filesize/num_grains;
             ulong start_byte=i*partition;
             ulong end_byte=num_grains-1==i?filesize:(i+1)*partition;
-            reader=new ScanStreamReader(((ScanPredicate)predicate).GetFileName());
+            reader=new ScanStreamReader(((ScanPredicate)predicate).File);
             if(!reader.GetFile(start_byte))
                 return Task.FromException(new Exception("unable to get file"));
             start=start_byte;

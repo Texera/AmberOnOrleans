@@ -52,6 +52,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                 case MessageStatus.Vaild:
                     return true;
                 case MessageStatus.Ahead:
+                    Console.WriteLine("expected "+inSequenceNumberMap[sender]+" but get "+sequenceNum);
                     if(!stashedPayloadMessages.ContainsKey(sender))
                     {
                         stashedPayloadMessages[sender]=new Dictionary<ulong, Pair<bool, List<TexeraTuple>>>();
@@ -59,6 +60,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     stashedPayloadMessages[sender].Add(sequenceNum, new Pair<bool, List<TexeraTuple>>(message.Value.IsEnd,message.Value.Payload));
                     break;
                 case MessageStatus.Duplicated:
+                    Console.WriteLine("expected "+inSequenceNumberMap[sender]+" but get "+sequenceNum+" duplicated");
                     break;
             }
             return false;
@@ -66,14 +68,14 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 
         public ulong GetOutMessageSequenceNumber(string nextOperator)
         {
-            if(outSequenceNumberMap.ContainsKey(nextOperator))
+            if(!outSequenceNumberMap.ContainsKey(nextOperator))
             {
                 outSequenceNumberMap.Add(nextOperator,0);
                 return 0;
             }
             else
             {
-                ulong res=outSequenceNumberMap[nextOperator]++;
+                ulong res=++outSequenceNumberMap[nextOperator];
                 return res;
             }
         }       
@@ -87,6 +89,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     inSequenceNumberMap[sender]=0;
                 }
                 ulong currentSequenceNumber=inSequenceNumberMap[sender];
+                //Console.WriteLine("check seqnum "+currentSequenceNumber+" from stashed");
                 Dictionary<ulong, Pair<bool,List<TexeraTuple>>> currentMap=stashedPayloadMessages[sender];
                 while(currentMap.ContainsKey(currentSequenceNumber))
                 {
@@ -96,8 +99,13 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     }
                     Pair<bool, List<TexeraTuple>> pair = currentMap[currentSequenceNumber];
                     isEnd |= pair.First;
-                    batchList.AddRange(pair.Second);
+                    if(pair.Second!=null)
+                    {
+                        batchList.AddRange(pair.Second);
+                    }
                     currentMap.Remove(currentSequenceNumber);
+                    //Console.WriteLine("extract seqnum "+currentSequenceNumber+" from stashed");
+                    currentSequenceNumber++;
                     inSequenceNumberMap[sender]++;
                 }
             }

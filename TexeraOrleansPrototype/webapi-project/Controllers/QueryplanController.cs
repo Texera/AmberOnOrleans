@@ -46,9 +46,10 @@ namespace webapi.Controllers
             JObject o = JObject.Parse(json);
             JArray operators = (JArray)o["logicalPlan"]["operators"];
             Guid workflowID;
-            if(!Guid.TryParse(o["workflowID"].ToString(),out workflowID))
+            //remove "texera-workflow-" at the begining of workflowID to make it parsable
+            if(!Guid.TryParse(o["workflowID"].ToString().Substring(16),out workflowID))
             {
-                throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString()}");
+                throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString().Substring(16)}");
             }
             Workflow workflow=new Workflow(workflowID);
             int table_id=0;
