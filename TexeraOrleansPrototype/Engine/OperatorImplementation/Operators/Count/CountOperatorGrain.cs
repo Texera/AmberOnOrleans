@@ -15,7 +15,6 @@ namespace Engine.OperatorImplementation.Operators
 
     public class CountOperatorGrain : WorkerGrain, ICountOperatorGrain
     {
-        protected override int BatchingLimit {get{return 1;}}
         protected override void ProcessBatch(List<TexeraTuple> batch,ref List<TexeraTuple> output)
         {
            output.Add(new TexeraTuple(-1,null,batch.Count));

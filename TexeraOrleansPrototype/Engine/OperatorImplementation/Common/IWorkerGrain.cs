@@ -11,9 +11,6 @@ namespace Engine.OperatorImplementation.Common
 {
     public interface IWorkerGrain : IGrainWithGuidCompoundKey
     {
-        #region used by end operators
-        Task InitializeOutputStream(IAsyncStream<Immutable<PayloadMessage>> stream);
-        #endregion
 
         #region used by operators that have subsequent operators
         Task AddNextGrain(Guid nextOperatorGuid, IWorkerGrain grain);
@@ -22,6 +19,7 @@ namespace Engine.OperatorImplementation.Common
 
         #region Used by all operators
         Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain);
+        Task SetSendStrategy(Guid operatorGuid, ISendStrategy sendStrategy);
         Task SetTargetEndFlagCount(int target);
         /*
         Receives and processes the control message completely. This is because the

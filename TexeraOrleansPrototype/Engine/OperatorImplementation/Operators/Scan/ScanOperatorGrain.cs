@@ -16,6 +16,7 @@ namespace Engine.OperatorImplementation.Operators
         private ulong start,end,seq_number=0,tuple_counter=0;
         private ScanStreamReader reader;
         private int tableId;
+        public static int GenerateLimit=1000;
 
         protected override void Start()
         {
@@ -32,7 +33,7 @@ namespace Engine.OperatorImplementation.Operators
         {
             List<TexeraTuple> tuples=new List<TexeraTuple>();
             int i=0;
-            while(i<BatchingLimit)
+            while(i<GenerateLimit)
             {
                 TexeraTuple tuple;
                 if(ReadTuple(out tuple))
