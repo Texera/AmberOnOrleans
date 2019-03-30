@@ -18,13 +18,13 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class KeywordSearchOperatorGrain : WorkerGrain, IKeywordSearchOperatorGrain
     {
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessBatch(List<TexeraTuple> tuples, ref List<TexeraTuple> output)
         {
-            if(tuple.FieldList!=null && tuple.FieldList[0].Contains("Asia"))
+            foreach(TexeraTuple tuple in tuples)
             {
-                return new List<TexeraTuple>{tuple};
+                if(tuple.FieldList!=null && tuple.FieldList[0].Contains("Asia"))
+                    output.Add(tuple);
             }
-            return null;
         }
     }
 }
