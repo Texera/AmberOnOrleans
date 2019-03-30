@@ -6,7 +6,7 @@ using Engine.OperatorImplementation.Common;
 using System;
 using TexeraUtilities;
 
-namespace Engine
+namespace Engine.OperatorImplementation.SendingSemantics
 {
     public interface ISendStrategy
     {
