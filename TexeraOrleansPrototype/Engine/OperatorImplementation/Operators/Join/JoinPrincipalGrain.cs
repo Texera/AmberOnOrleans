@@ -16,10 +16,5 @@ namespace Engine.OperatorImplementation.Operators
         {
             return this.GrainFactory.GetGrain<IJoinOperatorGrain>(this.GetPrimaryKey(), extension);
         }
-
-        public override async Task BuildWorkerTopology()
-        {
-            base.BuildWorkerTopology();
-        }
     }
 }
