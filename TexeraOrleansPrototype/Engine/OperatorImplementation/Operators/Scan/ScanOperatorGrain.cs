@@ -35,6 +35,7 @@ namespace Engine.OperatorImplementation.Operators
             int i=0;
             while(i<GenerateLimit)
             {
+                if(start>end)break;
                 TexeraTuple tuple;
                 if(ReadTuple(out tuple))
                 {

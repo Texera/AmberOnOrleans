@@ -68,11 +68,11 @@ namespace Engine.OperatorImplementation.Common
 
         public Task Process(Immutable<PayloadMessage> message)
         {
-            Console.WriteLine(MakeIdentifier(self) + " process message from "+message.Value.SenderIdentifer +"with seqnum "+message.Value.SequenceNumber);
+            //Console.WriteLine(MakeIdentifier(self) + " process message from "+message.Value.SenderIdentifer +"with seqnum "+message.Value.SequenceNumber);
             List<TexeraTuple> batch;
             bool isEnd;
             PreProcess(message,out batch,out isEnd);
-            Console.WriteLine("isEnd: "+isEnd.ToString());
+            //Console.WriteLine("isEnd: "+isEnd.ToString());
             List<TexeraTuple> output=new List<TexeraTuple>();
             if(batch!=null)
             {
@@ -170,7 +170,7 @@ namespace Engine.OperatorImplementation.Common
 
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
-            Console.WriteLine(MakeIdentifier(self) + " received message from "+message.Value.SenderIdentifer+"with seqnum "+message.Value.SequenceNumber);
+            //Console.WriteLine(MakeIdentifier(self) + " received message from "+message.Value.SenderIdentifer+"with seqnum "+message.Value.SequenceNumber);
             if(orderingEnforcer.PreProcess(message))
             {
                 if(isPaused)
