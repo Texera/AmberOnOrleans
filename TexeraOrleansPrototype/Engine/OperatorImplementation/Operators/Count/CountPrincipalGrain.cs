@@ -21,10 +21,11 @@ namespace Engine.OperatorImplementation.Operators
             IWorkerGrain finalGrain=this.GrainFactory.GetGrain<ICountFinalOperatorGrain>(this.GetPrimaryKey(),"final");
             operatorGrains[1].Add(finalGrain);            
             //first layer
+            ISendStrategy strategy=new RoundRobin(new List<IWorkerGrain>{finalGrain});
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
                 IWorkerGrain grain=this.GrainFactory.GetGrain<ICountOperatorGrain>(this.GetPrimaryKey(),i.ToString());
-                await grain.AddNextGrain(this.GetPrimaryKey(),finalGrain);
+                await grain.SetSendStrategy(this.GetPrimaryKey(),strategy);
                 operatorGrains[0].Add(grain);
             }
             //set target end flag

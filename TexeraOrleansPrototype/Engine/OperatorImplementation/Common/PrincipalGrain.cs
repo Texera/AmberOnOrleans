@@ -26,8 +26,7 @@ namespace Engine.OperatorImplementation.Common
         private Guid workflowID;
         private IControllerGrain controllerGrain;
         private ulong sequenceNumber=0;
-
-
+        
         public virtual IWorkerGrain GetOperatorGrain(string extension)
         {
             throw new NotImplementedException();
@@ -100,16 +99,21 @@ namespace Engine.OperatorImplementation.Common
             {
                 foreach(IPrincipalGrain principal in nextPrincipalGrains)
                 {
-                    List<IWorkerGrain> nextInputGrains=await principal.GetInputGrains();
-                    await Link2Layers(principal.GetPrimaryKey(),outputGrains,nextInputGrains);
+                    ISendStrategy strategy = await principal.GetInputSendStrategy();
+                    for(int i=0;i<outputGrains.Count;++i)
+                    {
+                        await outputGrains[i].SetSendStrategy(principal.GetPrimaryKey(),strategy);
+                    }
                 }
             }
             else
             {
                 //last operator, build stream
                 var streamProvider = GetStreamProvider("SMSProvider");
+                var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflowID,"OutputStream");
+                ISendStrategy strategy=new SendToStream(stream);
                 foreach(IWorkerGrain grain in outputGrains)
-                    await grain.InitializeOutputStream(streamProvider.GetStream<Immutable<PayloadMessage>>(workflowID,"OutputStream"));
+                    await grain.SetSendStrategy(workflowID,strategy);
             }
         }
 
@@ -196,6 +200,11 @@ namespace Engine.OperatorImplementation.Common
                  await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(MakeIndentifier(this),sequenceNumber,ControlMessage.ControlMessageType.Start)));
             }
             sequenceNumber++;
+        }
+
+        public virtual Task<ISendStrategy> GetInputSendStrategy()
+        {
+            return Task.FromResult(new RoundRobin(inputGrains) as ISendStrategy);
         }
     }
 }

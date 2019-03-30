@@ -14,8 +14,9 @@ namespace OrleansClient
 {
     public class StreamObserver : IAsyncObserver<Immutable<PayloadMessage>>
     {
-       public  List<TexeraTuple> resultsToRet = new List<TexeraTuple>();
+        public  List<TexeraTuple> resultsToRet = new List<TexeraTuple>();
         Stopwatch sw=new Stopwatch();
+        public bool isFinished=false;
 
         public Task Start()
         {
@@ -37,16 +38,21 @@ namespace OrleansClient
 
         public Task OnNextAsync(Immutable<PayloadMessage> item, StreamSequenceToken token = null)
         {
-            sw.Stop();
-            // Console.WriteLine("Time usage: " + sw.Elapsed);
-
-            List<TexeraTuple> results = item.Value.Payload;
-            resultsToRet.AddRange(results);
-            for(int i=0; i<results.Count; i++)
+            if(item.Value.IsEnd)
             {
-                Console.WriteLine($"=={results[i].CustomResult}, {results[i].TableID}, {results[i].FieldList}== count received: by client");
+                isFinished=true;
+                sw.Stop();
+                Console.WriteLine("Time usage: " + sw.Elapsed);
             }
-
+            else
+            {
+                List<TexeraTuple> results = item.Value.Payload;
+                resultsToRet.AddRange(results);
+                for(int i=0; i<results.Count; i++)
+                {
+                    Console.WriteLine($"=={results[i].CustomResult}, {results[i].TableID}, {results[i].FieldList}== count received: by client");
+                }
+            }
             return Task.CompletedTask;
         }
     }

@@ -15,17 +15,15 @@ namespace Engine.OperatorImplementation.Operators
     public class CountFinalOperatorGrain : WorkerGrain, ICountFinalOperatorGrain
     {
         public int count = 0;
-        protected override int BatchingLimit {get{return 1;}}
         protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
             count+=tuple.CustomResult;
             return null;
         }
 
-        protected override void MakeFinalPayloadMessage(ref List<PayloadMessage> outputMessages)
+        protected override List<TexeraTuple> MakeFinalOutputTuples()
         {
-            List<TexeraTuple> payload=new List<TexeraTuple>{new TexeraTuple(-1,null,count)};
-            outputMessages.Add(new PayloadMessage(MakeIdentifier(this),0,payload,false));
+            return new List<TexeraTuple>{new TexeraTuple(-1,null,count)};
         }
     }
 

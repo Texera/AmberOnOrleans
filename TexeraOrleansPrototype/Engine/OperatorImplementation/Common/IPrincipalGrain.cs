@@ -16,6 +16,7 @@ namespace Engine.OperatorImplementation.Common
         Task Resume();
         Task Init(IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator);
         Task<List<IWorkerGrain>> GetInputGrains();
+        Task<ISendStrategy> GetInputSendStrategy();
         Task<List<IWorkerGrain>> GetOutputGrains();
         Task Link();
         Task Start();

@@ -29,15 +29,12 @@ namespace Engine.OperatorImplementation.Common
         protected PredicateBase predicate = null;
         protected bool isPaused = false;
         protected List<Immutable<PayloadMessage>> pausedMessages = new List<Immutable<PayloadMessage>>();
-        protected Queue<TexeraTuple> outputRows = new Queue<TexeraTuple>();
-        protected IAsyncStream<Immutable<PayloadMessage>> stream = null;
-        protected Dictionary<Guid,Pair<int,List<IWorkerGrain>>> nextGrains = new Dictionary<Guid, Pair<int,List<IWorkerGrain>>>();
-        protected IPrincipalGrain principalGrain;//for reporting status
+        protected IPrincipalGrain principalGrain;
         protected IWorkerGrain self = null;
         private IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
+        private Dictionary<Guid,ISendStrategy> sendStrategies = new Dictionary<Guid, ISendStrategy>();
         private int currentEndFlagCount = 0;
         private int targetEndFlagCount = int.MinValue;
-        protected virtual int BatchingLimit {get{return 1000;}}
 
         public virtual Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
@@ -49,16 +46,14 @@ namespace Engine.OperatorImplementation.Common
 
         public Task AddNextGrain(Guid nextOperatorGuid,IWorkerGrain grain)
         {
-            if(!nextGrains.ContainsKey(nextOperatorGuid))
-                nextGrains.Add(nextOperatorGuid,new Pair<int,List<IWorkerGrain>>(0, new List<IWorkerGrain>()));
-            nextGrains[nextOperatorGuid].Second.Add(grain);
-            return Task.CompletedTask;
-        }
-
-
-        public Task InitializeOutputStream(IAsyncStream<Immutable<PayloadMessage>> stream)
-        {
-            this.stream=stream;
+            if(sendStrategies.ContainsKey(nextOperatorGuid))
+            {
+                sendStrategies[nextOperatorGuid].AddReceiver(grain);
+            }
+            else
+            {
+                throw new Exception("unknown next operator guid");
+            }
             return Task.CompletedTask;
         }
         
@@ -82,8 +77,41 @@ namespace Engine.OperatorImplementation.Common
             {
                 ProcessBatch(batch,ref output);
             }
-            BuildPayloadMessagesThenSend(output,isEnd);
+            MakePayloadMessagesThenSend(output,isEnd);
             return Task.CompletedTask;
+        }
+
+        private void MakePayloadMessagesThenSend(List<TexeraTuple> output, bool isEnd)
+        {
+            if(isEnd)
+            {
+                ++currentEndFlagCount;
+            }
+            foreach(ISendStrategy strategy in sendStrategies.Values)
+            {
+                strategy.Enqueue(output);
+                string identifer=MakeIdentifier(self);
+                strategy.SendBatchedMessages(identifer);
+            }
+            if(currentEndFlagCount==targetEndFlagCount)
+            {
+                MakeLastPayloadMessageThenSend();
+            }
+        }
+
+        private void MakeLastPayloadMessageThenSend()
+        {
+            foreach(ISendStrategy strategy in sendStrategies.Values)
+            {
+                List<TexeraTuple> result=MakeFinalOutputTuples();
+                if(result!=null)
+                {
+                    strategy.Enqueue(result);
+                }
+                string identifer=MakeIdentifier(self);
+                strategy.SendBatchedMessages(identifer);
+                strategy.SendEndMessages(identifer);
+            }
         }
 
         protected virtual void ProcessBatch(List<TexeraTuple> batch, ref List<TexeraTuple> output)
@@ -103,9 +131,14 @@ namespace Engine.OperatorImplementation.Common
 
         public Task AddNextGrainList(Guid nextOperatorGuid,List<IWorkerGrain> grains)
         {
-            if(!nextGrains.ContainsKey(nextOperatorGuid))
-                nextGrains.Add(nextOperatorGuid,new Pair<int,List<IWorkerGrain>>(0, new List<IWorkerGrain>()));
-            nextGrains[nextOperatorGuid].Second.AddRange(grains);
+            if(sendStrategies.ContainsKey(nextOperatorGuid))
+            {
+                sendStrategies[nextOperatorGuid].AddReceivers(grains);
+            }
+            else
+            {
+                throw new Exception("unknown next operator guid");
+            }
             return Task.CompletedTask;
         }
 
@@ -165,70 +198,11 @@ namespace Engine.OperatorImplementation.Common
             });
         }
 
-        protected async void BuildPayloadMessagesThenSend(List<TexeraTuple> outputBatch,bool isEnd)
+        protected virtual List<TexeraTuple> MakeFinalOutputTuples()
         {
-            if(isEnd)
-            {
-                currentEndFlagCount++;
-            }
-            foreach(PayloadMessage message in BuildBatchedPayloadMessage(outputBatch,currentEndFlagCount==targetEndFlagCount))
-            {
-                foreach(KeyValuePair<Guid, Pair<int,List<IWorkerGrain>>> entry in nextGrains)
-                {
-                    entry.Value.First+=1;
-                    IWorkerGrain receiver=entry.Value.Second[entry.Value.First%entry.Value.Second.Count];
-                    message.SequenceNumber=orderingEnforcer.GetOutMessageSequenceNumber(MakeIdentifier(receiver));
-                    Console.WriteLine(MakeIdentifier(self)+" sending message to "+MakeIdentifier(receiver) +"with seqnum "+message.SequenceNumber);
-                    await SendPayloadMessageTo(receiver,message.AsImmutable(),0);
-                }
-                if(stream != null)
-                {
-                    await stream.OnNextAsync(message.AsImmutable());
-                }
-            }
-            if(currentEndFlagCount==targetEndFlagCount)
-            {
-                BuildPayloadMessagesWithEndFlagThenSend();
-            }
+            return null;
         }
 
-        protected async void BuildPayloadMessagesWithEndFlagThenSend()
-        {
-            PayloadMessage message = new PayloadMessage(MakeIdentifier(self),0,null,true);
-            foreach(KeyValuePair<Guid, Pair<int,List<IWorkerGrain>>> entry in nextGrains)
-            {
-                foreach(IWorkerGrain grain in entry.Value.Second)
-                {
-                    message.SequenceNumber=orderingEnforcer.GetOutMessageSequenceNumber(MakeIdentifier(grain));
-                    Console.WriteLine(MakeIdentifier(self)+" sending end message to "+MakeIdentifier(grain) +"with seqnum "+message.SequenceNumber);
-                    await SendPayloadMessageTo(grain,message.AsImmutable(),0);
-                }
-                if(stream != null)
-                {
-                    await stream.OnNextAsync(message.AsImmutable());
-                }
-            }
-        }
-
-        protected virtual void MakeFinalPayloadMessage(ref List<PayloadMessage> outputMessages)
-        {
-            if(outputRows.Count>0)
-            {
-                List<TexeraTuple> payload=new List<TexeraTuple>(outputRows);
-                outputMessages.Add(new PayloadMessage(MakeIdentifier(self),0,payload,false));
-            }
-        }
-
-        private async Task SendPayloadMessageTo(IWorkerGrain nextGrain, Immutable<PayloadMessage> message, int retryCount)
-        {
-            await nextGrain.ReceivePayloadMessage(message).ContinueWith(async (t)=>
-            {
-                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                {
-                    await SendPayloadMessageTo(nextGrain,message, retryCount + 1);
-                }
-            });
-        }
 
         public string MakeIdentifier(IWorkerGrain grain)
         {
@@ -236,30 +210,6 @@ namespace Engine.OperatorImplementation.Common
             string extension;
             //grain.GetPrimaryKey(out extension);
             return grain.GetPrimaryKey(out extension).ToString()+" "+extension;
-        }
-
-        protected virtual List<PayloadMessage> BuildBatchedPayloadMessage(List<TexeraTuple> tuples,bool isEnd)
-        {
-            //batching limit = 1000 (for now)
-            List<PayloadMessage> outputMessages=new List<PayloadMessage>();
-            foreach(TexeraTuple t in tuples)
-            {
-                outputRows.Enqueue(t);
-            }
-            while(outputRows.Count>=BatchingLimit)
-            {
-                List<TexeraTuple> payload=new List<TexeraTuple>();
-                for(int i=0;i<BatchingLimit;++i)
-                {
-                    payload.Add(outputRows.Dequeue());
-                }
-                outputMessages.Add(new PayloadMessage(MakeIdentifier(self),0,payload,false));
-            }
-            if(isEnd)
-            {
-                MakeFinalPayloadMessage(ref outputMessages);
-            }
-            return outputMessages;
         }
 
         protected virtual void Pause()
@@ -291,12 +241,16 @@ namespace Engine.OperatorImplementation.Common
             List<TexeraTuple> output=GenerateTuples();
             if(output!=null)
             {
-                BuildPayloadMessagesThenSend(output,false);
+                MakePayloadMessagesThenSend(output,false);
                 StartGenerate(0);
             }
             else
             {
-                BuildPayloadMessagesWithEndFlagThenSend();
+                foreach(ISendStrategy strategy in sendStrategies.Values)
+                {
+                    string identifer=MakeIdentifier(self);
+                    strategy.SendEndMessages(identifer);
+                }
             }
             return Task.CompletedTask;
         }
@@ -317,5 +271,10 @@ namespace Engine.OperatorImplementation.Common
             });
         }
 
+        public Task SetSendStrategy(Guid operatorGuid,ISendStrategy sendStrategy)
+        {
+            sendStrategies[operatorGuid]=sendStrategy;
+            return Task.CompletedTask;
+        }
     }
 }

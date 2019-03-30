@@ -137,7 +137,7 @@ namespace OrleansClient
                 await op.PrincipalGrain.Start();
             }
 
-            while (so.resultsToRet.Count == 0)
+            while (!so.isFinished)
             {
 
             }

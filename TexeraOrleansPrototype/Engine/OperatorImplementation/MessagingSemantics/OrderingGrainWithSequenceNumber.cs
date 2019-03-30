@@ -16,7 +16,6 @@ namespace Engine.OperatorImplementation.MessagingSemantics
         private Dictionary<string,Dictionary<ulong, Pair<bool,List<TexeraTuple>>>> stashedPayloadMessages = new Dictionary<string, Dictionary<ulong, Pair<bool, List<TexeraTuple>>>>();
         private Dictionary<string,Dictionary<ulong, ControlMessage.ControlMessageType>> stashedControlMessages = new Dictionary<string, Dictionary<ulong, ControlMessage.ControlMessageType>>();
         private Dictionary<string,ulong> inSequenceNumberMap=new Dictionary<string, ulong>();
-        private Dictionary<string,ulong> outSequenceNumberMap=new Dictionary<string, ulong>();
         private enum MessageStatus
         {
             Vaild,
@@ -65,20 +64,6 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             }
             return false;
         }
-
-        public ulong GetOutMessageSequenceNumber(string nextOperator)
-        {
-            if(!outSequenceNumberMap.ContainsKey(nextOperator))
-            {
-                outSequenceNumberMap.Add(nextOperator,0);
-                return 0;
-            }
-            else
-            {
-                ulong res=++outSequenceNumberMap[nextOperator];
-                return res;
-            }
-        }       
 
         public void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, string sender)
         {
