@@ -8,7 +8,7 @@ using Orleans.Core;
 using Orleans.Streams;
 using TexeraUtilities;
 
-namespace Engine
+namespace Engine.OperatorImplementation.SendingSemantics
 {
     public class SendToStream: SingleQueueBatching, ISendStrategy
     {

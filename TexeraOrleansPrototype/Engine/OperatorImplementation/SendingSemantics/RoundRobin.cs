@@ -6,7 +6,7 @@ using Orleans.Concurrency;
 using Orleans.Core;
 using TexeraUtilities;
 
-namespace Engine
+namespace Engine.OperatorImplementation.SendingSemantics
 {
     public class RoundRobin: SingleQueueSendStrategy
     {
