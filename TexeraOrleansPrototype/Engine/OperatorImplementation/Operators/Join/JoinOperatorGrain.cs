@@ -9,6 +9,7 @@ using Orleans.Concurrency;
 using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
+using System.Linq;
 
 namespace Engine.OperatorImplementation.Operators
 {
@@ -24,7 +25,9 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     foreach(TexeraTuple t in entry.Value)
                     {
-                        result.Add(new TexeraTuple(3,null));
+                        HashSet<string> fields=new HashSet<string>(tuple.FieldList);
+                        fields.UnionWith(t.FieldList);
+                        result.Add(new TexeraTuple(3,fields.ToList().ToArray()));
                     }
                 }
             }
