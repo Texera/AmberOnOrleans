@@ -37,8 +37,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
             for(int i=0;i<receivers.Count;++i)
             {
-                message = new PayloadMessage(senderIdentifier,0,null,true);
-                message.SequenceNumber=outputSequenceNumbers[i]++;
+                message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
                 SendMessageTo(receivers[i],message.AsImmutable(),0);
             }
         }
