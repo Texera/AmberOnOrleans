@@ -12,10 +12,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
     public abstract class SingleQueueBatching
     {
         private Queue<TexeraTuple> outputRows=new Queue<TexeraTuple>();
-        private int SingleQueueBatchingLimit;
-        public SingleQueueBatching(int SingleQueueBatchingLimit=1000)
+        private int batchingLimit;
+        public SingleQueueBatching(int batchingLimit=1000)
         {
-            this.SingleQueueBatchingLimit=SingleQueueBatchingLimit;
+            this.batchingLimit=batchingLimit;
         }
 
         public void Enqueue(List<TexeraTuple> output)
@@ -29,10 +29,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
         protected PayloadMessage MakeBatchedMessage(string senderIdentifier,ulong sequenceNumber)
         {
             PayloadMessage outputMessage=null;
-            if(outputRows.Count>=SingleQueueBatchingLimit)
+            if(outputRows.Count>=batchingLimit)
             {
                 List<TexeraTuple> payload=new List<TexeraTuple>();
-                for(int i=0;i<SingleQueueBatchingLimit;++i)
+                for(int i=0;i<batchingLimit;++i)
                 {
                     payload.Add(outputRows.Dequeue());
                 }
