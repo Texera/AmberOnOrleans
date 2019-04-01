@@ -1,27 +1,38 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Linq.Expressions;
 using Engine.OperatorImplementation.Common;
 using Orleans;
 using Orleans.Concurrency;
 using Orleans.Core;
+using Serialize.Linq.Nodes;
+using Serialize.Linq.Serializers;
 using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.SendingSemantics
 {
     public class Shuffle: MultiQueueSendStrategy
     {
-        private Func<TexeraTuple,int> selector;
-        public Shuffle(List<IWorkerGrain> receivers,Func<TexeraTuple,int> selector, int batchingLimit=1000):base(receivers,batchingLimit)
+        private string selectorExpression;
+        private Func<TexeraTuple,int> selector=null;
+        public Shuffle(List<IWorkerGrain> receivers, string jsonLambdaFunction, int batchingLimit=1000):base(receivers,batchingLimit)
         {
-            this.selector=selector;
+            this.selectorExpression=jsonLambdaFunction;
         }
 
         public override void Enqueue(List<TexeraTuple> output)
         {
+            if(selector==null)
+            {
+                var serializer = new ExpressionSerializer(new JsonSerializer());
+                var actualExpression = serializer.DeserializeText(selectorExpression);
+                selector=((Expression<Func<TexeraTuple,int>>)actualExpression).Compile();
+            }
             foreach(TexeraTuple tuple in output)
             {
-                outputRows[selector(tuple)%outputRows.Count].Enqueue(tuple);
+                int idx=NonNegativeModular(selector(tuple),outputRows.Count);
+                outputRows[idx].Enqueue(tuple);
             }
         }
 
@@ -60,6 +71,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 SendMessageTo(receivers[i],message.AsImmutable(),0);
             }
 
+        }
+
+        private int NonNegativeModular(int x, int m) {
+            return (x%m + m)%m;
         }
 
     }

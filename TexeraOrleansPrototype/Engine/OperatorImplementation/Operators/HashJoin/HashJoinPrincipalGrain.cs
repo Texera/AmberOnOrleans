@@ -7,7 +7,10 @@ using System.Threading.Tasks;
 using TexeraUtilities;
 using Engine.OperatorImplementation.Common;
 using System.Linq;
+using System.Linq.Expressions;
 using Engine.OperatorImplementation.SendingSemantics;
+using Serialize.Linq.Extensions;
+using Serialize.Linq.Serializers;
 
 namespace Engine.OperatorImplementation.Operators
 {
@@ -22,7 +25,9 @@ namespace Engine.OperatorImplementation.Operators
         public override Task<ISendStrategy> GetInputSendStrategy()
         {
             int joinFieldIndex=((HashJoinPredicate)predicate).JoinFieldIndex;
-            return Task.FromResult(new Shuffle(inputGrains,Tuple=>1) as ISendStrategy);
+            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetHashCode();
+            var serializer = new ExpressionSerializer(new JsonSerializer());
+            return Task.FromResult(new Shuffle(inputGrains,serializer.SerializeText(exp)) as ISendStrategy);
         }
     }
 }
