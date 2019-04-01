@@ -77,10 +77,15 @@ namespace webapi.Controllers
                     FilterPredicate filterPredicate = new FilterPredicate((int)operator1["compareTo"]);
                     op = new FilterOperator(filterPredicate);
                 }
-                else if((string)operator1["operatorType"] == "RippleJoin")
+                else if((string)operator1["operatorType"] == "CrossRippleJoin")
                 {
-                    JoinPredicate joinPredicate=new JoinPredicate();
+                    JoinPredicate joinPredicate=new JoinPredicate(table_id++);
                     op = new JoinOperator(joinPredicate);
+                }
+                else if((string)operator1["operatorType"] == "HashRippleJoin")
+                {
+                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["fieldName"].ToString().Replace("_c","")),table_id++);
+                    op = new HashJoinOperator(hashJoinPredicate);
                 }
                 if(op!=null)
                     map.Add((string)operator1["operatorID"],op);
@@ -98,13 +103,24 @@ namespace webapi.Controllers
             workflow.InitializeOperatorSet(new HashSet<Operator>(map.Values));
 
             List<TexeraTuple> results = ClientWrapper.Instance.DoClientWork(client, workflow).Result;
-            TexeraResult texeraResult = new TexeraResult();
-            texeraResult.code = 0;
             if(results == null)
             {
                 results = new List<TexeraTuple>();
             }
-            texeraResult.result = results;
+            List<JObject> resultJson=new List<JObject>();
+            foreach(TexeraTuple tuple in results)
+            {
+                JObject jsonTuple=new JObject();
+                jsonTuple.Add("TableID",tuple.TableID);
+                for(int i=0;i<tuple.FieldList.Length;++i)
+                {
+                    jsonTuple.Add("_c"+i,tuple.FieldList[i]);
+                }
+                resultJson.Add(jsonTuple);
+            }
+            TexeraResult texeraResult = new TexeraResult();
+            texeraResult.code = 0;
+            texeraResult.result = resultJson;
             texeraResult.resultID = Guid.NewGuid();
 
             return Json(texeraResult);

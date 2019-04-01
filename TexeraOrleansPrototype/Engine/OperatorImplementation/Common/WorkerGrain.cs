@@ -239,18 +239,21 @@ namespace Engine.OperatorImplementation.Common
 
         public Task Generate()
         {
-            List<TexeraTuple> output=GenerateTuples();
-            if(output!=null)
+            if(!isPaused)
             {
-                MakePayloadMessagesThenSend(output,false);
-                StartGenerate(0);
-            }
-            else
-            {
-                foreach(ISendStrategy strategy in sendStrategies.Values)
+                List<TexeraTuple> output=GenerateTuples();
+                if(output!=null)
                 {
-                    string identifer=MakeIdentifier(self);
-                    strategy.SendEndMessages(identifer);
+                    MakePayloadMessagesThenSend(output,false);
+                    StartGenerate(0);
+                }
+                else
+                {
+                    foreach(ISendStrategy strategy in sendStrategies.Values)
+                    {
+                        string identifer=MakeIdentifier(self);
+                        strategy.SendEndMessages(identifer);
+                    }
                 }
             }
             return Task.CompletedTask;

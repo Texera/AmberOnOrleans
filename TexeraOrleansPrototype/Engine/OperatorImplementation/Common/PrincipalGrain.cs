@@ -23,6 +23,7 @@ namespace Engine.OperatorImplementation.Common
         protected List<List<IWorkerGrain>> operatorGrains = new List<List<IWorkerGrain>>();
         protected List<IWorkerGrain> outputGrains {get{return operatorGrains.Last();}}
         protected List<IWorkerGrain> inputGrains {get{return operatorGrains.First();}}
+        protected PredicateBase predicate;
         private IPrincipalGrain self=null;
         private Guid workflowID;
         private IControllerGrain controllerGrain;
@@ -50,14 +51,14 @@ namespace Engine.OperatorImplementation.Common
             this.controllerGrain=controllerGrain;
             this.workflowID=workflowID;
             this.self=currentOperator.PrincipalGrain;
-            PredicateBase predicate=currentOperator.Predicate;
+            this.predicate=currentOperator.Predicate;
             await BuildWorkerTopology();
-            PassExtraParametersByPredicate(ref predicate);
+            PassExtraParametersByPredicate(ref this.predicate);
             foreach(List<IWorkerGrain> grainList in operatorGrains)
             {
                 foreach(IWorkerGrain grain in grainList)
                 {
-                    await grain.Init(grain,predicate,self);
+                    await grain.Init(grain,this.predicate,self);
                 }
             }
         }
@@ -118,14 +119,6 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        protected async Task Link2Layers(Guid nextOperatorGuid, List<IWorkerGrain> currentLayer,List<IWorkerGrain> nextLayer)
-        {
-            for(int i=0;i<currentLayer.Count;++i)
-            {
-                await currentLayer[i].AddNextGrainList(nextOperatorGuid,nextLayer);
-            }
-        }
-
         public Task<List<IWorkerGrain>> GetInputGrains()
         {
             return Task.FromResult(inputGrains);
@@ -149,50 +142,27 @@ namespace Engine.OperatorImplementation.Common
             {
                 foreach(IWorkerGrain grain in grainList)
                 {
+                    Console.WriteLine("Sending pause to "+grain);
                     await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(MakeIndentifier(this),sequenceNumber,ControlMessage.ControlMessageType.Pause)));
+                    Console.WriteLine(grain+" checked pause");
                 }
             }
             sequenceNumber++;
-             foreach(IPrincipalGrain next in nextPrincipalGrains)
-            {
-                await SendPauseToNextPrincipalGrain(next,0);
-            }
-        }
-
-        private async Task SendPauseToNextPrincipalGrain(IPrincipalGrain nextGrain, int retryCount)
-        {
-            nextGrain.Pause().ContinueWith((t)=>
-            {
-                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                    SendPauseToNextPrincipalGrain(nextGrain,retryCount+1);
-            });
         }
 
         public virtual async Task Resume()
         {
             isPaused = false;
-            foreach(IPrincipalGrain next in nextPrincipalGrains)
-            {
-                await SendResumeToNextPrincipalGrain(next,0);
-            }
             foreach(List<IWorkerGrain> grainList in operatorGrains)
             {
                 foreach(IWorkerGrain grain in grainList)
                 {
-                 await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(MakeIndentifier(this),sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                    await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(MakeIndentifier(this),sequenceNumber,ControlMessage.ControlMessageType.Resume)));
                 }
             }
             sequenceNumber++;
         }
 
-        private async Task SendResumeToNextPrincipalGrain(IPrincipalGrain nextGrain, int retryCount)
-        {
-            nextGrain.Resume().ContinueWith((t)=>
-            {
-                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                    SendResumeToNextPrincipalGrain(nextGrain,retryCount+1);
-            });
-        }
 
         public virtual async Task Start()
         {

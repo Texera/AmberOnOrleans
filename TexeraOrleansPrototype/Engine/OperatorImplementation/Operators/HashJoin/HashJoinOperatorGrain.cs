@@ -1,0 +1,62 @@
+using Orleans;
+using System;
+using System.Collections.Generic;
+using System.Text;
+using System.Threading;
+using System.Threading.Tasks;
+using System.IO;
+using Orleans.Concurrency;
+using Engine.OperatorImplementation.MessagingSemantics;
+using Engine.OperatorImplementation.Common;
+using TexeraUtilities;
+using System.Linq;
+
+namespace Engine.OperatorImplementation.Operators
+{
+    public class HashJoinOperatorGrain : WorkerGrain, IHashJoinOperatorGrain
+    {
+        Dictionary<int,Dictionary<string,List<TexeraTuple>>> joinedTuples=new Dictionary<int, Dictionary<string, List<TexeraTuple>>>();
+        int joinFieldIndex=-1;
+        int TableID;
+        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        {
+            base.Init(self,predicate,principalGrain);
+            joinFieldIndex=((HashJoinPredicate)predicate).JoinFieldIndex;
+            TableID=((HashJoinPredicate)predicate).TableID;
+            return Task.CompletedTask;
+        }
+        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        {
+            List<TexeraTuple> result=new List<TexeraTuple>();
+            string field=tuple.FieldList[joinFieldIndex];
+            List<string> fields=tuple.FieldList.ToList();
+            fields.RemoveAt(joinFieldIndex);
+            foreach(KeyValuePair<int,Dictionary<string,List<TexeraTuple>>> entry in joinedTuples)
+            {
+                if(entry.Key!=tuple.TableID && entry.Value.ContainsKey(field))
+                {
+                    foreach(TexeraTuple joinedTuple in entry.Value[field])
+                    {
+                        result.Add(new TexeraTuple(TableID,fields.Concat(joinedTuple.FieldList).ToArray()));
+                    }
+                }
+            }
+            if(!joinedTuples.ContainsKey(tuple.TableID))
+            {
+                Dictionary<string,List<TexeraTuple>> d = new Dictionary<string, List<TexeraTuple>>();
+                d.Add(field,new List<TexeraTuple>{tuple});
+                joinedTuples.Add(tuple.TableID,d);
+            }
+            else if(!joinedTuples[tuple.TableID].ContainsKey(field))
+            {
+                joinedTuples[tuple.TableID].Add(field,new List<TexeraTuple>{tuple});
+            }
+            else
+            {
+                joinedTuples[tuple.TableID][field].Add(tuple);
+            }
+            return result;
+        }
+    }
+
+}

@@ -5,9 +5,10 @@ namespace Engine.OperatorImplementation.Operators
     public class JoinPredicate : PredicateBase
     {
 
-        public JoinPredicate()
+        public int TableID;
+        public JoinPredicate(int tableID)
         {
-            
+            this.TableID=tableID;
         }
     }
 }

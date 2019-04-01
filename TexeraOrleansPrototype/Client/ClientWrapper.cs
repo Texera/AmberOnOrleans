@@ -107,7 +107,7 @@ namespace OrleansClient
         {
             if(IDToWorkflowEntry.ContainsKey(workflowID))
             {
-                await IDToWorkflowEntry[workflowID].Pause();
+                await IDToWorkflowEntry[workflowID].Resume();
             }
             else
             {
@@ -130,6 +130,12 @@ namespace OrleansClient
             var so = new StreamObserver();
             var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflow.GetStreamGuid(), "OutputStream");
             await stream.SubscribeAsync(so);
+            int numEndGrains=0;
+            foreach(Operator o in workflow.EndOperators)
+            {
+                numEndGrains+=o.PrincipalGrain.GetOutputGrains().Result.Count;
+            }
+            so.SetNumEndFlags(numEndGrains);
             instance.IDToWorkflowEntry[workflow.WorkflowID]=workflow;
             await so.Start();
             foreach(Operator op in workflow.StartOperators)

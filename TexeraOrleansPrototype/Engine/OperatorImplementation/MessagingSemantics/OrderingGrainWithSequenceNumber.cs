@@ -103,6 +103,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             switch(CheckMessage(sender,sequenceNum))
             {
                 case MessageStatus.Vaild:
+                    inSequenceNumberMap[sender]++;
                     return new List<ControlMessage.ControlMessageType>{message.Value.Type};
                 case MessageStatus.Ahead:
                     if(!stashedControlMessages.ContainsKey(sender))

@@ -16,6 +16,13 @@ namespace Engine.OperatorImplementation.Operators
     public class JoinOperatorGrain : WorkerGrain, IJoinOperatorGrain
     {
         Dictionary<int,List<TexeraTuple>> joinedTuples=new Dictionary<int, List<TexeraTuple>>();
+        int TableID;
+        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        {
+            base.Init(self,predicate,principalGrain);
+            TableID=((JoinPredicate)predicate).TableID;
+            return Task.CompletedTask;
+        }
         protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
             List<TexeraTuple> result=new List<TexeraTuple>();
@@ -25,9 +32,7 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     foreach(TexeraTuple t in entry.Value)
                     {
-                        HashSet<string> fields=new HashSet<string>(tuple.FieldList);
-                        fields.UnionWith(t.FieldList);
-                        result.Add(new TexeraTuple(3,fields.ToList().ToArray()));
+                        result.Add(new TexeraTuple(TableID,tuple.FieldList.Concat(t.FieldList).ToArray()));
                     }
                 }
             }

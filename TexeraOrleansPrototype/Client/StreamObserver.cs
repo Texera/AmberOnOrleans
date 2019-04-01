@@ -14,14 +14,22 @@ namespace OrleansClient
 {
     public class StreamObserver : IAsyncObserver<Immutable<PayloadMessage>>
     {
-        public  List<TexeraTuple> resultsToRet = new List<TexeraTuple>();
+        public List<TexeraTuple> resultsToRet = new List<TexeraTuple>();
         Stopwatch sw=new Stopwatch();
+        private Dictionary<string,ulong> endSequenceNumber=new Dictionary<string, ulong>();
+        private Dictionary<string,ulong> currentSequenceNumber=new Dictionary<string, ulong>();
+        private int numEndFlags;
+        private int currentEndFlags=0;
         public bool isFinished=false;
-
         public Task Start()
         {
             sw.Start();
             return Task.CompletedTask;
+        }
+
+        public void SetNumEndFlags(int num)
+        {
+            numEndFlags=num;
         }
 
         public Task OnCompletedAsync()
@@ -38,17 +46,39 @@ namespace OrleansClient
 
         public Task OnNextAsync(Immutable<PayloadMessage> item, StreamSequenceToken token = null)
         {
+            if(!currentSequenceNumber.ContainsKey(item.Value.SenderIdentifer))
+            {
+                currentSequenceNumber.Add(item.Value.SenderIdentifer,0);
+            }
             if(item.Value.IsEnd)
             {
-                isFinished=true;
-                sw.Stop();
-                Console.WriteLine("Time usage: " + sw.Elapsed);
+                endSequenceNumber.Add(item.Value.SenderIdentifer,item.Value.SequenceNumber);
+                currentEndFlags++;
             }
             else
             {
+                currentSequenceNumber[item.Value.SenderIdentifer]++;
                 List<TexeraTuple> results = item.Value.Payload;
                 resultsToRet.AddRange(results);
-                Console.WriteLine("Received "+results.Count+" tuples from the last operator");
+                //Console.WriteLine("Received "+results.Count+" tuples from the last operator");
+            }
+            if(currentEndFlags==numEndFlags && currentSequenceNumber.Count==endSequenceNumber.Count)
+            {
+                bool c=true;
+                foreach(string s in currentSequenceNumber.Keys)
+                {
+                    if(currentSequenceNumber[s]!=endSequenceNumber[s])
+                    {
+                        c=false;
+                        break;
+                    }
+                }
+                if(c)
+                {
+                    isFinished=true;
+                    sw.Stop();
+                    Console.WriteLine("Time usage: " + sw.Elapsed);
+                }
             }
             return Task.CompletedTask;
         }

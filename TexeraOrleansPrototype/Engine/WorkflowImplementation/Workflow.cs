@@ -46,15 +46,16 @@ namespace Engine.WorkflowImplementation
 
         public async Task Pause()
         {
-            foreach(Operator o in StartOperators)
+            foreach(Operator o in AllOperators)
             {
                 await o.Pause();
             }
+            return;
         }
 
         public async Task Resume()
         {
-            foreach(Operator o in StartOperators)
+            foreach(Operator o in AllOperators)
             {
                 await o.Resume();
             }
