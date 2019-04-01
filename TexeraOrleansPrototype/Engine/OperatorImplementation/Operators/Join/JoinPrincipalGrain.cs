@@ -9,7 +9,7 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class JoinPrinicipalGrain : PrincipalGrain, IFilterPrincipalGrain
+    public class JoinPrinicipalGrain : PrincipalGrain, IJoinPrincipalGrain
     {
         public override int DefaultNumGrainsInOneLayer { get { return 1; } }
         public override IWorkerGrain GetOperatorGrain(string extension)

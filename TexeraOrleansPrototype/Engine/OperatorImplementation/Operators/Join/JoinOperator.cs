@@ -5,7 +5,7 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class JoinOperator : Operator
     {
-        public JoinOperator(FilterPredicate predicate) : base(predicate)
+        public JoinOperator(JoinPredicate predicate) : base(predicate)
         {
 
         }

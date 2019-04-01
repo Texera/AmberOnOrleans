@@ -77,6 +77,11 @@ namespace webapi.Controllers
                     FilterPredicate filterPredicate = new FilterPredicate((int)operator1["compareTo"]);
                     op = new FilterOperator(filterPredicate);
                 }
+                else if((string)operator1["operatorType"] == "RippleJoin")
+                {
+                    JoinPredicate joinPredicate=new JoinPredicate();
+                    op = new JoinOperator(joinPredicate);
+                }
                 if(op!=null)
                     map.Add((string)operator1["operatorID"],op);
             }

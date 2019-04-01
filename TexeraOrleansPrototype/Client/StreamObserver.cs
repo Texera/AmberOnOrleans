@@ -48,10 +48,7 @@ namespace OrleansClient
             {
                 List<TexeraTuple> results = item.Value.Payload;
                 resultsToRet.AddRange(results);
-                for(int i=0; i<results.Count; i++)
-                {
-                    Console.WriteLine($"=={results[i].CustomResult}, {results[i].TableID}, {results[i].FieldList}== count received: by client");
-                }
+                Console.WriteLine("Received "+results.Count+" tuples from the last operator");
             }
             return Task.CompletedTask;
         }
