@@ -64,7 +64,7 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "KeywordMatcher")
                 {
-                    KeywordPredicate keywordPredicate = new KeywordPredicate((string)operator1["query"]);
+                    KeywordPredicate keywordPredicate = new KeywordPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["keyword"].ToString());
                     op = new KeywordOperator(keywordPredicate);
                 }
                 else if((string)operator1["operatorType"] == "Aggregation")
@@ -74,7 +74,7 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "Comparison")
                 {
-                    FilterPredicate filterPredicate = new FilterPredicate((int)operator1["compareTo"]);
+                    FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),float.Parse(operator1["compareTo"].ToString()),operator1["comparisonType"].ToString());
                     op = new FilterOperator(filterPredicate);
                 }
                 else if((string)operator1["operatorType"] == "CrossRippleJoin")
@@ -84,7 +84,7 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "HashRippleJoin")
                 {
-                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["fieldName"].ToString().Replace("_c","")),table_id++);
+                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
                     op = new HashJoinOperator(hashJoinPredicate);
                 }
                 if(op!=null)

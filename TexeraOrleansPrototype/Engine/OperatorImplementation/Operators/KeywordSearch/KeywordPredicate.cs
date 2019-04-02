@@ -4,20 +4,17 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class KeywordPredicate : PredicateBase
     {
-        private string query;
+        public int SearchIndex;
+        public string Query;
 
-        public KeywordPredicate(string query)
+        public KeywordPredicate(int searchIndex, string query)
         {
             if(query == null)
             {
                 query = "";
             }
-            this.query = query;
-        }
-
-        public string GetQuery()
-        {
-            return query;
+            this.Query = query;
+            this.SearchIndex=searchIndex;
         }
     }
 }

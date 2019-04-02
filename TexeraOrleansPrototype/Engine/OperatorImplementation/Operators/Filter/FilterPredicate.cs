@@ -4,16 +4,50 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class FilterPredicate : PredicateBase
     {
-        private int threshold;
+        public int FilterIndex;
+        public float Threshold;
 
-        public FilterPredicate(int threshold)
+        public enum FilterType
         {
-            this.threshold = threshold;
+            Equal,
+            Greater,
+            GreaterOrEqual,
+            Less,
+            LessOrEqual,
+            NotEqual,
         }
 
-        public int GetThreshold()
+        public FilterType Type;
+
+        public FilterPredicate(int filterIndex, float threshold, string type)
         {
-            return threshold;
+            this.Threshold = threshold;
+            this.FilterIndex = filterIndex;
+            switch(type)
+            {
+                case "=":
+                    this.Type=FilterType.Equal;
+                    break;
+                case ">":
+                    this.Type=FilterType.Greater;
+                    break;
+                case ">=":
+                    this.Type=FilterType.GreaterOrEqual;
+                    break;
+                case "<":
+                    this.Type=FilterType.Less;
+                    break;
+                case "<=":
+                    this.Type=FilterType.LessOrEqual;
+                    break;
+                case "≠":
+                    this.Type=FilterType.NotEqual;
+                    break;
+                default:
+                    this.Type=FilterType.Equal;
+                    break;
+            }
         }
+
     }
 }
