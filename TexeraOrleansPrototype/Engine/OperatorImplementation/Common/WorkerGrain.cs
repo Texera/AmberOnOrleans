@@ -82,7 +82,7 @@ namespace Engine.OperatorImplementation.Common
                 List<TexeraTuple> output=new List<TexeraTuple>();
                 if(WorkAsExternalTask)
                 {
-                    var OrleansScheduler=TaskScheduler.Current;
+                    var orleansScheduler=TaskScheduler.Current;
                     Task externalTask=new Task(()=>
                     {
                         if(batch!=null)
@@ -90,7 +90,7 @@ namespace Engine.OperatorImplementation.Common
                             ProcessBatch(batch,ref output);
                         }
                         Task sendTask=new Task(()=>{MakePayloadMessagesThenSend(output,isEnd);});
-                        sendTask.Start(OrleansScheduler);
+                        sendTask.Start(orleansScheduler);
                         sendTask.Wait();
                         taskQueue.Dequeue();
                         if(!isPaused && taskQueue.Count>0 && taskQueue.Peek().Status==TaskStatus.Created)
