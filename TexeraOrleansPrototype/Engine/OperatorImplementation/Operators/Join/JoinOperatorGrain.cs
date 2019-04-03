@@ -15,6 +15,7 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class JoinOperatorGrain : WorkerGrain, IJoinOperatorGrain
     {
+        protected override bool WorkAsExternalTask {get{return true;}}
         Dictionary<int,List<TexeraTuple>> joinedTuples=new Dictionary<int, List<TexeraTuple>>();
         int TableID;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
