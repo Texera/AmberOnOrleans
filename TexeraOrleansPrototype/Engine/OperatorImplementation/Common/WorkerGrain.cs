@@ -45,18 +45,18 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public Task AddNextGrain(Guid nextOperatorGuid,IWorkerGrain grain)
-        {
-            if(sendStrategies.ContainsKey(nextOperatorGuid))
-            {
-                sendStrategies[nextOperatorGuid].AddReceiver(grain);
-            }
-            else
-            {
-                throw new Exception("unknown next operator guid");
-            }
-            return Task.CompletedTask;
-        }
+        // public Task AddNextGrain(Guid nextOperatorGuid,IWorkerGrain grain)
+        // {
+        //     if(sendStrategies.ContainsKey(nextOperatorGuid))
+        //     {
+        //         sendStrategies[nextOperatorGuid].AddReceiver(grain);
+        //     }
+        //     else
+        //     {
+        //         throw new Exception("unknown next operator guid");
+        //     }
+        //     return Task.CompletedTask;
+        // }
         
         protected void PreProcess(Immutable<PayloadMessage> message, out List<TexeraTuple> batch,out bool isEnd)
         {
@@ -91,7 +91,7 @@ namespace Engine.OperatorImplementation.Common
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(output);
-                string identifer=MakeIdentifier(self);
+                string identifer=ReturnGrainIndentifierString(self);
                 strategy.SendBatchedMessages(identifer);
             }
             if(currentEndFlagCount==targetEndFlagCount)
@@ -109,7 +109,7 @@ namespace Engine.OperatorImplementation.Common
                 {
                     strategy.Enqueue(result);
                 }
-                string identifer=MakeIdentifier(self);
+                string identifer=ReturnGrainIndentifierString(self);
                 strategy.SendBatchedMessages(identifer);
                 strategy.SendEndMessages(identifer);
             }
@@ -130,18 +130,18 @@ namespace Engine.OperatorImplementation.Common
             return null;
         }
 
-        public Task AddNextGrainList(Guid nextOperatorGuid,List<IWorkerGrain> grains)
-        {
-            if(sendStrategies.ContainsKey(nextOperatorGuid))
-            {
-                sendStrategies[nextOperatorGuid].AddReceivers(grains);
-            }
-            else
-            {
-                throw new Exception("unknown next operator guid");
-            }
-            return Task.CompletedTask;
-        }
+        // public Task AddNextGrainList(Guid nextOperatorGuid,List<IWorkerGrain> grains)
+        // {
+        //     if(sendStrategies.ContainsKey(nextOperatorGuid))
+        //     {
+        //         sendStrategies[nextOperatorGuid].AddReceivers(grains);
+        //     }
+        //     else
+        //     {
+        //         throw new Exception("unknown next operator guid");
+        //     }
+        //     return Task.CompletedTask;
+        // }
 
         public Task ProcessControlMessage(Immutable<ControlMessage> message)
         {
@@ -184,7 +184,7 @@ namespace Engine.OperatorImplementation.Common
             }
             else
             {
-                Console.WriteLine(MakeIdentifier(self)+" error");
+                Console.WriteLine(ReturnGrainIndentifierString(self)+" error");
             }
             return Task.CompletedTask;
         }
@@ -205,7 +205,7 @@ namespace Engine.OperatorImplementation.Common
         }
 
 
-        public string MakeIdentifier(IWorkerGrain grain)
+        public string ReturnGrainIndentifierString(IWorkerGrain grain)
         {
             //string a="Engine.OperatorImplementation.Operators.OrleansCodeGen";
             string extension;
@@ -249,7 +249,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 foreach(ISendStrategy strategy in sendStrategies.Values)
                 {
-                    string identifer=MakeIdentifier(self);
+                    string identifer=ReturnGrainIndentifierString(self);
                     strategy.SendEndMessages(identifer);
                 }
             }

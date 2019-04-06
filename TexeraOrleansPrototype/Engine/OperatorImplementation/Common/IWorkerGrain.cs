@@ -14,8 +14,8 @@ namespace Engine.OperatorImplementation.Common
     {
 
         #region used by operators that have subsequent operators
-        Task AddNextGrain(Guid nextOperatorGuid, IWorkerGrain grain);
-        Task AddNextGrainList(Guid nextOperatorGuid, List<IWorkerGrain> grains);
+        // Task AddNextGrain(Guid nextOperatorGuid, IWorkerGrain grain);
+        // Task AddNextGrainList(Guid nextOperatorGuid, List<IWorkerGrain> grains);
         #endregion
 
         #region Used by all operators

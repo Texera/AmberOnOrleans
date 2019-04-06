@@ -20,7 +20,7 @@ namespace Engine.OperatorImplementation.Common
         Task<List<IWorkerGrain>> GetInputGrains();
         Task<ISendStrategy> GetInputSendStrategy();
         Task<List<IWorkerGrain>> GetOutputGrains();
-        Task Link();
+        Task LinkWorkerGrains();
         Task Start();
     }
 }

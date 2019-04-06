@@ -33,7 +33,7 @@ namespace Engine.OperatorImplementation.Common
         {
             return inOperators;
         }
-        public virtual void SetUpPrincipalGrain(IGrainFactory factory)
+        public virtual void SetPrincipalGrain(IGrainFactory factory)
         {
             PrincipalGrain = factory.GetGrain<IPrincipalGrain>(OperatorGuid,"Principal");
         }
@@ -82,7 +82,7 @@ namespace Engine.OperatorImplementation.Common
 
         public async Task LinkWorkerGrains()
         {
-            await PrincipalGrain.Link();
+            await PrincipalGrain.LinkWorkerGrains();
         }
 
         public async Task Pause()
