@@ -175,7 +175,7 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual Task<ISendStrategy> GetInputSendStrategy()
         {
-            return Task.FromResult(new RoundRobin(inputGrains) as ISendStrategy);
+            return Task.FromResult(new RoundRobin(inputGrains,predicate.BatchingLimit) as ISendStrategy);
         }
     }
 }
