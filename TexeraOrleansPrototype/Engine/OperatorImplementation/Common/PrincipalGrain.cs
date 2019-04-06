@@ -51,7 +51,7 @@ namespace Engine.OperatorImplementation.Common
             this.controllerGrain=controllerGrain;
             this.workflowID=workflowID;
             this.operatorID = currentOperator.OperatorGuid;
-            this.self =  this.GrainFactory.GetGrain<IPrincipalGrain>(currentOperator.OperatorGuid,"Principal");
+            this.self = this.GrainFactory.GetGrain<IPrincipalGrain>(currentOperator.OperatorGuid);
             PredicateBase predicate=currentOperator.Predicate;
             await BuildWorkerTopology();
             PassExtraParametersByPredicate(ref predicate);
