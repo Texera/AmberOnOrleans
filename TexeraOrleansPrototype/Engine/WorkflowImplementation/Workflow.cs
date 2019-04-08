@@ -38,7 +38,7 @@ namespace Engine.WorkflowImplementation
             workflowControllerGrain=factory.GetGrain<IControllerGrain>(WorkflowID);
             foreach(Operator o in AllOperators)
             {
-                o.SetUpPrincipalGrain(factory);
+                o.SetPrincipalGrain(factory);
             }
             await workflowControllerGrain.Init(workflowControllerGrain,WorkflowID,AllOperators);
 

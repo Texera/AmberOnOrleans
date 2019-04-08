@@ -37,7 +37,7 @@ namespace Engine.OperatorImplementation.Common
         private Dictionary<Guid,ISendStrategy> sendStrategies = new Dictionary<Guid, ISendStrategy>();
         private int currentEndFlagCount = 0;
         private int targetEndFlagCount = int.MinValue;
-        private Queue<Task> taskQueue=new Queue<Task>();
+        // private Queue<Task> taskQueue=new Queue<Task>();
 
         public virtual Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
@@ -121,7 +121,7 @@ namespace Engine.OperatorImplementation.Common
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(output);
-                string identifer=MakeIdentifier(self);
+                string identifer=ReturnGrainIndentifierString(self);
                 strategy.SendBatchedMessages(identifer);
             }
             if(currentEndFlagCount==targetEndFlagCount)
@@ -139,7 +139,7 @@ namespace Engine.OperatorImplementation.Common
                 {
                     strategy.Enqueue(result);
                 }
-                string identifer=MakeIdentifier(self);
+                string identifer=ReturnGrainIndentifierString(self);
                 strategy.SendBatchedMessages(identifer);
                 strategy.SendEndMessages(identifer);
             }
@@ -160,18 +160,18 @@ namespace Engine.OperatorImplementation.Common
             return null;
         }
 
-        public Task AddNextGrainList(Guid nextOperatorGuid,List<IWorkerGrain> grains)
-        {
-            if(sendStrategies.ContainsKey(nextOperatorGuid))
-            {
-                sendStrategies[nextOperatorGuid].AddReceivers(grains);
-            }
-            else
-            {
-                throw new Exception("unknown next operator guid");
-            }
-            return Task.CompletedTask;
-        }
+        // public Task AddNextGrainList(Guid nextOperatorGuid,List<IWorkerGrain> grains)
+        // {
+        //     if(sendStrategies.ContainsKey(nextOperatorGuid))
+        //     {
+        //         sendStrategies[nextOperatorGuid].AddReceivers(grains);
+        //     }
+        //     else
+        //     {
+        //         throw new Exception("unknown next operator guid");
+        //     }
+        //     return Task.CompletedTask;
+        // }
 
         public Task ProcessControlMessage(Immutable<ControlMessage> message)
         {
@@ -221,14 +221,13 @@ namespace Engine.OperatorImplementation.Common
         }
 
 
-        public string MakeIdentifier(IWorkerGrain grain)
+        public string ReturnGrainIndentifierString(IWorkerGrain grain)
         {
             //string a="Engine.OperatorImplementation.Operators.OrleansCodeGen";
             string extension;
             //grain.GetPrimaryKey(out extension);
             return grain.GetPrimaryKey(out extension).ToString()+" "+extension;
         }
-
 
         protected virtual void Pause()
         {
@@ -276,7 +275,7 @@ namespace Engine.OperatorImplementation.Common
                 {
                     foreach(ISendStrategy strategy in sendStrategies.Values)
                     {
-                        string identifer=MakeIdentifier(self);
+                        string identifer=ReturnGrainIndentifierString(self);
                         strategy.SendEndMessages(identifer);
                     }
                 }

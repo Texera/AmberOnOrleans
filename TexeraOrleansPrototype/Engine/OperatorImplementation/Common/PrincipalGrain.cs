@@ -20,6 +20,7 @@ namespace Engine.OperatorImplementation.Common
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
         protected bool isPaused = false;
+        protected Guid operatorID;
         protected List<List<IWorkerGrain>> operatorGrains = new List<List<IWorkerGrain>>();
         protected List<IWorkerGrain> outputGrains {get{return operatorGrains.Last();}}
         protected List<IWorkerGrain> inputGrains {get{return operatorGrains.First();}}
@@ -50,6 +51,7 @@ namespace Engine.OperatorImplementation.Common
         {
             this.controllerGrain=controllerGrain;
             this.workflowID=workflowID;
+            this.operatorID=currentOperator.OperatorGuid;
             this.self=currentOperator.PrincipalGrain;
             this.predicate=currentOperator.Predicate;
             await BuildWorkerTopology();
@@ -58,7 +60,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 foreach(IWorkerGrain grain in grainList)
                 {
-                    await grain.Init(grain,this.predicate,self);
+                    await grain.Init(grain,predicate,self);
                 }
             }
         }
@@ -81,12 +83,12 @@ namespace Engine.OperatorImplementation.Common
             // for multiple-layer init, do some linking inside...
         }
 
-        public async Task Link()
+        public async Task LinkWorkerGrains()
         {
             int count=0;
-            foreach(IPrincipalGrain principal in prevPrincipalGrains)
+            foreach(IPrincipalGrain prevPrincipal in prevPrincipalGrains)
             {
-                List<IWorkerGrain> prevOutputGrains=await principal.GetOutputGrains();
+                List<IWorkerGrain> prevOutputGrains=await prevPrincipal.GetOutputGrains();
                 count+=prevOutputGrains.Count;
             }
             if(count>0)
@@ -99,12 +101,12 @@ namespace Engine.OperatorImplementation.Common
 
             if(nextPrincipalGrains.Count!=0)
             {
-                foreach(IPrincipalGrain principal in nextPrincipalGrains)
+                foreach(IPrincipalGrain nextPrincipal in nextPrincipalGrains)
                 {
-                    ISendStrategy strategy = await principal.GetInputSendStrategy();
+                    ISendStrategy strategy = await nextPrincipal.GetInputSendStrategy();
                     for(int i=0;i<outputGrains.Count;++i)
                     {
-                        await outputGrains[i].SetSendStrategy(principal.GetPrimaryKey(),strategy);
+                        await outputGrains[i].SetSendStrategy(operatorID,strategy);
                     }
                 }
             }
@@ -119,6 +121,14 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
+        // protected async Task Link2Layers(Guid nextOperatorGuid, List<IWorkerGrain> currentLayer,List<IWorkerGrain> nextLayer)
+        // {
+        //     for(int i=0;i<currentLayer.Count;++i)
+        //     {
+        //         await currentLayer[i].AddNextGrainList(nextOperatorGuid,nextLayer);
+        //     }
+        // }
+
         public Task<List<IWorkerGrain>> GetInputGrains()
         {
             return Task.FromResult(inputGrains);
@@ -129,7 +139,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.FromResult(outputGrains);
         }
 
-        public string MakeIndentifier(IPrincipalGrain grain)
+        private string ReturnGrainIndentifierString(IPrincipalGrain grain)
         {
             string extension;
             return grain.GetPrimaryKey(out extension).ToString()+extension;

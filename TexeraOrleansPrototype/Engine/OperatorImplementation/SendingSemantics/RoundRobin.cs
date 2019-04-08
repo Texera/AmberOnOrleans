@@ -46,8 +46,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
             outputSequenceNumbers[roundRobinIndex]++;
             SendMessageTo(receivers[roundRobinIndex],message,0);
-            roundRobinIndex++;
-            roundRobinIndex%=receivers.Count;
+            roundRobinIndex = (roundRobinIndex+1)%receivers.Count;
         }
     }
 }

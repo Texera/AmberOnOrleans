@@ -9,7 +9,7 @@ namespace Engine.OperatorImplementation.Operators
         {
 
         }
-        public override void SetUpPrincipalGrain(IGrainFactory factory)
+        public override void SetPrincipalGrain(IGrainFactory factory)
         {
             PrincipalGrain = factory.GetGrain<IFilterPrincipalGrain>(OperatorGuid);
         }
