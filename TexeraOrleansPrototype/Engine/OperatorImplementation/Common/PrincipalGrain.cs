@@ -153,7 +153,7 @@ namespace Engine.OperatorImplementation.Common
                 foreach(IWorkerGrain grain in grainList)
                 {
                     Console.WriteLine("Sending pause to "+grain);
-                    await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(MakeIndentifier(this),sequenceNumber,ControlMessage.ControlMessageType.Pause)));
+                    await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Pause)));
                     Console.WriteLine(grain+" checked pause");
                 }
             }
@@ -167,7 +167,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 foreach(IWorkerGrain grain in grainList)
                 {
-                    await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(MakeIndentifier(this),sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                    await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Resume)));
                 }
             }
             sequenceNumber++;
@@ -178,7 +178,7 @@ namespace Engine.OperatorImplementation.Common
         {
             foreach(IWorkerGrain grain in inputGrains)
             {
-                 await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(MakeIndentifier(this),sequenceNumber,ControlMessage.ControlMessageType.Start)));
+                 await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Start)));
             }
             sequenceNumber++;
         }
