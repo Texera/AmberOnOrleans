@@ -6,7 +6,7 @@ namespace Engine.OperatorImplementation.Operators
     {
 
         public int TableID;
-        public JoinPredicate(int tableID)
+        public JoinPredicate(int tableID,int outputLimitPerBatch=-1,int batchingLimit=1000,int timeLimitPerBatch=-1):base(outputLimitPerBatch,batchingLimit,timeLimitPerBatch)
         {
             this.TableID=tableID;
         }

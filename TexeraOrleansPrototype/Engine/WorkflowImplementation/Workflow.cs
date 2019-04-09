@@ -41,7 +41,6 @@ namespace Engine.WorkflowImplementation
                 o.SetPrincipalGrain(factory);
             }
             await workflowControllerGrain.Init(workflowControllerGrain,WorkflowID,AllOperators);
-
         }
 
         public async Task Pause()

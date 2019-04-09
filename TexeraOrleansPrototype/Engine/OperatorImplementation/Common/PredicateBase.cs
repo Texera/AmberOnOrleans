@@ -8,7 +8,7 @@ namespace Engine.OperatorImplementation.Common
         public int OutputLimitPerBatch;
         public int TimeLimitPerBatch;
 
-        public PredicateBase(int outputLimitPerBatch=-1,int batchingLimit=1000,int timeLimitPerBatch=3000)
+        public PredicateBase(int outputLimitPerBatch=-1,int batchingLimit=1000,int timeLimitPerBatch=-1)
         {
             BatchingLimit=batchingLimit;
             OutputLimitPerBatch=outputLimitPerBatch;

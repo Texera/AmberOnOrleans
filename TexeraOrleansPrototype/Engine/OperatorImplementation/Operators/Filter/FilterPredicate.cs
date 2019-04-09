@@ -19,7 +19,7 @@ namespace Engine.OperatorImplementation.Operators
 
         public FilterType Type;
 
-        public FilterPredicate(int filterIndex, float threshold, string type)
+        public FilterPredicate(int filterIndex, float threshold, string type, int outputLimitPerBatch=-1,int batchingLimit=1000,int timeLimitPerBatch=-1):base(outputLimitPerBatch,batchingLimit,timeLimitPerBatch)
         {
             this.Threshold = threshold;
             this.FilterIndex = filterIndex;
