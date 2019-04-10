@@ -77,19 +77,7 @@ namespace webapi.Controllers
                     FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),float.Parse(operator1["compareTo"].ToString()),operator1["comparisonType"].ToString());
                     op = new FilterOperator(filterPredicate);
                 }
-                else if((string)operator1["operatorType"] == "CrossRippleJoin")
-                {
-                    int outputLimit=operator1["outputLimitPerBatch"]==null?-1:int.Parse(operator1["outputLimitPerBatch"].ToString());
-                    int inputLimit=operator1["batchingLimit"]==null?1000:int.Parse(operator1["batchingLimit"].ToString());
-                    int timeLimit=operator1["timeLimitPerBatch(ms)"]==null?-1:int.Parse(operator1["timeLimitPerBatch(ms)"].ToString());
-                    JoinPredicate joinPredicate=new JoinPredicate(table_id++,outputLimit,inputLimit,timeLimit);
-                    op = new JoinOperator(joinPredicate);
-                }
-                else if((string)operator1["operatorType"] == "HashRippleJoin")
-                {
-                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
-                    op = new HashJoinOperator(hashJoinPredicate);
-                }
+                
                 if(op!=null)
                     map.Add((string)operator1["operatorID"],op);
             }

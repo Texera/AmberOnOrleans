@@ -45,19 +45,23 @@ namespace Engine.WorkflowImplementation
 
         public async Task Pause()
         {
+            List<Task> taskList=new List<Task>();
             foreach(Operator o in AllOperators)
             {
-                await o.Pause();
+                taskList.Add(o.Pause());
             }
+            Task.WaitAll(taskList.ToArray());
             return;
         }
 
         public async Task Resume()
         {
+            List<Task> taskList=new List<Task>();
             foreach(Operator o in AllOperators)
             {
-                await o.Resume();
+                taskList.Add(o.Resume());
             }
+            Task.WaitAll(taskList.ToArray());
         }
 
 

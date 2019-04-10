@@ -18,6 +18,7 @@ namespace Engine.OperatorImplementation.Operators
         protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
             count+=int.Parse(tuple.FieldList[0]);
+            Console.WriteLine("current count: "+count);
             return null;
         }
 
