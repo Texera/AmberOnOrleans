@@ -147,20 +147,11 @@ namespace Engine.OperatorImplementation.Common
 
         protected virtual void ProcessBatch(List<TexeraTuple> batch, ref List<TexeraTuple> output)
         {
-            Stopwatch sw = new Stopwatch();
-            sw.Start();
             foreach(TexeraTuple tuple in batch)
             {
                 List<TexeraTuple> results=ProcessTuple(tuple);
                 if(results!=null)
                     output.AddRange(results);
-                if(predicate.TimeLimitPerBatch!=-1 && sw.Elapsed.TotalMilliseconds>=predicate.TimeLimitPerBatch)
-                    return;
-                if(predicate.OutputLimitPerBatch!=-1 && output.Count>=predicate.OutputLimitPerBatch)
-                {
-                    output.RemoveRange(predicate.OutputLimitPerBatch-1,output.Count-predicate.OutputLimitPerBatch);
-                    return;
-                }
             }
         }
 

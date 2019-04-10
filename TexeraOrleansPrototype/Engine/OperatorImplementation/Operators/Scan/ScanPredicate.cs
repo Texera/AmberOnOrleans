@@ -9,7 +9,7 @@ namespace Engine.OperatorImplementation.Operators
         public string File;
         public ulong FileSize;
         public int TableID;
-        public ScanPredicate(string file,int tableID,int outputLimitPerBatch=-1,int batchingLimit=1000,int timeLimitPerBatch=-1):base(outputLimitPerBatch,batchingLimit,timeLimitPerBatch)
+        public ScanPredicate(string file,int tableID,int batchingLimit=1000):base(batchingLimit)
         {
             if(file == null)
             {
