@@ -190,7 +190,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 SendPayloadMessageToSelf(message,0);
             }
-            pausedMessages.Clear();
+            pausedMessages=new List<Immutable<PayloadMessage>>();
         }
         protected virtual void Start()
         {

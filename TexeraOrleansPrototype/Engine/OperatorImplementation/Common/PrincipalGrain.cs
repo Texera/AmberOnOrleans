@@ -148,11 +148,8 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Pause()
         {
-            if(currentPauseFlag<inputGrains.Count && !isPaused)
-            {
-                currentPauseFlag++;
-            }
-            else
+            currentPauseFlag++;
+            if(currentPauseFlag>=prevPrincipalGrains.Count || isPaused)
             {
                 currentPauseFlag=0;
                 if(isPaused)
