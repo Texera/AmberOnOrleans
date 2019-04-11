@@ -29,6 +29,7 @@ namespace Engine.OperatorImplementation.Common
         private Guid workflowID;
         private IControllerGrain controllerGrain;
         private ulong sequenceNumber=0;
+        private int currentPauseFlag=0;
         
         public virtual IWorkerGrain GetOperatorGrain(string extension)
         {
@@ -147,21 +148,52 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Pause()
         {
-            isPaused = true;
-            foreach(List<IWorkerGrain> grainList in operatorGrains)
+            if(currentPauseFlag<inputGrains.Count && !isPaused)
             {
-                foreach(IWorkerGrain grain in grainList)
+                currentPauseFlag++;
+            }
+            else
+            {
+                currentPauseFlag=0;
+                if(isPaused)
                 {
-                    Console.WriteLine("Sending pause to "+grain);
-                    await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Pause)));
-                    Console.WriteLine(grain+" checked pause");
+                    return;
+                }
+                isPaused = true;
+                foreach(List<IWorkerGrain> grainList in operatorGrains)
+                {
+                    foreach(IWorkerGrain grain in grainList)
+                    {
+                        await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Pause)));
+                    }
+                }
+                sequenceNumber++;
+                foreach(IPrincipalGrain next in nextPrincipalGrains)
+                {
+                    await SendPauseToNextPrincipalGrain(next,0);
                 }
             }
-            sequenceNumber++;
+        }
+
+        private async Task SendPauseToNextPrincipalGrain(IPrincipalGrain nextGrain, int retryCount)
+        {
+            nextGrain.Pause().ContinueWith((t)=>
+            {
+                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                    SendPauseToNextPrincipalGrain(nextGrain,retryCount+1);
+            });
         }
 
         public virtual async Task Resume()
         {
+            if(!isPaused)
+            {
+                return;
+            }
+            foreach(IPrincipalGrain next in nextPrincipalGrains)
+            {
+                await SendResumeToNextPrincipalGrain(next,0);
+            }
             isPaused = false;
             foreach(List<IWorkerGrain> grainList in operatorGrains)
             {
@@ -171,6 +203,15 @@ namespace Engine.OperatorImplementation.Common
                 }
             }
             sequenceNumber++;
+        }
+
+        private async Task SendResumeToNextPrincipalGrain(IPrincipalGrain nextGrain, int retryCount)
+        {
+            nextGrain.Resume().ContinueWith((t)=>
+            {
+                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                    SendResumeToNextPrincipalGrain(nextGrain,retryCount+1);
+            });
         }
 
 

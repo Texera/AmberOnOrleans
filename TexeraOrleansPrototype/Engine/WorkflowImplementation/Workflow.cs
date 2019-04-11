@@ -46,7 +46,7 @@ namespace Engine.WorkflowImplementation
         public async Task Pause()
         {
             List<Task> taskList=new List<Task>();
-            foreach(Operator o in AllOperators)
+            foreach(Operator o in StartOperators)
             {
                 taskList.Add(o.Pause());
             }
@@ -57,7 +57,7 @@ namespace Engine.WorkflowImplementation
         public async Task Resume()
         {
             List<Task> taskList=new List<Task>();
-            foreach(Operator o in AllOperators)
+            foreach(Operator o in StartOperators)
             {
                 taskList.Add(o.Resume());
             }
