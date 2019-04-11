@@ -26,6 +26,10 @@ namespace Engine.OperatorImplementation.Operators
         protected override void Resume()
         {
             isPaused=false;
+            if(start>end)
+            {
+                return;
+            }
             StartGenerate(0);
         }
 
