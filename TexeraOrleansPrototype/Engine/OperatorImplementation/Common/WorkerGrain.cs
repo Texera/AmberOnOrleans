@@ -27,7 +27,6 @@ namespace Engine.OperatorImplementation.Common
 
     public class WorkerGrain : Grain, IWorkerGrain
     {
-        // protected virtual bool WorkAsExternalTask {get{return false;}}
         protected PredicateBase predicate = null;
         protected bool isPaused = false;
         protected List<Immutable<PayloadMessage>> pausedMessages = new List<Immutable<PayloadMessage>>();
@@ -37,26 +36,12 @@ namespace Engine.OperatorImplementation.Common
         private Dictionary<Guid,ISendStrategy> sendStrategies = new Dictionary<Guid, ISendStrategy>();
         private int currentEndFlagCount = 0;
         private int targetEndFlagCount = int.MinValue;
-        // private Queue<Task> taskQueue=new Queue<Task>();
 
         public virtual Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             this.self=self;
             this.principalGrain=principalGrain;
             this.predicate=predicate;
-            return Task.CompletedTask;
-        }
-
-        public Task AddNextGrain(Guid nextOperatorGuid,IWorkerGrain grain)
-        {
-            if(sendStrategies.ContainsKey(nextOperatorGuid))
-            {
-                sendStrategies[nextOperatorGuid].AddReceiver(grain);
-            }
-            else
-            {
-                throw new Exception("unknown next operator guid");
-            }
             return Task.CompletedTask;
         }
         
@@ -80,34 +65,11 @@ namespace Engine.OperatorImplementation.Common
                 bool isEnd;
                 PreProcess(message,out batch,out isEnd);
                 List<TexeraTuple> output=new List<TexeraTuple>();
-                // if(WorkAsExternalTask)
-                // {
-                //     var orleansScheduler=TaskScheduler.Current;
-                //     Task externalTask=new Task(()=>
-                //     {
-                //         if(batch!=null)
-                //         {
-                //             ProcessBatch(batch,ref output);
-                //         }
-                //         Task sendTask=new Task(()=>{MakePayloadMessagesThenSend(output,isEnd);});
-                //         sendTask.Start(orleansScheduler);
-                //         sendTask.Wait();
-                //         taskQueue.Dequeue();
-                //         if(!isPaused && taskQueue.Count>0 && taskQueue.Peek().Status==TaskStatus.Created)
-                //             taskQueue.Peek().Start();
-                //     });
-                //     taskQueue.Enqueue(externalTask);
-                //     if(taskQueue.Peek().Status==TaskStatus.Created)
-                //         taskQueue.Peek().Start(TaskScheduler.Default);
-                // }
-                // else
-                // {
                 if(batch!=null)
                 {
                     ProcessBatch(batch,ref output);
                 }
                 MakePayloadMessagesThenSend(output,isEnd);
-                // }
             }
             return Task.CompletedTask;
         }
