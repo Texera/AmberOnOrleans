@@ -122,19 +122,6 @@ namespace Engine.OperatorImplementation.Common
             return null;
         }
 
-        // public Task AddNextGrainList(Guid nextOperatorGuid,List<IWorkerGrain> grains)
-        // {
-        //     if(sendStrategies.ContainsKey(nextOperatorGuid))
-        //     {
-        //         sendStrategies[nextOperatorGuid].AddReceivers(grains);
-        //     }
-        //     else
-        //     {
-        //         throw new Exception("unknown next operator guid");
-        //     }
-        //     return Task.CompletedTask;
-        // }
-
         public Task ProcessControlMessage(Immutable<ControlMessage> message)
         {
             List<ControlMessage.ControlMessageType> executeSequence = orderingEnforcer.PreProcess(message);
@@ -199,13 +186,6 @@ namespace Engine.OperatorImplementation.Common
         protected virtual void Resume()
         {
             isPaused=false;
-            /*
-            if(WorkAsExternalTask)
-            {
-                if(taskQueue.Count>0 && taskQueue.Peek().Status!=TaskStatus.Running)
-                    taskQueue.Peek().Start(TaskScheduler.Default);
-            }
-            */
             foreach(Immutable<PayloadMessage> message in pausedMessages)
             {
                 SendPayloadMessageToSelf(message,0);
