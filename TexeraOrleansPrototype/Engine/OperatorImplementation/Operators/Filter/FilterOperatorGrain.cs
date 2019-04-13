@@ -32,9 +32,9 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void ProcessBatch(List<TexeraTuple> tuples, ref List<TexeraTuple> output)
+        protected override void ProcessBatch(List<TexeraTuple> batch, ref List<TexeraTuple> output)
         {
-            foreach(TexeraTuple tuple in tuples)
+            foreach(TexeraTuple tuple in batch)
             {
                 if(tuple.FieldList!=null)
                 {

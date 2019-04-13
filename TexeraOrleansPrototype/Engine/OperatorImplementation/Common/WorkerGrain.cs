@@ -9,6 +9,7 @@ using Orleans.Streams;
 using System.Diagnostics;
 using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.SendingSemantics;
+using System.Threading;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -27,6 +28,7 @@ namespace Engine.OperatorImplementation.Common
 
     public class WorkerGrain : Grain, IWorkerGrain
     {
+        protected virtual bool WorkAsExternalTask {get{return false;}}
         protected PredicateBase predicate = null;
         protected bool isPaused = false;
         protected List<Immutable<PayloadMessage>> pausedMessages = new List<Immutable<PayloadMessage>>();
@@ -36,6 +38,8 @@ namespace Engine.OperatorImplementation.Common
         private Dictionary<Guid,ISendStrategy> sendStrategies = new Dictionary<Guid, ISendStrategy>();
         private int currentEndFlagCount = 0;
         private int targetEndFlagCount = int.MinValue;
+        private Queue<Action> actionQueue=new Queue<Action>();
+        private int currentIndex=0;
 
         public virtual Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
@@ -61,15 +65,44 @@ namespace Engine.OperatorImplementation.Common
             }
             if(orderingEnforcer.PreProcess(message))
             {
+                
                 List<TexeraTuple> batch;
                 bool isEnd;
                 PreProcess(message,out batch,out isEnd);
                 List<TexeraTuple> output=new List<TexeraTuple>();
-                if(batch!=null)
+                if(WorkAsExternalTask)
                 {
-                    ProcessBatch(batch,ref output);
+                    var orleansScheduler=TaskScheduler.Current;
+                    Action action=()=>
+                    {
+                        if(batch!=null)
+                        {
+                            ProcessBatch(batch,ref output);
+                        }
+                        if(isPaused)
+                        {
+                            return;
+                        }
+                        currentIndex=0;
+                        Task sendTask=new Task(()=>{MakePayloadMessagesThenSend(output,isEnd);});
+                        sendTask.Start(orleansScheduler);
+                        sendTask.Wait();
+                        actionQueue.Dequeue();
+                        if(!isPaused && actionQueue.Count>0)
+                            new Task(actionQueue.Peek()).Start();
+                    };
+                    actionQueue.Enqueue(action);
+                    if(actionQueue.Count==1)
+                        new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
                 }
-                MakePayloadMessagesThenSend(output,isEnd);
+                else
+                {
+                    if(batch!=null)
+                    {
+                        ProcessBatch(batch,ref output);
+                    }
+                    MakePayloadMessagesThenSend(output,isEnd);
+                }
             }
             return Task.CompletedTask;
         }
@@ -109,9 +142,13 @@ namespace Engine.OperatorImplementation.Common
 
         protected virtual void ProcessBatch(List<TexeraTuple> batch, ref List<TexeraTuple> output)
         {
-            foreach(TexeraTuple tuple in batch)
+            for(;currentIndex<batch.Count;++currentIndex)
             {
-                List<TexeraTuple> results=ProcessTuple(tuple);
+                if(isPaused)
+                {
+                    return;
+                }
+                List<TexeraTuple> results=ProcessTuple(batch[currentIndex]);
                 if(results!=null)
                     output.AddRange(results);
             }
@@ -186,12 +223,19 @@ namespace Engine.OperatorImplementation.Common
         protected virtual void Resume()
         {
             isPaused=false;
+            if(WorkAsExternalTask)
+            {
+                if(actionQueue.Count>0)
+                    new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+            }
             foreach(Immutable<PayloadMessage> message in pausedMessages)
             {
                 SendPayloadMessageToSelf(message,0);
             }
             pausedMessages=new List<Immutable<PayloadMessage>>();
         }
+
+       
         protected virtual void Start()
         {
             throw new NotImplementedException();
