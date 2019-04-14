@@ -17,7 +17,7 @@ namespace Engine.OperatorImplementation.Operators
         int count=0;
         protected override void ProcessTuple(TexeraTuple tuple)
         {
-           count++;
+            count++;
         }
 
         protected override void MakeFinalOutputTuples()

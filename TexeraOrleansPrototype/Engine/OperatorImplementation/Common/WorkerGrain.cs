@@ -41,6 +41,7 @@ namespace Engine.OperatorImplementation.Common
         private Queue<Action> actionQueue=new Queue<Action>();
         protected int currentIndex=0;
         protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
+        protected bool isFinished=false;
 
         public virtual Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
@@ -101,6 +102,7 @@ namespace Engine.OperatorImplementation.Common
                     {
                         ProcessBatch(batch);
                     }
+                    currentIndex=0;
                     MakePayloadMessagesThenSend(isEnd);
                 }
             }
@@ -122,6 +124,7 @@ namespace Engine.OperatorImplementation.Common
             }
             if(currentEndFlagCount==targetEndFlagCount)
             {
+                isFinished=true;
                 MakeLastPayloadMessageThenSend();
             }
         }
@@ -132,6 +135,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 MakeFinalOutputTuples();
                 strategy.Enqueue(outputTuples);
+                outputTuples.Clear();
                 string identifer=ReturnGrainIndentifierString(self);
                 strategy.SendBatchedMessages(identifer);
                 strategy.SendEndMessages(identifer);
@@ -219,6 +223,10 @@ namespace Engine.OperatorImplementation.Common
         protected virtual void Resume()
         {
             isPaused=false;
+            if(isFinished)
+            {
+                return;
+            }
             if(WorkAsExternalTask)
             {
                 if(actionQueue.Count>0)
@@ -248,7 +256,7 @@ namespace Engine.OperatorImplementation.Common
             if(!isPaused)
             {
                 GenerateTuples();
-                if(outputTuples!=null)
+                if(!isFinished || outputTuples.Count>0)
                 {
                     MakePayloadMessagesThenSend(false);
                     StartGenerate(0);
@@ -265,9 +273,9 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        protected virtual List<TexeraTuple> GenerateTuples()
+        protected virtual void GenerateTuples()
         {
-            return null;
+            
         }
 
         protected void StartGenerate(int retryCount)

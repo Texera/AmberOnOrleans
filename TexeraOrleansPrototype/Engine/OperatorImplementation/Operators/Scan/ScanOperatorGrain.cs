@@ -13,7 +13,7 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ScanOperatorGrain : WorkerGrain, IScanOperatorGrain
     {
-        private ulong start,end,seq_number=0,tuple_counter=0;
+        private ulong start,end,tuple_counter=0;
         private ScanStreamReader reader;
         private int tableId;
         public static int GenerateLimit=1000;
@@ -26,30 +26,35 @@ namespace Engine.OperatorImplementation.Operators
         protected override void Resume()
         {
             isPaused=false;
-            if(start>end)
+            if(isFinished)
             {
                 return;
             }
             StartGenerate(0);
         }
 
-        protected override List<TexeraTuple> GenerateTuples()
+        protected override void GenerateTuples()
         {
-            List<TexeraTuple> tuples=new List<TexeraTuple>();
             int i=0;
             while(i<GenerateLimit)
             {
-                if(start>end)break;
+                if(start>end)
+                {
+                    isFinished=true;
+                    break;
+                }
                 TexeraTuple tuple;
                 if(ReadTuple(out tuple))
                 {
-                    tuples.Add(tuple);
+                    outputTuples.Add(tuple);
                     i++;
                 }
                 if(reader.IsEOF())
+                {
+                    isFinished=true;
                     break;
+                }
             }
-            return tuples.Count==0?null:tuples;
         }
 
         
