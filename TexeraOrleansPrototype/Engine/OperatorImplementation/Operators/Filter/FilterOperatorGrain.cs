@@ -32,40 +32,37 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void ProcessBatch(List<TexeraTuple> batch, ref List<TexeraTuple> output)
+        protected override void ProcessTuple(TexeraTuple tuple)
         {
-            foreach(TexeraTuple tuple in batch)
+            if(tuple.FieldList!=null)
             {
-                if(tuple.FieldList!=null)
+                switch(type)
                 {
-                    switch(type)
-                    {
-                        case FilterPredicate.FilterType.Equal:
-                            if(float.Parse(tuple.FieldList[filterIndex])==threshold)
-                                output.Add(tuple);
-                            break;
-                        case FilterPredicate.FilterType.Greater:
-                            if(float.Parse(tuple.FieldList[filterIndex])>threshold)
-                                output.Add(tuple);
-                            break;
-                        case FilterPredicate.FilterType.GreaterOrEqual:
-                            if(float.Parse(tuple.FieldList[filterIndex])>=threshold)
-                                output.Add(tuple);
-                            break;
-                        case FilterPredicate.FilterType.Less:
-                            if(float.Parse(tuple.FieldList[filterIndex])<threshold)
-                                output.Add(tuple);
-                            break;
-                        case FilterPredicate.FilterType.LessOrEqual:
-                            if(float.Parse(tuple.FieldList[filterIndex])<=threshold)
-                                output.Add(tuple);
-                            break;
-                        case FilterPredicate.FilterType.NotEqual:
-                            if(float.Parse(tuple.FieldList[filterIndex])!=threshold)
-                                output.Add(tuple);
-                            break;
-                    }   
-                }
+                    case FilterPredicate.FilterType.Equal:
+                        if(float.Parse(tuple.FieldList[filterIndex])==threshold)
+                            outputTuples.Add(tuple);
+                        break;
+                    case FilterPredicate.FilterType.Greater:
+                        if(float.Parse(tuple.FieldList[filterIndex])>threshold)
+                            outputTuples.Add(tuple);
+                        break;
+                    case FilterPredicate.FilterType.GreaterOrEqual:
+                        if(float.Parse(tuple.FieldList[filterIndex])>=threshold)
+                            outputTuples.Add(tuple);
+                        break;
+                    case FilterPredicate.FilterType.Less:
+                        if(float.Parse(tuple.FieldList[filterIndex])<threshold)
+                            outputTuples.Add(tuple);
+                        break;
+                    case FilterPredicate.FilterType.LessOrEqual:
+                        if(float.Parse(tuple.FieldList[filterIndex])<=threshold)
+                            outputTuples.Add(tuple);
+                        break;
+                    case FilterPredicate.FilterType.NotEqual:
+                        if(float.Parse(tuple.FieldList[filterIndex])!=threshold)
+                            outputTuples.Add(tuple);
+                        break;
+                }   
             }
         }
     }
