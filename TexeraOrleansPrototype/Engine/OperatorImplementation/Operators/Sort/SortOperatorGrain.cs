@@ -18,6 +18,7 @@ namespace Engine.OperatorImplementation.Operators
         protected override bool WorkAsExternalTask {get{return true;}}
         List<TexeraTuple> sortedTuples=new List<TexeraTuple>();
         int sortIndex;
+        int counter=0;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);
@@ -26,6 +27,7 @@ namespace Engine.OperatorImplementation.Operators
         }
         protected override void ProcessTuple(TexeraTuple tuple)
         {
+            //Console.WriteLine(++counter+" tuples sorted");
             int idx=-1;
             for(int i=0;i<sortedTuples.Count;++i)
             {

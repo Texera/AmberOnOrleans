@@ -148,7 +148,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(isPaused)
                 {
-                    return;
+                   return;
                 }
                 ProcessTuple(batch[currentIndex]);
             }

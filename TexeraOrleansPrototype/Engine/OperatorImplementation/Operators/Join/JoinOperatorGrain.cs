@@ -27,7 +27,7 @@ namespace Engine.OperatorImplementation.Operators
         }
         protected override void ProcessTuple(TexeraTuple tuple)
         {
-            Console.WriteLine(++counter+" tuple processed");
+            //Console.WriteLine(++counter+" tuple processed");
             foreach(KeyValuePair<int,List<TexeraTuple>> entry in joinedTuples)
             {
                 if(entry.Key!=tuple.TableID)
