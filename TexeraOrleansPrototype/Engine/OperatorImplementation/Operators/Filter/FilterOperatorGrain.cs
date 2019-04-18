@@ -18,7 +18,7 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class FilterOperatorGrain : WorkerGrain, IFilterOperatorGrain
     {
-
+        protected override bool WorkAsExternalTask {get{return true;}}
         int filterIndex=-1;
         FilterPredicate.FilterType type;
         float threshold=0;

@@ -64,7 +64,7 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "KeywordMatcher")
                 {
-                    KeywordPredicate keywordPredicate = new KeywordPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["keyword"].ToString());
+                    KeywordPredicate keywordPredicate = new KeywordPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["keyword"]!=null?operator1["keyword"].ToString():"");
                     op = new KeywordOperator(keywordPredicate);
                 }
                 else if((string)operator1["operatorType"] == "Aggregation")

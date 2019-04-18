@@ -5,6 +5,7 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class KeywordOperator : Operator
     {
+        
         public KeywordOperator(KeywordPredicate predicate) : base(predicate)
         {
             

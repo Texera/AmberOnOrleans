@@ -14,6 +14,7 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class CountOperatorGrain : WorkerGrain, ICountOperatorGrain
     {
+        protected override bool WorkAsExternalTask {get{return true;}}
         int count=0;
         protected override void ProcessTuple(TexeraTuple tuple)
         {
