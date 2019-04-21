@@ -44,23 +44,9 @@ namespace Engine.OperatorImplementation.Common
             this.predicate=predicate;
             return Task.CompletedTask;
         }
-
-        // public Task AddNextGrain(Guid nextOperatorGuid,IWorkerGrain grain)
-        // {
-        //     if(sendStrategies.ContainsKey(nextOperatorGuid))
-        //     {
-        //         sendStrategies[nextOperatorGuid].AddReceiver(grain);
-        //     }
-        //     else
-        //     {
-        //         throw new Exception("unknown next operator guid");
-        //     }
-        //     return Task.CompletedTask;
-        // }
         
         protected void PreProcess(Immutable<PayloadMessage> message, out List<TexeraTuple> batch,out bool isEnd)
         {
-            orderingEnforcer.IndeedReceivePayloadMessage(message.Value.SenderIdentifer);
             isEnd=message.Value.IsEnd;
             batch=message.Value.Payload;
             orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.Value.SenderIdentifer);  
@@ -68,17 +54,23 @@ namespace Engine.OperatorImplementation.Common
 
         public Task Process(Immutable<PayloadMessage> message)
         {
-            //Console.WriteLine(MakeIdentifier(self) + " process message from "+message.Value.SenderIdentifer +"with seqnum "+message.Value.SequenceNumber);
-            List<TexeraTuple> batch;
-            bool isEnd;
-            PreProcess(message,out batch,out isEnd);
-            //Console.WriteLine("isEnd: "+isEnd.ToString());
-            List<TexeraTuple> output=new List<TexeraTuple>();
-            if(batch!=null)
+            if(isPaused)
             {
-                ProcessBatch(batch,ref output);
+                pausedMessages.Add(message);
+                return Task.CompletedTask;
             }
-            MakePayloadMessagesThenSend(output,isEnd);
+            if(orderingEnforcer.PreProcess(message))
+            {
+                List<TexeraTuple> batch;
+                bool isEnd;
+                PreProcess(message,out batch,out isEnd);
+                List<TexeraTuple> output=new List<TexeraTuple>();
+                if(batch!=null)
+                {
+                    ProcessBatch(batch,ref output);
+                }
+                MakePayloadMessagesThenSend(output,isEnd);
+            }
             return Task.CompletedTask;
         }
 
@@ -130,19 +122,6 @@ namespace Engine.OperatorImplementation.Common
             return null;
         }
 
-        // public Task AddNextGrainList(Guid nextOperatorGuid,List<IWorkerGrain> grains)
-        // {
-        //     if(sendStrategies.ContainsKey(nextOperatorGuid))
-        //     {
-        //         sendStrategies[nextOperatorGuid].AddReceivers(grains);
-        //     }
-        //     else
-        //     {
-        //         throw new Exception("unknown next operator guid");
-        //     }
-        //     return Task.CompletedTask;
-        // }
-
         public Task ProcessControlMessage(Immutable<ControlMessage> message)
         {
             List<ControlMessage.ControlMessageType> executeSequence = orderingEnforcer.PreProcess(message);
@@ -171,21 +150,7 @@ namespace Engine.OperatorImplementation.Common
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
             //Console.WriteLine(MakeIdentifier(self) + " received message from "+message.Value.SenderIdentifer+"with seqnum "+message.Value.SequenceNumber);
-            if(orderingEnforcer.PreProcess(message))
-            {
-                if(isPaused)
-                {
-                    pausedMessages.Add(message);
-                }
-                else
-                {
-                    SendPayloadMessageToSelf(message, 0);
-                }
-            }
-            else
-            {
-                Console.WriteLine(ReturnGrainIndentifierString(self)+" error");
-            }
+            SendPayloadMessageToSelf(message,0);
             return Task.CompletedTask;
         }
 
@@ -225,6 +190,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 SendPayloadMessageToSelf(message,0);
             }
+            pausedMessages=new List<Immutable<PayloadMessage>>();
         }
         protected virtual void Start()
         {
@@ -239,18 +205,21 @@ namespace Engine.OperatorImplementation.Common
 
         public Task Generate()
         {
-            List<TexeraTuple> output=GenerateTuples();
-            if(output!=null)
+            if(!isPaused)
             {
-                MakePayloadMessagesThenSend(output,false);
-                StartGenerate(0);
-            }
-            else
-            {
-                foreach(ISendStrategy strategy in sendStrategies.Values)
+                List<TexeraTuple> output=GenerateTuples();
+                if(output!=null)
                 {
-                    string identifer=ReturnGrainIndentifierString(self);
-                    strategy.SendEndMessages(identifer);
+                    MakePayloadMessagesThenSend(output,false);
+                    StartGenerate(0);
+                }
+                else
+                {
+                    foreach(ISendStrategy strategy in sendStrategies.Values)
+                    {
+                        string identifer=ReturnGrainIndentifierString(self);
+                        strategy.SendEndMessages(identifer);
+                    }
                 }
             }
             return Task.CompletedTask;

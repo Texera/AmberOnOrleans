@@ -41,23 +41,27 @@ namespace Engine.WorkflowImplementation
                 o.SetPrincipalGrain(factory);
             }
             await workflowControllerGrain.Init(workflowControllerGrain,WorkflowID,AllOperators);
-
         }
 
         public async Task Pause()
         {
+            List<Task> taskList=new List<Task>();
             foreach(Operator o in StartOperators)
             {
-                await o.Pause();
+                taskList.Add(o.Pause());
             }
+            Task.WaitAll(taskList.ToArray());
+            return;
         }
 
         public async Task Resume()
         {
+            List<Task> taskList=new List<Task>();
             foreach(Operator o in StartOperators)
             {
-                await o.Resume();
+                taskList.Add(o.Resume());
             }
+            Task.WaitAll(taskList.ToArray());
         }
 
 

@@ -24,10 +24,12 @@ namespace Engine.OperatorImplementation.Common
         protected List<List<IWorkerGrain>> operatorGrains = new List<List<IWorkerGrain>>();
         protected List<IWorkerGrain> outputGrains {get{return operatorGrains.Last();}}
         protected List<IWorkerGrain> inputGrains {get{return operatorGrains.First();}}
+        protected PredicateBase predicate;
         private IPrincipalGrain self=null;
         private Guid workflowID;
         private IControllerGrain controllerGrain;
         private ulong sequenceNumber=0;
+        private int currentPauseFlag=0;
         
         public virtual IWorkerGrain GetOperatorGrain(string extension)
         {
@@ -50,11 +52,11 @@ namespace Engine.OperatorImplementation.Common
         {
             this.controllerGrain=controllerGrain;
             this.workflowID=workflowID;
-            this.operatorID = currentOperator.OperatorGuid;
-            this.self = this.GrainFactory.GetGrain<IPrincipalGrain>(currentOperator.OperatorGuid);
-            PredicateBase predicate=currentOperator.Predicate;
+            this.operatorID=currentOperator.OperatorGuid;
+            this.self=currentOperator.PrincipalGrain;
+            this.predicate=currentOperator.Predicate;
             await BuildWorkerTopology();
-            PassExtraParametersByPredicate(ref predicate);
+            PassExtraParametersByPredicate(ref this.predicate);
             foreach(List<IWorkerGrain> grainList in operatorGrains)
             {
                 foreach(IWorkerGrain grain in grainList)
@@ -146,18 +148,27 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Pause()
         {
-            isPaused = true;
-            foreach(List<IWorkerGrain> grainList in operatorGrains)
+            currentPauseFlag++;
+            if(currentPauseFlag>=prevPrincipalGrains.Count || isPaused)
             {
-                foreach(IWorkerGrain grain in grainList)
+                currentPauseFlag=0;
+                if(isPaused)
                 {
-                    await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(this),sequenceNumber,ControlMessage.ControlMessageType.Pause)));
+                    return;
                 }
-            }
-            sequenceNumber++;
-             foreach(IPrincipalGrain next in nextPrincipalGrains)
-            {
-                await SendPauseToNextPrincipalGrain(next,0);
+                isPaused = true;
+                foreach(List<IWorkerGrain> grainList in operatorGrains)
+                {
+                    foreach(IWorkerGrain grain in grainList)
+                    {
+                        await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Pause)));
+                    }
+                }
+                sequenceNumber++;
+                foreach(IPrincipalGrain next in nextPrincipalGrains)
+                {
+                    await SendPauseToNextPrincipalGrain(next,0);
+                }
             }
         }
 
@@ -172,16 +183,20 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Resume()
         {
-            isPaused = false;
+            if(!isPaused)
+            {
+                return;
+            }
             foreach(IPrincipalGrain next in nextPrincipalGrains)
             {
                 await SendResumeToNextPrincipalGrain(next,0);
             }
+            isPaused = false;
             foreach(List<IWorkerGrain> grainList in operatorGrains)
             {
                 foreach(IWorkerGrain grain in grainList)
                 {
-                 await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(this),sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                    await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Resume)));
                 }
             }
             sequenceNumber++;
@@ -196,18 +211,19 @@ namespace Engine.OperatorImplementation.Common
             });
         }
 
+
         public virtual async Task Start()
         {
             foreach(IWorkerGrain grain in inputGrains)
             {
-                 await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(this),sequenceNumber,ControlMessage.ControlMessageType.Start)));
+                 await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Start)));
             }
             sequenceNumber++;
         }
 
         public virtual Task<ISendStrategy> GetInputSendStrategy()
         {
-            return Task.FromResult(new RoundRobin(inputGrains) as ISendStrategy);
+            return Task.FromResult(new RoundRobin(inputGrains,predicate.BatchingLimit) as ISendStrategy);
         }
     }
 }

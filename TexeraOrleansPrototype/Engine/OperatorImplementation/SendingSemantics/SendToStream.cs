@@ -14,7 +14,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected IAsyncStream<Immutable<PayloadMessage>> stream; 
         private ulong sequenceNumber=0;
-        public SendToStream(IAsyncStream<Immutable<PayloadMessage>> stream,int batchingLimit=1000):base(batchingLimit)
+        public SendToStream(IAsyncStream<Immutable<PayloadMessage>> stream,int batchingLimit=100):base(batchingLimit)
         {
             this.stream=stream;
         }
@@ -29,25 +29,27 @@ namespace Engine.OperatorImplementation.SendingSemantics
             throw new NotImplementedException();
         }
 
-        public async void SendBatchedMessages(string senderIdentifier)
+        public void SendBatchedMessages(string senderIdentifier)
         {
             while(true)
             {
-                PayloadMessage message = MakeBatchedMessage(senderIdentifier,sequenceNumber++);
+                PayloadMessage message = MakeBatchedMessage(senderIdentifier,sequenceNumber);
                 if(message==null)break;
-                await stream.OnNextAsync(message.AsImmutable());
+                ++sequenceNumber;
+                stream.OnNextAsync(message.AsImmutable());
             }
         }
 
-        public async void SendEndMessages(string senderIdentifier)
+        public void SendEndMessages(string senderIdentifier)
         {
-            PayloadMessage message = MakeLastMessage(senderIdentifier,sequenceNumber++);
+            PayloadMessage message = MakeLastMessage(senderIdentifier,sequenceNumber);
             if(message!=null)
             {
-                await stream.OnNextAsync(message.AsImmutable());
+                ++sequenceNumber;
+                stream.OnNextAsync(message.AsImmutable());
             }
             message = new PayloadMessage(senderIdentifier,sequenceNumber++,null,true);
-            await stream.OnNextAsync(message.AsImmutable());
+            stream.OnNextAsync(message.AsImmutable());
         }
 
     }

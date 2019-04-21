@@ -18,11 +18,23 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class KeywordSearchOperatorGrain : WorkerGrain, IKeywordSearchOperatorGrain
     {
+        int searchIndex;
+        string keyword;
+
+        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        {
+            base.Init(self,predicate,principalGrain);
+            searchIndex=((KeywordPredicate)predicate).SearchIndex;
+            keyword=((KeywordPredicate)predicate).Query;
+            return Task.CompletedTask;
+        }
+
+
         protected override void ProcessBatch(List<TexeraTuple> tuples, ref List<TexeraTuple> output)
         {
             foreach(TexeraTuple tuple in tuples)
             {
-                if(tuple.FieldList!=null && tuple.FieldList[0].Contains("Asia"))
+                if(tuple.FieldList!=null && tuple.FieldList[searchIndex].Contains(keyword))
                     output.Add(tuple);
             }
         }

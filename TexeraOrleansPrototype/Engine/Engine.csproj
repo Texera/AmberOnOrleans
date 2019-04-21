@@ -18,6 +18,7 @@
     <PackageReference Include="Microsoft.Orleans.OrleansCodeGenerator.Build" Version="2.1.2" />
     <PackageReference Include="Microsoft.Orleans.Server" Version="2.1.2" />
     <PackageReference Include="MySql.Data" Version="8.0.13" />
+    <PackageReference Include="Serialize.Linq" Version="1.7.3.1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -17,13 +17,13 @@ namespace Engine.OperatorImplementation.Operators
         public int count = 0;
         protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
-            count+=tuple.CustomResult;
+            count+=int.Parse(tuple.FieldList[0]);
             return null;
         }
 
         protected override List<TexeraTuple> MakeFinalOutputTuples()
         {
-            return new List<TexeraTuple>{new TexeraTuple(-1,null,count)};
+            return new List<TexeraTuple>{new TexeraTuple(-1,new string[]{count.ToString()})};
         }
     }
 

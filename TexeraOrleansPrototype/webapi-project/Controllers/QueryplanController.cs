@@ -64,7 +64,7 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "KeywordMatcher")
                 {
-                    KeywordPredicate keywordPredicate = new KeywordPredicate((string)operator1["query"]);
+                    KeywordPredicate keywordPredicate = new KeywordPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["keyword"]!=null?operator1["keyword"].ToString():"");
                     op = new KeywordOperator(keywordPredicate);
                 }
                 else if((string)operator1["operatorType"] == "Aggregation")
@@ -74,9 +74,10 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "Comparison")
                 {
-                    FilterPredicate filterPredicate = new FilterPredicate((int)operator1["compareTo"]);
+                    FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),float.Parse(operator1["compareTo"].ToString()),operator1["comparisonType"].ToString());
                     op = new FilterOperator(filterPredicate);
                 }
+                
                 if(op!=null)
                     map.Add((string)operator1["operatorID"],op);
             }
@@ -93,13 +94,24 @@ namespace webapi.Controllers
             workflow.InitializeOperatorSet(new HashSet<Operator>(map.Values));
 
             List<TexeraTuple> results = ClientWrapper.Instance.DoClientWork(client, workflow).Result;
-            TexeraResult texeraResult = new TexeraResult();
-            texeraResult.code = 0;
             if(results == null)
             {
                 results = new List<TexeraTuple>();
             }
-            texeraResult.result = results;
+            List<JObject> resultJson=new List<JObject>();
+            foreach(TexeraTuple tuple in results)
+            {
+                JObject jsonTuple=new JObject();
+                jsonTuple.Add("TableID",tuple.TableID);
+                for(int i=0;i<tuple.FieldList.Length;++i)
+                {
+                    jsonTuple.Add("_c"+i,tuple.FieldList[i]);
+                }
+                resultJson.Add(jsonTuple);
+            }
+            TexeraResult texeraResult = new TexeraResult();
+            texeraResult.code = 0;
+            texeraResult.result = resultJson;
             texeraResult.resultID = Guid.NewGuid();
 
             return Json(texeraResult);
