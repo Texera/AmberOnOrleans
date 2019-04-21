@@ -48,9 +48,8 @@ namespace Engine.WorkflowImplementation
             List<Task> taskList=new List<Task>();
             foreach(Operator o in StartOperators)
             {
-                taskList.Add(o.Pause());
+                await o.Pause();
             }
-            Task.WaitAll(taskList.ToArray());
             return;
         }
 
@@ -59,9 +58,8 @@ namespace Engine.WorkflowImplementation
             List<Task> taskList=new List<Task>();
             foreach(Operator o in StartOperators)
             {
-                taskList.Add(o.Resume());
+                await o.Resume();
             }
-            Task.WaitAll(taskList.ToArray());
         }
 
 

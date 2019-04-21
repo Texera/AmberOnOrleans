@@ -54,13 +54,13 @@ namespace OrleansClient
             {
                 endSequenceNumber.Add(item.Value.SenderIdentifer,item.Value.SequenceNumber);
                 currentEndFlags++;
-                Console.WriteLine("Received END = "+item.Value.SequenceNumber+" from the last operator");
             }
             else
             {
                 currentSequenceNumber[item.Value.SenderIdentifer]++;
                 List<TexeraTuple> results = item.Value.Payload;
                 resultsToRet.AddRange(results);
+                //Console.WriteLine("Received "+results.Count+" tuples from the last operator");
             }
             if(currentEndFlags==numEndFlags && currentSequenceNumber.Count==endSequenceNumber.Count)
             {

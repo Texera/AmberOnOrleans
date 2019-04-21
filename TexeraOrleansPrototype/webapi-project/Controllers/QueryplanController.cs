@@ -77,7 +77,17 @@ namespace webapi.Controllers
                     FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),float.Parse(operator1["compareTo"].ToString()),operator1["comparisonType"].ToString());
                     op = new FilterOperator(filterPredicate);
                 }
-                
+                else if((string)operator1["operatorType"] == "CrossRippleJoin")
+                {
+                    int inputLimit=operator1["batchingLimit"]==null?1000:int.Parse(operator1["batchingLimit"].ToString());
+                    JoinPredicate joinPredicate=new JoinPredicate(table_id++,inputLimit);
+                    op = new JoinOperator(joinPredicate);
+                }
+                else if((string)operator1["operatorType"] == "HashRippleJoin")
+                {
+                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
+                    op = new HashJoinOperator(hashJoinPredicate);
+                }
                 if(op!=null)
                     map.Add((string)operator1["operatorID"],op);
             }
