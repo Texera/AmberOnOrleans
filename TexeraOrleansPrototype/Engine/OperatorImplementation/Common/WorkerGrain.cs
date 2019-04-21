@@ -74,7 +74,7 @@ namespace Engine.OperatorImplementation.Common
                 if(WorkAsExternalTask)
                 {
                     var orleansScheduler=TaskScheduler.Current;
-                    Action action=()=>
+                    Action action=async ()=>
                     {
                         if(batch!=null)
                         {
@@ -87,7 +87,7 @@ namespace Engine.OperatorImplementation.Common
                         currentIndex=0;
                         Task sendTask=new Task(()=>{MakePayloadMessagesThenSend(isEnd);});
                         sendTask.Start(orleansScheduler);
-                        sendTask.Wait();
+                        await sendTask;
                         actionQueue.Dequeue();
                         if(!isPaused && actionQueue.Count>0)
                             new Task(actionQueue.Peek()).Start();
