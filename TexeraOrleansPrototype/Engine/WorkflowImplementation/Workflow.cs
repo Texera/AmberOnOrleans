@@ -45,23 +45,29 @@ namespace Engine.WorkflowImplementation
 
         public async Task Pause()
         {
+<<<<<<< HEAD
             List<Task> taskList=new List<Task>();
             foreach(Operator o in StartOperators)
+=======
+            foreach(Operator o in AllOperators)
+>>>>>>> parent of 69b6bf6... remove join operators
             {
-                taskList.Add(o.Pause());
+                await o.Pause();
             }
-            Task.WaitAll(taskList.ToArray());
             return;
         }
 
         public async Task Resume()
         {
+<<<<<<< HEAD
             List<Task> taskList=new List<Task>();
             foreach(Operator o in StartOperators)
+=======
+            foreach(Operator o in AllOperators)
+>>>>>>> parent of 69b6bf6... remove join operators
             {
-                taskList.Add(o.Resume());
+                await o.Resume();
             }
-            Task.WaitAll(taskList.ToArray());
         }
 
 
