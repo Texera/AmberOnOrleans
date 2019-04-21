@@ -47,7 +47,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 if(outputRows[i].Count==0)continue;
                 List<TexeraTuple> payload=new List<TexeraTuple>();
                 payload.AddRange(outputRows[i]);
-                outputRows[i].Clear();
+                outputRows[i]=new List<TexeraTuple>();
                 result.Add(new Pair<int,List<TexeraTuple>>(i,payload));
             }
             return result;
