@@ -79,10 +79,8 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "CrossRippleJoin")
                 {
-                    int outputLimit=operator1["outputLimitPerBatch"]==null?-1:int.Parse(operator1["outputLimitPerBatch"].ToString());
                     int inputLimit=operator1["batchingLimit"]==null?1000:int.Parse(operator1["batchingLimit"].ToString());
-                    int timeLimit=operator1["timeLimitPerBatch(ms)"]==null?-1:int.Parse(operator1["timeLimitPerBatch(ms)"].ToString());
-                    JoinPredicate joinPredicate=new JoinPredicate(table_id++,outputLimit,inputLimit,timeLimit);
+                    JoinPredicate joinPredicate=new JoinPredicate(table_id++,inputLimit);
                     op = new JoinOperator(joinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "HashRippleJoin")

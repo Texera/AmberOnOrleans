@@ -6,7 +6,7 @@ namespace Engine.OperatorImplementation.Operators
     {
         public int JoinFieldIndex;
         public int TableID;
-        public HashJoinPredicate(int joinFieldIndex, int tableID,int outputLimitPerBatch=-1,int batchingLimit=1000,int timeLimitPerBatch=-1):base(outputLimitPerBatch,batchingLimit,timeLimitPerBatch)
+        public HashJoinPredicate(int joinFieldIndex, int tableID,int batchingLimit=1000):base(batchingLimit)
         {
             JoinFieldIndex=joinFieldIndex;    
             TableID=tableID;
