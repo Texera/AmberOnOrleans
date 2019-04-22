@@ -28,7 +28,6 @@ namespace Engine.OperatorImplementation.Common
 
     public class WorkerGrain : Grain, IWorkerGrain
     {
-        protected virtual bool WorkAsExternalTask {get{return false;}}
         protected PredicateBase predicate = null;
         protected bool isPaused = false;
         protected List<Immutable<PayloadMessage>> pausedMessages = new List<Immutable<PayloadMessage>>();
@@ -71,39 +70,31 @@ namespace Engine.OperatorImplementation.Common
                 List<TexeraTuple> batch;
                 bool isEnd;
                 PreProcess(message,out batch,out isEnd);
-                if(WorkAsExternalTask)
-                {
-                    var orleansScheduler=TaskScheduler.Current;
-                    Action action=async ()=>
-                    {
-                        if(batch!=null)
-                        {
-                            ProcessBatch(batch);
-                        }
-                        if(isPaused)
-                        {
-                            return;
-                        }
-                        currentIndex=0;
-                        Task sendTask=new Task(()=>{MakePayloadMessagesThenSend(isEnd);});
-                        sendTask.Start(orleansScheduler);
-                        await sendTask;
-                        actionQueue.Dequeue();
-                        if(!isPaused && actionQueue.Count>0)
-                            new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
-                    };
-                    actionQueue.Enqueue(action);
-                    if(actionQueue.Count==1)
-                        new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
-                }
-                else
+                var orleansScheduler=TaskScheduler.Current;
+                Action action=async ()=>
                 {
                     if(batch!=null)
                     {
                         ProcessBatch(batch);
                     }
+                    if(isPaused)
+                    {
+                        return;
+                    }
                     currentIndex=0;
-                    MakePayloadMessagesThenSend(isEnd);
+                    Task sendTask=new Task(()=>{MakePayloadMessagesThenSend(isEnd);});
+                    sendTask.Start(orleansScheduler);
+                    await sendTask;
+                    actionQueue.Dequeue();
+                    if(!isPaused && actionQueue.Count>0)
+                    {
+                        new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+                    }
+                };
+                actionQueue.Enqueue(action);
+                if(actionQueue.Count==1)
+                {
+                    new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
                 }
             }
             return Task.CompletedTask;
@@ -227,10 +218,9 @@ namespace Engine.OperatorImplementation.Common
             {
                 return;
             }
-            if(WorkAsExternalTask)
+            if(actionQueue.Count>0)
             {
-                if(actionQueue.Count>0)
-                    new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+                new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
             }
             foreach(Immutable<PayloadMessage> message in pausedMessages)
             {

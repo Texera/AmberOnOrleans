@@ -18,7 +18,6 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class KeywordSearchOperatorGrain : WorkerGrain, IKeywordSearchOperatorGrain
     {
-        protected override bool WorkAsExternalTask {get{return true;}}
         int searchIndex;
         string keyword;
 

@@ -15,7 +15,6 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class HashJoinOperatorGrain : WorkerGrain, IHashJoinOperatorGrain
     {
-        protected override bool WorkAsExternalTask {get{return true;}}
         Dictionary<int,Dictionary<string,List<TexeraTuple>>> joinedTuples=new Dictionary<int, Dictionary<string, List<TexeraTuple>>>();
         int joinFieldIndex=-1;
         int TableID;

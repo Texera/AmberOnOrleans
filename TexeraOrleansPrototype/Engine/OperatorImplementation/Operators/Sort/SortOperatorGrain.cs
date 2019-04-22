@@ -15,7 +15,6 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class SortOperatorGrain : WorkerGrain, ISortOperatorGrain
     {
-        protected override bool WorkAsExternalTask {get{return true;}}
         List<TexeraTuple> sortedTuples=new List<TexeraTuple>();
         int sortIndex;
         int counter=0;
