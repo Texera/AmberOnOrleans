@@ -90,7 +90,7 @@ namespace Engine.OperatorImplementation.Common
                         await sendTask;
                         actionQueue.Dequeue();
                         if(!isPaused && actionQueue.Count>0)
-                            new Task(actionQueue.Peek()).Start();
+                            new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
                     };
                     actionQueue.Enqueue(action);
                     if(actionQueue.Count==1)
