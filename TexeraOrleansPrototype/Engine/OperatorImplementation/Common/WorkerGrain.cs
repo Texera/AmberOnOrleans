@@ -10,6 +10,7 @@ using System.Diagnostics;
 using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.SendingSemantics;
 using System.Threading;
+using System.Collections.Concurrent;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -50,13 +51,6 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
         
-        protected void PreProcess(Immutable<PayloadMessage> message, out List<TexeraTuple> batch,out bool isEnd)
-        {
-            isEnd=message.Value.IsEnd;
-            batch=message.Value.Payload;
-            orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.Value.SenderIdentifer);  
-        }
-
         public Task Process(Immutable<PayloadMessage> message)
         {
             if(isPaused)
@@ -66,10 +60,9 @@ namespace Engine.OperatorImplementation.Common
             }
             if(orderingEnforcer.PreProcess(message))
             {
-                
-                List<TexeraTuple> batch;
-                bool isEnd;
-                PreProcess(message,out batch,out isEnd);
+                bool isEnd=message.Value.IsEnd;
+                List<TexeraTuple>batch=message.Value.Payload;
+                orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.Value.SenderIdentifer);  
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
@@ -94,7 +87,7 @@ namespace Engine.OperatorImplementation.Common
                 actionQueue.Enqueue(action);
                 if(actionQueue.Count==1)
                 {
-                    new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+                    new Task(action).Start(TaskScheduler.Default);
                 }
             }
             return Task.CompletedTask;
@@ -109,10 +102,10 @@ namespace Engine.OperatorImplementation.Common
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
-                outputTuples.Clear();
                 string identifer=ReturnGrainIndentifierString(self);
                 strategy.SendBatchedMessages(identifer);
             }
+            outputTuples=new List<TexeraTuple>();
             if(currentEndFlagCount==targetEndFlagCount)
             {
                 isFinished=true;
@@ -126,11 +119,11 @@ namespace Engine.OperatorImplementation.Common
             {
                 MakeFinalOutputTuples();
                 strategy.Enqueue(outputTuples);
-                outputTuples.Clear();
                 string identifer=ReturnGrainIndentifierString(self);
                 strategy.SendBatchedMessages(identifer);
                 strategy.SendEndMessages(identifer);
             }
+            outputTuples= new List<TexeraTuple>();
         }
 
         protected void ProcessBatch(List<TexeraTuple> batch)
@@ -220,6 +213,7 @@ namespace Engine.OperatorImplementation.Common
             }
             if(actionQueue.Count>0)
             {
+               
                 new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
             }
             foreach(Immutable<PayloadMessage> message in pausedMessages)
