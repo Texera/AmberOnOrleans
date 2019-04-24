@@ -22,7 +22,7 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void MakeFinalOutputTuples()
         {
-            outputTuples.Add(new TexeraTuple(-1,new string[]{count.ToString()}));
+            outputTuples.Enqueue(new TexeraTuple(-1,new string[]{count.ToString()}));
         }
     }
 

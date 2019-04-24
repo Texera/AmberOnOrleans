@@ -36,7 +36,7 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     foreach(TexeraTuple joinedTuple in entry.Value[field])
                     {
-                        outputTuples.Add(new TexeraTuple(TableID,joinedTuple.FieldList.Concat(fields).ToArray()));
+                        outputTuples.Enqueue(new TexeraTuple(TableID,joinedTuple.FieldList.Concat(fields).ToArray()));
                     }
                 }
             }

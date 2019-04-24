@@ -44,7 +44,8 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void MakeFinalOutputTuples()
         {
-            outputTuples.AddRange(sortedTuples);
+            foreach(TexeraTuple tuple in sortedTuples)
+                outputTuples.Enqueue(tuple);
         }
     }
 

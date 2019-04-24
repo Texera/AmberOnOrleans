@@ -33,7 +33,7 @@ namespace Engine.OperatorImplementation.Operators
         protected override void ProcessTuple(TexeraTuple tuple)
         {
             if(tuple.FieldList!=null && tuple.FieldList[searchIndex].Contains(keyword))
-                outputTuples.Add(tuple);
+                outputTuples.Enqueue(tuple);
         }
     }
 }

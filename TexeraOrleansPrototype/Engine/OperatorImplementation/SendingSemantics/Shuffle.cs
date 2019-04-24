@@ -21,7 +21,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.selectorExpression=jsonLambdaFunction;
         }
 
-        public override void Enqueue(List<TexeraTuple> output)
+        public override void Enqueue(IEnumerable<TexeraTuple> output)
         {
             if(selector==null)
             {

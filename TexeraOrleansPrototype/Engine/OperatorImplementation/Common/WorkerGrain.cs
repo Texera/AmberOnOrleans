@@ -40,7 +40,7 @@ namespace Engine.OperatorImplementation.Common
         private int targetEndFlagCount = int.MinValue;
         private Queue<Action> actionQueue=new Queue<Action>();
         protected int currentIndex=0;
-        protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
+        protected ConcurrentQueue<TexeraTuple> outputTuples=new ConcurrentQueue<TexeraTuple>();
         protected bool isFinished=false;
 
         public virtual Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
@@ -78,16 +78,22 @@ namespace Engine.OperatorImplementation.Common
                     Task sendTask=new Task(()=>{MakePayloadMessagesThenSend(isEnd);});
                     sendTask.Start(orleansScheduler);
                     await sendTask;
-                    actionQueue.Dequeue();
-                    if(!isPaused && actionQueue.Count>0)
+                    lock(actionQueue)
                     {
-                        new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+                        actionQueue.Dequeue();
+                        if(!isPaused && actionQueue.Count>0)
+                        {
+                            new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+                        }
                     }
                 };
-                actionQueue.Enqueue(action);
-                if(actionQueue.Count==1)
+                lock(actionQueue)
                 {
-                    new Task(action).Start(TaskScheduler.Default);
+                    actionQueue.Enqueue(action);
+                    if(actionQueue.Count==1)
+                    {
+                        new Task(action).Start(TaskScheduler.Default);
+                    }
                 }
             }
             return Task.CompletedTask;
@@ -105,7 +111,7 @@ namespace Engine.OperatorImplementation.Common
                 string identifer=ReturnGrainIndentifierString(self);
                 strategy.SendBatchedMessages(identifer);
             }
-            outputTuples=new List<TexeraTuple>();
+            outputTuples=new ConcurrentQueue<TexeraTuple>();
             if(currentEndFlagCount==targetEndFlagCount)
             {
                 isFinished=true;
@@ -123,7 +129,7 @@ namespace Engine.OperatorImplementation.Common
                 strategy.SendBatchedMessages(identifer);
                 strategy.SendEndMessages(identifer);
             }
-            outputTuples= new List<TexeraTuple>();
+            outputTuples= new ConcurrentQueue<TexeraTuple>();
         }
 
         protected void ProcessBatch(List<TexeraTuple> batch)

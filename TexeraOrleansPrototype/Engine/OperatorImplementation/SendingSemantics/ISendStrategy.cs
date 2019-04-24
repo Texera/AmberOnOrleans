@@ -10,7 +10,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public interface ISendStrategy
     {
-        void Enqueue(List<TexeraTuple> output);
+        void Enqueue(IEnumerable<TexeraTuple> output);
         void SendBatchedMessages(string senderIdentifier);
         void SendEndMessages(string senderIdentifier);
         void AddReceiver(IWorkerGrain receiver);
