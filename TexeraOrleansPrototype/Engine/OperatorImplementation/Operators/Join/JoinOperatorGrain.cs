@@ -15,25 +15,25 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class JoinOperatorGrain : WorkerGrain, IJoinOperatorGrain
     {
-        // protected override bool WorkAsExternalTask {get{return true;}}
         Dictionary<int,List<TexeraTuple>> joinedTuples=new Dictionary<int, List<TexeraTuple>>();
         int TableID;
+        int counter=0;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);
             TableID=((JoinPredicate)predicate).TableID;
             return Task.CompletedTask;
         }
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple)
         {
-            List<TexeraTuple> result=new List<TexeraTuple>();
+            //Console.WriteLine(++counter+" tuple processed");
             foreach(KeyValuePair<int,List<TexeraTuple>> entry in joinedTuples)
             {
                 if(entry.Key!=tuple.TableID)
                 {
                     foreach(TexeraTuple t in entry.Value)
                     {
-                        result.Add(new TexeraTuple(TableID,tuple.FieldList.Concat(t.FieldList).ToArray()));
+                        outputTuples.Enqueue(new TexeraTuple(TableID,tuple.FieldList.Concat(t.FieldList).ToArray()));
                     }
                 }
             }
@@ -45,7 +45,6 @@ namespace Engine.OperatorImplementation.Operators
             {
                 joinedTuples.Add(tuple.TableID,new List<TexeraTuple>{tuple});
             }
-            return result;
         }
     }
 

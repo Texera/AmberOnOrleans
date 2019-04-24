@@ -30,13 +30,10 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void ProcessBatch(List<TexeraTuple> tuples, ref List<TexeraTuple> output)
+        protected override void ProcessTuple(TexeraTuple tuple)
         {
-            foreach(TexeraTuple tuple in tuples)
-            {
-                if(tuple.FieldList!=null && tuple.FieldList[searchIndex].Contains(keyword))
-                    output.Add(tuple);
-            }
+            if(tuple.FieldList!=null && tuple.FieldList[searchIndex].Contains(keyword))
+                outputTuples.Enqueue(tuple);
         }
     }
 }

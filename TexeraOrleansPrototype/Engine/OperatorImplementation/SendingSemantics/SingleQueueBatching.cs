@@ -18,7 +18,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.batchingLimit=batchingLimit;
         }
 
-        public void Enqueue(List<TexeraTuple> output)
+        public void Enqueue(IEnumerable<TexeraTuple> output)
         {
             foreach(TexeraTuple tuple in output)
             {

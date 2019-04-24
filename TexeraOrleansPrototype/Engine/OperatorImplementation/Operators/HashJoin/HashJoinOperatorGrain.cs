@@ -15,7 +15,6 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class HashJoinOperatorGrain : WorkerGrain, IHashJoinOperatorGrain
     {
-        // protected override bool WorkAsExternalTask {get{return true;}}
         Dictionary<int,Dictionary<string,List<TexeraTuple>>> joinedTuples=new Dictionary<int, Dictionary<string, List<TexeraTuple>>>();
         int joinFieldIndex=-1;
         int TableID;
@@ -26,9 +25,8 @@ namespace Engine.OperatorImplementation.Operators
             TableID=((HashJoinPredicate)predicate).TableID;
             return Task.CompletedTask;
         }
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple)
         {
-            List<TexeraTuple> result=new List<TexeraTuple>();
             string field=tuple.FieldList[joinFieldIndex];
             List<string> fields=tuple.FieldList.ToList();
             fields.RemoveAt(joinFieldIndex);
@@ -38,7 +36,7 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     foreach(TexeraTuple joinedTuple in entry.Value[field])
                     {
-                        result.Add(new TexeraTuple(TableID,joinedTuple.FieldList.Concat(fields).ToArray()));
+                        outputTuples.Enqueue(new TexeraTuple(TableID,joinedTuple.FieldList.Concat(fields).ToArray()));
                     }
                 }
             }
@@ -56,7 +54,6 @@ namespace Engine.OperatorImplementation.Operators
             {
                 joinedTuples[tuple.TableID][field].Add(tuple);
             }
-            return result;
         }
     }
 

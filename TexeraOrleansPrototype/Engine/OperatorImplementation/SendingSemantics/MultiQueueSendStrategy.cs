@@ -20,7 +20,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.outputSequenceNumbers=Enumerable.Repeat((ulong)0, receivers.Count).ToList();
         }
 
-        public abstract void Enqueue(List<TexeraTuple> output);
+        public abstract void Enqueue(IEnumerable<TexeraTuple> output);
 
         public abstract void AddReceiver(IWorkerGrain receiver);
 

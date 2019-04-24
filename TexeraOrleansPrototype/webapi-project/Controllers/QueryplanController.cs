@@ -88,6 +88,12 @@ namespace webapi.Controllers
                     HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
                     op = new HashJoinOperator(hashJoinPredicate);
                 }
+                else if((string)operator1["operatorType"] == "InsertionSort")
+                {
+                    SortPredicate sortPredicate=new SortPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")));
+                    op=new SortOperator(sortPredicate);
+                }
+
                 if(op!=null)
                     map.Add((string)operator1["operatorID"],op);
             }
