@@ -24,7 +24,7 @@ namespace Engine.OperatorImplementation.Operators
             sortIndex=((SortPredicate)predicate).SortIndex;
             return Task.CompletedTask;
         }
-        protected override void ProcessTuple(TexeraTuple tuple)
+        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
             //Console.WriteLine(++counter+" tuples sorted");
             int idx=-1;
@@ -40,12 +40,12 @@ namespace Engine.OperatorImplementation.Operators
                 sortedTuples.Insert(idx,tuple);
             else
                 sortedTuples.Add(tuple);
+            return null;
         }
 
-        protected override void MakeFinalOutputTuples()
+        protected override List<TexeraTuple> MakeFinalOutputTuples()
         {
-            foreach(TexeraTuple tuple in sortedTuples)
-                outputTuples.Enqueue(tuple);
+            return sortedTuples;
         }
     }
 

@@ -159,10 +159,12 @@ namespace Engine.OperatorImplementation.Common
                 isPaused = true;
                 foreach(List<IWorkerGrain> grainList in operatorGrains)
                 {
+                    List<Task> taskList=new List<Task>();
                     foreach(IWorkerGrain grain in grainList)
                     {
-                        await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Pause)));
+                        taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Pause))));
                     }
+                    await Task.WhenAll(taskList);
                 }
                 sequenceNumber++;
                 foreach(IPrincipalGrain next in nextPrincipalGrains)
@@ -194,10 +196,12 @@ namespace Engine.OperatorImplementation.Common
             isPaused = false;
             foreach(List<IWorkerGrain> grainList in operatorGrains)
             {
+                List<Task> taskList=new List<Task>();
                 foreach(IWorkerGrain grain in grainList)
                 {
-                    await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                    taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Resume))));
                 }
+                await Task.WhenAll(taskList);
             }
             sequenceNumber++;
         }
@@ -214,10 +218,12 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Start()
         {
+            List<Task> taskList=new List<Task>();
             foreach(IWorkerGrain grain in inputGrains)
             {
-                 await grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Start)));
+                taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Start))));
             }
+            await Task.WhenAll(taskList);
             sequenceNumber++;
         }
 
