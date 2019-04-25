@@ -75,15 +75,13 @@ namespace Engine.OperatorImplementation.Common
                         return;
                     }
                     currentIndex=0;
-                    Task sendTask=new Task(()=>{MakePayloadMessagesThenSend(isEnd);});
-                    sendTask.Start(orleansScheduler);
-                    await sendTask;
+                    await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend(isEnd);},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
                         if(!isPaused && actionQueue.Count>0)
                         {
-                            new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+                            Task.Run(actionQueue.Peek());
                         }
                     }
                 };
@@ -92,7 +90,7 @@ namespace Engine.OperatorImplementation.Common
                     actionQueue.Enqueue(action);
                     if(actionQueue.Count==1)
                     {
-                        new Task(action).Start(TaskScheduler.Default);
+                        Task.Run(action);
                     }
                 }
             }
