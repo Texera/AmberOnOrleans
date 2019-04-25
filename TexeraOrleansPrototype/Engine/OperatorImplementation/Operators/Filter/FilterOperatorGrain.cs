@@ -31,7 +31,7 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void ProcessTuple(TexeraTuple tuple)
+        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
             if(tuple.FieldList!=null)
             {
@@ -39,30 +39,31 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     case FilterPredicate.FilterType.Equal:
                         if(float.Parse(tuple.FieldList[filterIndex])==threshold)
-                            outputTuples.Enqueue(tuple);
+                            return new List<TexeraTuple>{tuple};
                         break;
                     case FilterPredicate.FilterType.Greater:
                         if(float.Parse(tuple.FieldList[filterIndex])>threshold)
-                            outputTuples.Enqueue(tuple);
+                            return new List<TexeraTuple>{tuple};
                         break;
                     case FilterPredicate.FilterType.GreaterOrEqual:
                         if(float.Parse(tuple.FieldList[filterIndex])>=threshold)
-                            outputTuples.Enqueue(tuple);
+                            return new List<TexeraTuple>{tuple};
                         break;
                     case FilterPredicate.FilterType.Less:
                         if(float.Parse(tuple.FieldList[filterIndex])<threshold)
-                            outputTuples.Enqueue(tuple);
+                            return new List<TexeraTuple>{tuple};
                         break;
                     case FilterPredicate.FilterType.LessOrEqual:
                         if(float.Parse(tuple.FieldList[filterIndex])<=threshold)
-                            outputTuples.Enqueue(tuple);
+                            return new List<TexeraTuple>{tuple};
                         break;
                     case FilterPredicate.FilterType.NotEqual:
                         if(float.Parse(tuple.FieldList[filterIndex])!=threshold)
-                            outputTuples.Enqueue(tuple);
+                            return new List<TexeraTuple>{tuple};
                         break;
                 }   
             }
+            return null;
         }
     }
 }
