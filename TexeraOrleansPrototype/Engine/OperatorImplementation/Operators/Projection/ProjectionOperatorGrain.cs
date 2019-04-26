@@ -18,20 +18,20 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ProjectionOperatorGrain : WorkerGrain, IProjectionOperatorGrain
     {
-        List<int> projectionAttrs;
+        List<int> projectionIndexs;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);
-            projectionAttrs=((ProjectionPredicate)predicate).ProjectionAttrs;
+            projectionIndexs=((ProjectionPredicate)predicate).ProjectionIndexs;
             return Task.CompletedTask;
         }
 
 
         protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
-            TexeraTuple result=new TexeraTuple(tuple.TableID,new string[projectionAttrs.Count]);
+            TexeraTuple result=new TexeraTuple(tuple.TableID,new string[projectionIndexs.Count]);
             int i=0;
-            foreach(int attr in projectionAttrs)
+            foreach(int attr in projectionIndexs)
             {
                 result.FieldList[i++]=tuple.FieldList[attr];
             }

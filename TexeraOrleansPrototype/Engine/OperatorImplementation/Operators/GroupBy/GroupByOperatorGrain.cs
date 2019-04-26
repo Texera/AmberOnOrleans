@@ -18,8 +18,8 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class GroupByOperatorGrain : WorkerGrain, IGroupByOperatorGrain
     {
-        Dictionary<string,float> results;
-        Dictionary<string,int> counter;
+        Dictionary<string,float> results=new Dictionary<string, float>();
+        Dictionary<string,int> counter=new Dictionary<string, int>();
         int groupByIndex;
         int aggregationIndex;
         string aggregationFunc;
@@ -55,6 +55,11 @@ namespace Engine.OperatorImplementation.Operators
                         case "avg":
                             results[field]+=value;
                             break;
+                        case "sum":
+                            results[field]+=value;
+                            break;
+                        case "count":
+                            break;
                     }
                 }
                 else
@@ -84,6 +89,12 @@ namespace Engine.OperatorImplementation.Operators
                         break;
                     case "avg":
                         result.Add(new TexeraTuple(-1,new string[]{pair.Key,(pair.Value/counter[pair.Key]).ToString()}));
+                        break;
+                    case "sum":
+                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
+                        break;
+                    case "count":
+                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,counter[pair.Key].ToString()}));
                         break;
                 }
             }

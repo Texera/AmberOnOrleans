@@ -6,7 +6,7 @@ namespace Engine.OperatorImplementation.Operators
     public class GroupByOperator : Operator
     {
         
-        public GroupByOperator(KeywordPredicate predicate) : base(predicate)
+        public GroupByOperator(GroupByPredicate predicate) : base(predicate)
         {
             
         }

@@ -5,10 +5,10 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ProjectionPredicate : PredicateBase
     {
-        public List<int> ProjectionAttrs;
-        public ProjectionPredicate(List<int> projectionAttrs,int batchingLimit=1000):base(batchingLimit)
+        public List<int> ProjectionIndexs;
+        public ProjectionPredicate(List<int> projectionIndexs,int batchingLimit=1000):base(batchingLimit)
         {
-            this.ProjectionAttrs=projectionAttrs;
+            this.ProjectionIndexs=projectionIndexs;
         }
     }
 }

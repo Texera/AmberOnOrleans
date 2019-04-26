@@ -27,13 +27,36 @@ namespace Engine.OperatorImplementation.Operators
         protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
             //Console.WriteLine(++counter+" tuples sorted");
+            bool isNumeric=false;
+            float num=0;
+            string value=tuple.FieldList[sortIndex];
+            try
+            {
+                num=float.Parse(tuple.FieldList[sortIndex]);
+                isNumeric=true;
+            }
+            catch(Exception)
+            {
+                
+            }
             int idx=-1;
             for(int i=0;i<sortedTuples.Count;++i)
             {
-                if(String.Compare(sortedTuples[i].FieldList[sortIndex],tuple.FieldList[sortIndex])==1)
+                if(!isNumeric)
                 {
-                    idx=i;
-                    break;
+                    if(String.Compare(sortedTuples[i].FieldList[sortIndex],value)==1)
+                    {
+                        idx=i;
+                        break;
+                    }
+                }
+                else
+                {
+                    if(float.Parse(sortedTuples[i].FieldList[sortIndex])>num)
+                    {
+                        idx=i;
+                        break;
+                    }
                 }
             }
             if(idx!=-1)

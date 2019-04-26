@@ -93,6 +93,19 @@ namespace webapi.Controllers
                     SortPredicate sortPredicate=new SortPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")));
                     op=new SortOperator(sortPredicate);
                 }
+                else if((string)operator1["operatorType"] == "GroupBy")
+                {
+                    int groupByIndex=int.Parse(operator1["groupByAttribute"].ToString().Replace("_c",""));
+                    int aggregationIndex=int.Parse(operator1["aggregationAttribute"].ToString().Replace("_c",""));
+                    GroupByPredicate groupByPredicate=new GroupByPredicate(groupByIndex,aggregationIndex,operator1["aggregationFunction"].ToString());
+                    op=new GroupByOperator(groupByPredicate);
+                }
+                else if((string)operator1["operatorType"] == "Projection")
+                {
+                    List<int> projectionIndexs=operator1["projectionAttributes"].ToString().Split(",").Select(x=>int.Parse(x.Replace("_c",""))).ToList();
+                    ProjectionPredicate projectionPredicate=new ProjectionPredicate(projectionIndexs);
+                    op=new ProjectionOperator(projectionPredicate);
+                }
 
                 if(op!=null)
                     map.Add((string)operator1["operatorID"],op);
