@@ -3,15 +3,15 @@ using Orleans;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class JoinOperator : Operator
+    public class HashRippleJoinOperator : Operator
     {
-        public JoinOperator(JoinPredicate predicate) : base(predicate)
+        public HashRippleJoinOperator(HashRippleJoinPredicate predicate) : base(predicate)
         {
 
         }
         public override void SetPrincipalGrain(IGrainFactory factory)
         {
-            PrincipalGrain = factory.GetGrain<IJoinPrincipalGrain>(OperatorGuid);
+            PrincipalGrain = factory.GetGrain<IHashRippleJoinPrincipalGrain>(OperatorGuid);
         }
     }
 }

@@ -10,6 +10,7 @@ using System.Diagnostics;
 using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.SendingSemantics;
 using System.Threading;
+using System.Linq;
 using System.Collections.Concurrent;
 
 namespace Engine.OperatorImplementation.Common
@@ -36,10 +37,10 @@ namespace Engine.OperatorImplementation.Common
         protected IWorkerGrain self = null;
         private IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
         private Dictionary<Guid,ISendStrategy> sendStrategies = new Dictionary<Guid, ISendStrategy>();
-        private int currentEndFlagCount = 0;
-        private int targetEndFlagCount = int.MinValue;
-        private Queue<Action> actionQueue=new Queue<Action>();
+        protected Dictionary<string,int> inputInfo;
+        protected Queue<Action> actionQueue=new Queue<Action>();
         protected int currentIndex=0;
+        protected int currentEndFlagCount=int.MaxValue;
         protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
         protected bool isFinished=false;
 
@@ -61,11 +62,12 @@ namespace Engine.OperatorImplementation.Common
             if(orderingEnforcer.PreProcess(message))
             {
                 bool isEnd=message.Value.IsEnd;
-                List<TexeraTuple>batch=message.Value.Payload;
+                List<TexeraTuple> batch=message.Value.Payload;
                 orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.Value.SenderIdentifer);  
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
+                    BeforeProcessBatch(message);
                     if(batch!=null)
                     {
                         ProcessBatch(batch);
@@ -75,7 +77,13 @@ namespace Engine.OperatorImplementation.Common
                         return;
                     }
                     currentIndex=0;
-                    await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend(isEnd);},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    if(isEnd)
+                    {
+                        inputInfo[message.Value.SenderIdentifer.Split(' ')[0]]--;
+                        currentEndFlagCount--;
+                    }
+                    AfterProcessBatch(message);
+                    await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
@@ -97,12 +105,8 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        private void MakePayloadMessagesThenSend(bool isEnd)
+        protected void MakePayloadMessagesThenSend()
         {
-            if(isEnd)
-            {
-                ++currentEndFlagCount;
-            }
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
@@ -110,7 +114,7 @@ namespace Engine.OperatorImplementation.Common
                 strategy.SendBatchedMessages(identifer);
             }
             outputTuples=new List<TexeraTuple>();
-            if(currentEndFlagCount==targetEndFlagCount)
+            if(currentEndFlagCount==0)
             {
                 isFinished=true;
                 MakeLastPayloadMessageThenSend();
@@ -134,6 +138,16 @@ namespace Engine.OperatorImplementation.Common
             outputTuples= new List<TexeraTuple>();
         }
 
+
+        protected virtual void BeforeProcessBatch(Immutable<PayloadMessage> message)
+        {
+
+        }
+
+        protected virtual void AfterProcessBatch(Immutable<PayloadMessage> message)
+        {
+
+        }
         protected void ProcessBatch(List<TexeraTuple> batch)
         {
             List<TexeraTuple> localList=new List<TexeraTuple>();
@@ -250,9 +264,10 @@ namespace Engine.OperatorImplementation.Common
             throw new NotImplementedException();
         }
 
-        public Task SetTargetEndFlagCount(int target)
+        public Task SetInputInformation(Dictionary<string,int> inputInfo)
         {
-            targetEndFlagCount=target;
+            currentEndFlagCount=inputInfo.Values.Sum();
+            this.inputInfo=inputInfo;
             return Task.CompletedTask;
         }
 
@@ -263,7 +278,7 @@ namespace Engine.OperatorImplementation.Common
                 GenerateTuples();
                 if(!isFinished || outputTuples.Count>0)
                 {
-                    MakePayloadMessagesThenSend(false);
+                    MakePayloadMessagesThenSend();
                     StartGenerate(0);
                 }
                 else

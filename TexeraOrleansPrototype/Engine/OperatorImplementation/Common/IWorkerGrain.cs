@@ -21,7 +21,7 @@ namespace Engine.OperatorImplementation.Common
         #region Used by all operators
         Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain);
         Task SetSendStrategy(Guid operatorGuid, ISendStrategy sendStrategy);
-        Task SetTargetEndFlagCount(int target);
+        Task SetInputInformation(Dictionary<string,int> inputInfo);
         /*
         Receives and processes the control message completely. This is because the
         control message needs to be acted upon ASAP.

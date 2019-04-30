@@ -86,17 +86,17 @@ namespace Engine.OperatorImplementation.Common
 
         public async Task LinkWorkerGrains()
         {
-            int count=0;
+            Dictionary<string,int> inputInfo=new Dictionary<string, int>();
             foreach(IPrincipalGrain prevPrincipal in prevPrincipalGrains)
             {
                 List<IWorkerGrain> prevOutputGrains=await prevPrincipal.GetOutputGrains();
-                count+=prevOutputGrains.Count;
+                inputInfo[prevPrincipal.GetPrimaryKeyString()]=prevOutputGrains.Count;
             }
-            if(count>0)
+            if(inputInfo.Count>0)
             {
                 foreach(IWorkerGrain grain in inputGrains)
                 {
-                    await grain.SetTargetEndFlagCount(count);
+                    await grain.SetInputInformation(inputInfo);
                 }
             }
 
