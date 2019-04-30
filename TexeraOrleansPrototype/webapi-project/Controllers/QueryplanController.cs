@@ -80,13 +80,13 @@ namespace webapi.Controllers
                 else if((string)operator1["operatorType"] == "CrossRippleJoin")
                 {
                     int inputLimit=operator1["batchingLimit"]==null?1000:int.Parse(operator1["batchingLimit"].ToString());
-                    JoinPredicate joinPredicate=new JoinPredicate(table_id++,inputLimit);
-                    op = new JoinOperator(joinPredicate);
+                    CrossRippleJoinPredicate crossRippleJoinPredicate=new CrossRippleJoinPredicate(table_id++,inputLimit);
+                    op = new CrossRippleJoinOperator(crossRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "HashRippleJoin")
                 {
-                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
-                    op = new HashJoinOperator(hashJoinPredicate);
+                    HashRippleJoinPredicate hashRippleJoinPredicate=new HashRippleJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
+                    op = new HashRippleJoinOperator(hashRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "InsertionSort")
                 {
@@ -105,6 +105,11 @@ namespace webapi.Controllers
                     List<int> projectionIndexs=operator1["projectionAttributes"].ToString().Split(",").Select(x=>int.Parse(x.Replace("_c",""))).ToList();
                     ProjectionPredicate projectionPredicate=new ProjectionPredicate(projectionIndexs);
                     op=new ProjectionOperator(projectionPredicate);
+                }
+                else if((string)operator1["operatorType"] == "HashJoin")
+                {
+                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
+                    op = new HashJoinOperator(hashJoinPredicate);
                 }
 
                 if(op!=null)
