@@ -67,7 +67,7 @@ namespace Engine.OperatorImplementation.Common
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
-                    BeforeProcessBatch(message);
+                    BeforeProcessBatch(message,orleansScheduler);
                     if(batch!=null)
                     {
                         ProcessBatch(batch);
@@ -82,7 +82,7 @@ namespace Engine.OperatorImplementation.Common
                         inputInfo[message.Value.SenderIdentifer.Split(' ')[0]]--;
                         currentEndFlagCount--;
                     }
-                    AfterProcessBatch(message);
+                    AfterProcessBatch(message,orleansScheduler);
                     await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                     lock(actionQueue)
                     {
@@ -114,7 +114,7 @@ namespace Engine.OperatorImplementation.Common
                 strategy.SendBatchedMessages(identifer);
             }
             outputTuples=new List<TexeraTuple>();
-            if(currentEndFlagCount==0)
+            if(currentEndFlagCount==0 && actionQueue.Count==1)
             {
                 isFinished=true;
                 MakeLastPayloadMessageThenSend();
@@ -139,12 +139,12 @@ namespace Engine.OperatorImplementation.Common
         }
 
 
-        protected virtual void BeforeProcessBatch(Immutable<PayloadMessage> message)
+        protected virtual void BeforeProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
         {
 
         }
 
-        protected virtual void AfterProcessBatch(Immutable<PayloadMessage> message)
+        protected virtual void AfterProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
         {
 
         }

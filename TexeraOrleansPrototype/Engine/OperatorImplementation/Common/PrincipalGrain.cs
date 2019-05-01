@@ -90,7 +90,7 @@ namespace Engine.OperatorImplementation.Common
             foreach(IPrincipalGrain prevPrincipal in prevPrincipalGrains)
             {
                 List<IWorkerGrain> prevOutputGrains=await prevPrincipal.GetOutputGrains();
-                inputInfo[prevPrincipal.GetPrimaryKeyString()]=prevOutputGrains.Count;
+                inputInfo[prevPrincipal.GetPrimaryKey().ToString()]=prevOutputGrains.Count;
             }
             if(inputInfo.Count>0)
             {

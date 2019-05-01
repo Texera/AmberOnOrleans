@@ -34,10 +34,10 @@ namespace Engine.OperatorImplementation.Operators
             {
                 tableSource=tuple.TableID;
             }
-            if(tuple.TableID==tableSource)
+            if(tuple.TableID.Equals(tableSource))
             {
                 string source=tuple.FieldList[joinFieldIndex];
-                if(hashTable.ContainsKey(source))
+                if(!hashTable.ContainsKey(source))
                     hashTable[source]=new List<TexeraTuple>{tuple};
                 else
                     hashTable[source].Add(tuple);
@@ -64,16 +64,16 @@ namespace Engine.OperatorImplementation.Operators
             return null;
         }
 
-        protected override void AfterProcessBatch(Immutable<PayloadMessage> message)
+        protected override void AfterProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
         {
             if(inputInfo[sourceOperator]==0 && otherTable!=null)
             {
-                var orleansScheduler=TaskScheduler.Current;
+                var batch=otherTable;
                 Action action=async ()=>
                 {
-                    if(otherTable!=null)
+                    if(batch!=null)
                     {
-                        ProcessBatch(otherTable);
+                        ProcessBatch(batch);
                     }
                     if(isPaused)
                     {
@@ -102,7 +102,7 @@ namespace Engine.OperatorImplementation.Operators
             }
         }
 
-        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message)
+        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
         {
             if(sourceOperator==null)
                 sourceOperator=message.Value.SenderIdentifer.Split(' ')[0];
