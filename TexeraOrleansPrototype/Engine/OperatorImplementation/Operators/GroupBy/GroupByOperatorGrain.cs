@@ -34,7 +34,7 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
             try
             {
@@ -72,7 +72,6 @@ namespace Engine.OperatorImplementation.Operators
             {
                 Console.WriteLine(e);
             }
-            return null;
         }
         protected override List<TexeraTuple> MakeFinalOutputTuples()
         {

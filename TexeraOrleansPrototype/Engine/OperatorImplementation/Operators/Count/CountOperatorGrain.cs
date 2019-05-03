@@ -15,10 +15,9 @@ namespace Engine.OperatorImplementation.Operators
     public class CountOperatorGrain : WorkerGrain, ICountOperatorGrain
     {
         int count=0;
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
             count++;
-            return null;
         }
 
         protected override List<TexeraTuple> MakeFinalOutputTuples()

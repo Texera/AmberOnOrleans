@@ -28,7 +28,7 @@ namespace Engine.OperatorImplementation.Operators
             TableID=((HashJoinPredicate)predicate).TableID;
             return Task.CompletedTask;
         }
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
             if(tableSource==-1)
             {
@@ -53,15 +53,12 @@ namespace Engine.OperatorImplementation.Operators
                     string field=tuple.FieldList[joinFieldIndex];
                     List<string> fields=tuple.FieldList.ToList();
                     fields.RemoveAt(joinFieldIndex);
-                    List<TexeraTuple> result=new List<TexeraTuple>();
                     foreach(TexeraTuple t in hashTable[field])
                     {  
-                        result.Add(new TexeraTuple(TableID,t.FieldList.Concat(fields).ToArray()));
+                        output.Add(new TexeraTuple(TableID,t.FieldList.Concat(fields).ToArray()));
                     }
-                    return result;
                 }
             }
-            return null;
         }
 
         protected override void AfterProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)

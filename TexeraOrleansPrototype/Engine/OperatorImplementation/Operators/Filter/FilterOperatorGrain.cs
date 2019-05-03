@@ -42,7 +42,7 @@ namespace Engine.OperatorImplementation.Operators
                 return (T)ParseInfo.Invoke(null, new[] { value });
         }
 
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
             if(tuple.FieldList!=null)
             {
@@ -50,31 +50,30 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     case FilterPredicate.FilterType.Equal:
                         if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)==0)
-                            return new List<TexeraTuple>{tuple};
+                            output.Add(tuple);
                         break;
                     case FilterPredicate.FilterType.Greater:
                         if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)>0)
-                            return new List<TexeraTuple>{tuple};
+                            output.Add(tuple);
                         break;
                     case FilterPredicate.FilterType.GreaterOrEqual:
                         if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)>=0)
-                            return new List<TexeraTuple>{tuple};
+                            output.Add(tuple);
                         break;
                     case FilterPredicate.FilterType.Less:
                         if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)<0)
-                            return new List<TexeraTuple>{tuple};
+                            output.Add(tuple);
                         break;
                     case FilterPredicate.FilterType.LessOrEqual:
                         if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)<=0)
-                            return new List<TexeraTuple>{tuple};
+                            output.Add(tuple);
                         break;
                     case FilterPredicate.FilterType.NotEqual:
                         if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)!=0)
-                            return new List<TexeraTuple>{tuple};
+                            output.Add(tuple);
                         break;
                 }   
             }
-            return null;
         }
     }
 }

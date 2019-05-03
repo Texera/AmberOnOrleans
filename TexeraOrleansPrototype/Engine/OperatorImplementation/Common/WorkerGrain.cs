@@ -161,11 +161,7 @@ namespace Engine.OperatorImplementation.Common
                     }
                     return;
                 }
-                List<TexeraTuple> result=ProcessTuple(batch[currentIndex]);
-                if(result!=null)
-                {
-                    localList.AddRange(result);
-                }
+                ProcessTuple(batch[currentIndex],localList);
             }
             lock(outputTuples)
             {
@@ -173,9 +169,9 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        protected virtual List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected virtual void ProcessTuple(TexeraTuple tuple, List<TexeraTuple> output)
         {
-            return null;
+
         }
 
         public Task ProcessControlMessage(Immutable<ControlMessage> message)
