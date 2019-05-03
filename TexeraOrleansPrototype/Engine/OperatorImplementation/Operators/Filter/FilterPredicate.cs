@@ -5,8 +5,7 @@ namespace Engine.OperatorImplementation.Operators
     public class FilterPredicate : PredicateBase
     {
         public int FilterIndex;
-        public float Threshold;
-
+        public string Threshold;
         public enum FilterType
         {
             Equal,
@@ -19,7 +18,7 @@ namespace Engine.OperatorImplementation.Operators
 
         public FilterType Type;
 
-        public FilterPredicate(int filterIndex, float threshold, string type, int batchingLimit=1000):base(batchingLimit)
+        public FilterPredicate(int filterIndex, string threshold, string type, int batchingLimit=1000):base(batchingLimit)
         {
             this.Threshold = threshold;
             this.FilterIndex = filterIndex;

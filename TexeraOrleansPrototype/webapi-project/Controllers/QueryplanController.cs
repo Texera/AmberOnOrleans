@@ -74,8 +74,22 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "Comparison")
                 {
-                    FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),float.Parse(operator1["compareTo"].ToString()),operator1["comparisonType"].ToString());
-                    op = new FilterOperator(filterPredicate);
+                    FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["compareTo"].ToString(),operator1["comparisonType"].ToString());
+                    switch(operator1["attributeType"].ToString())
+                    {
+                        case "int":
+                            op = new FilterOperator<int>(filterPredicate);
+                            break;
+                        case "float":
+                            op = new FilterOperator<float>(filterPredicate);
+                            break;
+                        case "date":
+                            op=new FilterOperator<DateTime>(filterPredicate);
+                            break;
+                        case "string":
+                            op=new FilterOperator<string>(filterPredicate);
+                            break;
+                    }
                 }
                 else if((string)operator1["operatorType"] == "CrossRippleJoin")
                 {
@@ -91,7 +105,21 @@ namespace webapi.Controllers
                 else if((string)operator1["operatorType"] == "InsertionSort")
                 {
                     SortPredicate sortPredicate=new SortPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")));
-                    op=new SortOperator(sortPredicate);
+                    switch(operator1["attributeType"].ToString())
+                    {
+                        case "int":
+                            op = new SortOperator<int>(sortPredicate);
+                            break;
+                        case "float":
+                            op = new SortOperator<float>(sortPredicate);
+                            break;
+                        case "date":
+                            op= new SortOperator<DateTime>(sortPredicate);
+                            break;
+                        case "string":
+                            op= new SortOperator<string>(sortPredicate);
+                            break;
+                    }
                 }
                 else if((string)operator1["operatorType"] == "GroupBy")
                 {

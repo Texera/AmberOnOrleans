@@ -1,9 +1,10 @@
+using System;
 using Engine.OperatorImplementation.Common;
 using Orleans;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class FilterOperator : Operator
+    public class FilterOperator<T> : Operator where T:IComparable<T>
     {
         public FilterOperator(FilterPredicate predicate) : base(predicate)
         {
@@ -11,7 +12,7 @@ namespace Engine.OperatorImplementation.Operators
         }
         public override void SetPrincipalGrain(IGrainFactory factory)
         {
-            PrincipalGrain = factory.GetGrain<IFilterPrincipalGrain>(OperatorGuid);
+            PrincipalGrain = factory.GetGrain<IFilterPrincipalGrain<T>>(OperatorGuid);
         }
     }
 }

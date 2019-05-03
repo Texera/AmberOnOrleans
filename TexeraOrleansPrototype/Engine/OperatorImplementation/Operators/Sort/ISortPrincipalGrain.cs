@@ -9,7 +9,7 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public interface ISortPrincipalGrain : IPrincipalGrain
+    public interface ISortPrincipalGrain<T> : IPrincipalGrain where T:IComparable<T>
     {
 
     }

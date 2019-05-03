@@ -10,12 +10,15 @@ using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
 using System.Linq;
+using System.Reflection;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class SortOperatorGrain : WorkerGrain, ISortOperatorGrain
+    public class SortOperatorGrain<T> : WorkerGrain, ISortOperatorGrain<T> where T:IComparable<T>
     {
+        private static MethodInfo ParseInfo = typeof(T).GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string) }, null);
         List<TexeraTuple> sortedTuples=new List<TexeraTuple>();
+        List<T> sortedValues=new List<T>();
         int sortIndex;
         int counter=0;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
@@ -24,45 +27,25 @@ namespace Engine.OperatorImplementation.Operators
             sortIndex=((SortPredicate)predicate).SortIndex;
             return Task.CompletedTask;
         }
+
+        private static T Parse(string value)
+        {
+            if (typeof(T) == typeof(string))
+                return (T)(object)value;
+            else
+                return (T)ParseInfo.Invoke(null, new[] { value });
+        }
+
         protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
-            //Console.WriteLine(++counter+" tuples sorted");
-            bool isNumeric=false;
-            float num=0;
-            string value=tuple.FieldList[sortIndex];
-            try
+            T value=Parse(tuple.FieldList[sortIndex]);
+            int index = sortedValues.BinarySearch(value);
+            if(index<0)
             {
-                num=float.Parse(tuple.FieldList[sortIndex]);
-                isNumeric=true;
+                index=~index;
             }
-            catch(Exception)
-            {
-                
-            }
-            int idx=-1;
-            for(int i=0;i<sortedTuples.Count;++i)
-            {
-                if(!isNumeric)
-                {
-                    if(String.Compare(sortedTuples[i].FieldList[sortIndex],value)==1)
-                    {
-                        idx=i;
-                        break;
-                    }
-                }
-                else
-                {
-                    if(float.Parse(sortedTuples[i].FieldList[sortIndex])>num)
-                    {
-                        idx=i;
-                        break;
-                    }
-                }
-            }
-            if(idx!=-1)
-                sortedTuples.Insert(idx,tuple);
-            else
-                sortedTuples.Add(tuple);
+            sortedTuples.Insert(index,tuple);
+            sortedValues.Insert(index,value);
             return null;
         }
 

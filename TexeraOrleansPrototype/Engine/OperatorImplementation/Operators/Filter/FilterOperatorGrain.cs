@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
+using System.Reflection;
 using Orleans.Concurrency;
 using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
@@ -16,20 +17,30 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class FilterOperatorGrain : WorkerGrain, IFilterOperatorGrain
+
+    public class FilterOperatorGrain<T> :WorkerGrain, IFilterOperatorGrain<T> where T:IComparable<T>
     {
+        private static MethodInfo ParseInfo = typeof(T).GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string) }, null);
         int filterIndex=-1;
         FilterPredicate.FilterType type;
-        float threshold=0;
+        T threshold;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);
+            if (typeof(T) != typeof(string) && (ParseInfo == null || !typeof(T).IsAssignableFrom(ParseInfo.ReturnType)))
+                throw new InvalidOperationException("Invalid type, must contain public static T Parse(string)");
             type=((FilterPredicate)predicate).Type;
             filterIndex=((FilterPredicate)predicate).FilterIndex;
-            threshold=((FilterPredicate)predicate).Threshold;
+            threshold=Parse(((FilterPredicate)predicate).Threshold);
             return Task.CompletedTask;
         }
-
+        private static T Parse(string value)
+        {
+            if (typeof(T) == typeof(string))
+                return (T)(object)value;
+            else
+                return (T)ParseInfo.Invoke(null, new[] { value });
+        }
 
         protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
@@ -38,27 +49,27 @@ namespace Engine.OperatorImplementation.Operators
                 switch(type)
                 {
                     case FilterPredicate.FilterType.Equal:
-                        if(float.Parse(tuple.FieldList[filterIndex])==threshold)
+                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)==0)
                             return new List<TexeraTuple>{tuple};
                         break;
                     case FilterPredicate.FilterType.Greater:
-                        if(float.Parse(tuple.FieldList[filterIndex])>threshold)
+                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)>0)
                             return new List<TexeraTuple>{tuple};
                         break;
                     case FilterPredicate.FilterType.GreaterOrEqual:
-                        if(float.Parse(tuple.FieldList[filterIndex])>=threshold)
+                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)>=0)
                             return new List<TexeraTuple>{tuple};
                         break;
                     case FilterPredicate.FilterType.Less:
-                        if(float.Parse(tuple.FieldList[filterIndex])<threshold)
+                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)<0)
                             return new List<TexeraTuple>{tuple};
                         break;
                     case FilterPredicate.FilterType.LessOrEqual:
-                        if(float.Parse(tuple.FieldList[filterIndex])<=threshold)
+                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)<=0)
                             return new List<TexeraTuple>{tuple};
                         break;
                     case FilterPredicate.FilterType.NotEqual:
-                        if(float.Parse(tuple.FieldList[filterIndex])!=threshold)
+                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)!=0)
                             return new List<TexeraTuple>{tuple};
                         break;
                 }   
