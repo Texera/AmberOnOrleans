@@ -34,7 +34,7 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple)
         {
             try
             {
@@ -72,33 +72,30 @@ namespace Engine.OperatorImplementation.Operators
             {
                 Console.WriteLine(e);
             }
-            return null;
         }
-        protected override List<TexeraTuple> MakeFinalOutputTuples()
+        protected override void MakeFinalOutputTuples()
         {
-            List<TexeraTuple> result=new List<TexeraTuple>();
             foreach(KeyValuePair<string,float> pair in results)
             {
                 switch(aggregationFunc)
                 {
                     case "max":
-                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
+                        outputTuples.Enqueue(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
                         break;
                     case "min":
-                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
+                        outputTuples.Enqueue(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
                         break;
                     case "avg":
-                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,(pair.Value/counter[pair.Key]).ToString()}));
+                        outputTuples.Enqueue(new TexeraTuple(-1,new string[]{pair.Key,(pair.Value/counter[pair.Key]).ToString()}));
                         break;
                     case "sum":
-                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
+                        outputTuples.Enqueue(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
                         break;
                     case "count":
-                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,counter[pair.Key].ToString()}));
+                        outputTuples.Enqueue(new TexeraTuple(-1,new string[]{pair.Key,counter[pair.Key].ToString()}));
                         break;
                 }
             }
-            return result;
         }
     }
 }

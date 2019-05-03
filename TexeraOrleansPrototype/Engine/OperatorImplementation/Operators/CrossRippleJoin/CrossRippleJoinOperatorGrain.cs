@@ -24,17 +24,16 @@ namespace Engine.OperatorImplementation.Operators
             TableID=((CrossRippleJoinPredicate)predicate).TableID;
             return Task.CompletedTask;
         }
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple)
         {
             //Console.WriteLine(++counter+" tuple processed");
-            List<TexeraTuple> output=new List<TexeraTuple>();
             foreach(KeyValuePair<int,List<TexeraTuple>> entry in CrossRippleJoinedTuples)
             {
                 if(entry.Key!=tuple.TableID)
                 {
                     foreach(TexeraTuple t in entry.Value)
                     {
-                        output.Add(new TexeraTuple(TableID,tuple.FieldList.Concat(t.FieldList).ToArray()));
+                        outputTuples.Enqueue(new TexeraTuple(TableID,tuple.FieldList.Concat(t.FieldList).ToArray()));
                     }
                 }
             }
@@ -46,7 +45,6 @@ namespace Engine.OperatorImplementation.Operators
             {
                 CrossRippleJoinedTuples.Add(tuple.TableID,new List<TexeraTuple>{tuple});
             }
-            return output;
         }
     }
 

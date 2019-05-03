@@ -27,7 +27,7 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple)
         {
             TexeraTuple result=new TexeraTuple(tuple.TableID,new string[projectionIndexs.Count]);
             int i=0;
@@ -35,7 +35,7 @@ namespace Engine.OperatorImplementation.Operators
             {
                 result.FieldList[i++]=tuple.FieldList[attr];
             }
-            return new List<TexeraTuple>{result};
+            outputTuples.Enqueue(result);
         }
     }
 }

@@ -41,7 +41,7 @@ namespace Engine.OperatorImplementation.Common
         protected Queue<Action> actionQueue=new Queue<Action>();
         protected int currentIndex=0;
         protected int currentEndFlagCount=int.MaxValue;
-        protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
+        protected ConcurrentQueue<TexeraTuple> outputTuples=new ConcurrentQueue<TexeraTuple>();
         protected bool isFinished=false;
 
         public virtual Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
@@ -113,7 +113,7 @@ namespace Engine.OperatorImplementation.Common
                 string identifer=ReturnGrainIndentifierString(self);
                 strategy.SendBatchedMessages(identifer);
             }
-            outputTuples=new List<TexeraTuple>();
+            outputTuples=new ConcurrentQueue<TexeraTuple>();
             if(currentEndFlagCount==0 && actionQueue.Count==1)
             {
                 isFinished=true;
@@ -123,11 +123,7 @@ namespace Engine.OperatorImplementation.Common
 
         private void MakeLastPayloadMessageThenSend()
         {
-            List<TexeraTuple> output=MakeFinalOutputTuples();
-            if(output!=null)
-            {
-                outputTuples.AddRange(output);
-            }
+            MakeFinalOutputTuples();
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
@@ -135,7 +131,7 @@ namespace Engine.OperatorImplementation.Common
                 strategy.SendBatchedMessages(identifer);
                 strategy.SendEndMessages(identifer);
             }
-            outputTuples= new List<TexeraTuple>();
+            outputTuples= new ConcurrentQueue<TexeraTuple>();
         }
 
 
@@ -150,32 +146,19 @@ namespace Engine.OperatorImplementation.Common
         }
         protected void ProcessBatch(List<TexeraTuple> batch)
         {
-            List<TexeraTuple> localList=new List<TexeraTuple>();
             for(;currentIndex<batch.Count;++currentIndex)
             {
                 if(isPaused)
                 {
-                    lock(outputTuples)
-                    {
-                        outputTuples.AddRange(localList);
-                    }
                     return;
                 }
-                List<TexeraTuple> result=ProcessTuple(batch[currentIndex]);
-                if(result!=null)
-                {
-                    localList.AddRange(result);
-                }
-            }
-            lock(outputTuples)
-            {
-                outputTuples.AddRange(localList);
+                ProcessTuple(batch[currentIndex]);
             }
         }
 
-        protected virtual List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected virtual void ProcessTuple(TexeraTuple tuple)
         {
-            return null;
+
         }
 
         public Task ProcessControlMessage(Immutable<ControlMessage> message)
@@ -220,9 +203,9 @@ namespace Engine.OperatorImplementation.Common
             });
         }
 
-        protected virtual List<TexeraTuple> MakeFinalOutputTuples()
+        protected virtual void MakeFinalOutputTuples()
         {
-            return null;
+            
         }
 
 
