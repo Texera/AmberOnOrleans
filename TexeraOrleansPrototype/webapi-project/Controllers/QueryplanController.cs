@@ -81,8 +81,8 @@ namespace webapi.Controllers
                         case "int":
                             op = new FilterOperator<int>(filterPredicate);
                             break;
-                        case "float":
-                            op = new FilterOperator<float>(filterPredicate);
+                        case "double":
+                            op = new FilterOperator<double>(filterPredicate);
                             break;
                         case "date":
                             op=new FilterOperator<DateTime>(filterPredicate);
@@ -111,8 +111,8 @@ namespace webapi.Controllers
                         case "int":
                             op = new SortOperator<int>(sortPredicate);
                             break;
-                        case "float":
-                            op = new SortOperator<float>(sortPredicate);
+                        case "double":
+                            op = new SortOperator<double>(sortPredicate);
                             break;
                         case "date":
                             op= new SortOperator<DateTime>(sortPredicate);
