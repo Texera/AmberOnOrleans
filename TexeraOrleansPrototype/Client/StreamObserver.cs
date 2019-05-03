@@ -16,8 +16,8 @@ namespace OrleansClient
     {
         public List<TexeraTuple> resultsToRet = new List<TexeraTuple>();
         Stopwatch sw=new Stopwatch();
-        private Dictionary<string,ulong> endSequenceNumber=new Dictionary<string, ulong>();
         private Dictionary<string,ulong> currentSequenceNumber=new Dictionary<string, ulong>();
+        private Dictionary<string,Dictionary<ulong,Immutable<PayloadMessage>>> stashedMessage=new Dictionary<string, Dictionary<ulong, Immutable<PayloadMessage>>>();
         private int numEndFlags;
         private int currentEndFlags=0;
         public bool isFinished=false;
@@ -46,39 +46,55 @@ namespace OrleansClient
 
         public Task OnNextAsync(Immutable<PayloadMessage> item, StreamSequenceToken token = null)
         {
-            if(!currentSequenceNumber.ContainsKey(item.Value.SenderIdentifer))
+            string sender=item.Value.SenderIdentifer;
+            ulong seqNum=item.Value.SequenceNumber;
+            bool isEnd=item.Value.IsEnd;
+            if(!currentSequenceNumber.ContainsKey(sender))
             {
-                currentSequenceNumber.Add(item.Value.SenderIdentifer,0);
+                currentSequenceNumber.Add(sender,0);
             }
-            if(item.Value.IsEnd)
+            if(currentSequenceNumber[sender]<seqNum)
             {
-                endSequenceNumber.Add(item.Value.SenderIdentifer,item.Value.SequenceNumber);
-                currentEndFlags++;
+                //ahead
+                stashedMessage[sender][seqNum]=item;
+            }
+            else if(currentSequenceNumber[sender]>seqNum)
+            {
+                //duplicate
+                return Task.CompletedTask;
             }
             else
             {
-                currentSequenceNumber[item.Value.SenderIdentifer]++;
-                List<TexeraTuple> results = item.Value.Payload;
-                resultsToRet.AddRange(results);
-                //Console.WriteLine("Received "+results.Count+" tuples from the last operator");
-            }
-            if(currentEndFlags==numEndFlags && currentSequenceNumber.Count==endSequenceNumber.Count)
-            {
-                bool c=true;
-                foreach(string s in currentSequenceNumber.Keys)
+                List<TexeraTuple> currentPayload=item.Value.Payload;
+                while(true)
                 {
-                    if(currentSequenceNumber[s]!=endSequenceNumber[s])
+                    if(currentPayload!=null)
                     {
-                        c=false;
-                        break;
+                        resultsToRet.AddRange(currentPayload);
                     }
+                    ulong nextSeqNum=currentSequenceNumber[sender]++;
+                    if(stashedMessage.ContainsKey(sender) && stashedMessage[sender].ContainsKey(nextSeqNum))
+                    {
+                        Immutable<PayloadMessage> message=stashedMessage[sender][nextSeqNum];
+                        currentPayload=message.Value.Payload;
+                        isEnd|=message.Value.IsEnd;
+                        stashedMessage[sender].Remove(nextSeqNum);
+                    }
+                    else
+                        break;
                 }
-                if(c)
-                {
-                    isFinished=true;
-                    sw.Stop();
-                    Console.WriteLine("Time usage: " + sw.Elapsed);
-                }
+            }
+
+            if(isEnd)
+            {
+                currentEndFlags++;
+            }
+
+            if(currentEndFlags==numEndFlags)
+            {
+                isFinished=true;
+                sw.Stop();
+                Console.WriteLine("Time usage: " + sw.Elapsed);
             }
             return Task.CompletedTask;
         }

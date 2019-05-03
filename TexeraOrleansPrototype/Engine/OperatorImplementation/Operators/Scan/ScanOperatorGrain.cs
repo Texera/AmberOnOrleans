@@ -93,7 +93,6 @@ namespace Engine.OperatorImplementation.Operators
             {
                 ulong ByteCount;
                 string res = reader.ReadLine(out ByteCount);
-                Console.WriteLine(res);
                 start += ByteCount;
                 if (reader.IsEOF())
                 {
