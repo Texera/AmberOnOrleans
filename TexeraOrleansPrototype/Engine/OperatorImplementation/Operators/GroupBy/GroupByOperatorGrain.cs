@@ -76,12 +76,8 @@ namespace Engine.OperatorImplementation.Operators
         }
         protected override List<TexeraTuple> MakeFinalOutputTuples()
         {
-<<<<<<< HEAD
-            foreach(KeyValuePair<string,double> pair in results)
-=======
             List<TexeraTuple> result=new List<TexeraTuple>();
-            foreach(KeyValuePair<string,float> pair in results)
->>>>>>> parent of a7ae9cb... use ConcurrentQueue
+            foreach(KeyValuePair<string,double> pair in results)
             {
                 switch(aggregationFunc)
                 {
