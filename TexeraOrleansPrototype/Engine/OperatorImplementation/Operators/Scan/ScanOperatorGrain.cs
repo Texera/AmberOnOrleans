@@ -47,7 +47,7 @@ namespace Engine.OperatorImplementation.Operators
                 TexeraTuple tuple;
                 if(ReadTuple(out tuple))
                 {
-                    outputTuples.Enqueue(tuple);
+                    outputTuples.Add(tuple);
                     i++;
                 }
                 if(reader.IsEOF())

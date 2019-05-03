@@ -30,10 +30,11 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void ProcessTuple(TexeraTuple tuple)
+        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
             if(tuple.FieldList!=null && tuple.FieldList[searchIndex].Contains(keyword))
-                outputTuples.Enqueue(tuple);
+                return new List<TexeraTuple>{tuple};
+            return null;
         }
     }
 }

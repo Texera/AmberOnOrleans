@@ -25,18 +25,19 @@ namespace Engine.OperatorImplementation.Operators
             TableID=((HashRippleJoinPredicate)predicate).TableID;
             return Task.CompletedTask;
         }
-        protected override void ProcessTuple(TexeraTuple tuple)
+        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
             string field=tuple.FieldList[joinFieldIndex];
             List<string> fields=tuple.FieldList.ToList();
             fields.RemoveAt(joinFieldIndex);
+            List<TexeraTuple> output=new List<TexeraTuple>();
             foreach(KeyValuePair<int,Dictionary<string,List<TexeraTuple>>> entry in joinedTuples)
             {
                 if(entry.Key!=tuple.TableID && entry.Value.ContainsKey(field))
                 {
                     foreach(TexeraTuple joinedTuple in entry.Value[field])
                     {
-                        outputTuples.Enqueue(new TexeraTuple(TableID,joinedTuple.FieldList.Concat(fields).ToArray()));
+                        output.Add(new TexeraTuple(TableID,joinedTuple.FieldList.Concat(fields).ToArray()));
                     }
                 }
             }
@@ -54,6 +55,7 @@ namespace Engine.OperatorImplementation.Operators
             {
                 joinedTuples[tuple.TableID][field].Add(tuple);
             }
+            return output;
         }
     }
 

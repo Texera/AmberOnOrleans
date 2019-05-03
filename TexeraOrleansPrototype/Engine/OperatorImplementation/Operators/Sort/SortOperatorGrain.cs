@@ -36,7 +36,7 @@ namespace Engine.OperatorImplementation.Operators
                 return (T)ParseInfo.Invoke(null, new[] { value });
         }
 
-        protected override void ProcessTuple(TexeraTuple tuple)
+        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
             T value=Parse(tuple.FieldList[sortIndex]);
             int index = sortedValues.BinarySearch(value);
@@ -46,12 +46,12 @@ namespace Engine.OperatorImplementation.Operators
             }
             sortedTuples.Insert(index,tuple);
             sortedValues.Insert(index,value);
+            return null;
         }
 
-        protected override void MakeFinalOutputTuples()
+        protected override List<TexeraTuple> MakeFinalOutputTuples()
         {
-            foreach(TexeraTuple tuple in sortedTuples)
-                outputTuples.Enqueue(tuple);
+            return sortedTuples;
         }
     }
 

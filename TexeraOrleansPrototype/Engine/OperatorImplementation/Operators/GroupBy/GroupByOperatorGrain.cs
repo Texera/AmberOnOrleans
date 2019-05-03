@@ -34,7 +34,7 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void ProcessTuple(TexeraTuple tuple)
+        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
         {
             try
             {
@@ -72,30 +72,37 @@ namespace Engine.OperatorImplementation.Operators
             {
                 Console.WriteLine(e);
             }
+            return null;
         }
-        protected override void MakeFinalOutputTuples()
+        protected override List<TexeraTuple> MakeFinalOutputTuples()
         {
+<<<<<<< HEAD
             foreach(KeyValuePair<string,double> pair in results)
+=======
+            List<TexeraTuple> result=new List<TexeraTuple>();
+            foreach(KeyValuePair<string,float> pair in results)
+>>>>>>> parent of a7ae9cb... use ConcurrentQueue
             {
                 switch(aggregationFunc)
                 {
                     case "max":
-                        outputTuples.Enqueue(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
+                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
                         break;
                     case "min":
-                        outputTuples.Enqueue(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
+                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
                         break;
                     case "avg":
-                        outputTuples.Enqueue(new TexeraTuple(-1,new string[]{pair.Key,(pair.Value/counter[pair.Key]).ToString()}));
+                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,(pair.Value/counter[pair.Key]).ToString()}));
                         break;
                     case "sum":
-                        outputTuples.Enqueue(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
+                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,pair.Value.ToString()}));
                         break;
                     case "count":
-                        outputTuples.Enqueue(new TexeraTuple(-1,new string[]{pair.Key,counter[pair.Key].ToString()}));
+                        result.Add(new TexeraTuple(-1,new string[]{pair.Key,counter[pair.Key].ToString()}));
                         break;
                 }
             }
+            return result;
         }
     }
 }
