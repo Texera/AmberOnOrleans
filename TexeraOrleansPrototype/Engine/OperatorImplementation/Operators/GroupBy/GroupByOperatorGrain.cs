@@ -18,7 +18,7 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class GroupByOperatorGrain : WorkerGrain, IGroupByOperatorGrain
     {
-        Dictionary<string,float> results=new Dictionary<string, float>();
+        Dictionary<string,double> results=new Dictionary<string, double>();
         Dictionary<string,int> counter=new Dictionary<string, int>();
         int groupByIndex;
         int aggregationIndex;
@@ -39,11 +39,11 @@ namespace Engine.OperatorImplementation.Operators
             try
             {
                 string field=tuple.FieldList[groupByIndex];
-                float value=float.Parse(tuple.FieldList[aggregationIndex]);
+                double value=double.Parse(tuple.FieldList[aggregationIndex]);
                 if(results.ContainsKey(field))
                 {
                     counter[field]++;
-                    float oldValue=results[field];
+                    double oldValue=results[field];
                     switch(aggregationFunc)
                     {
                         case "max":
@@ -75,7 +75,7 @@ namespace Engine.OperatorImplementation.Operators
         }
         protected override void MakeFinalOutputTuples()
         {
-            foreach(KeyValuePair<string,float> pair in results)
+            foreach(KeyValuePair<string,double> pair in results)
             {
                 switch(aggregationFunc)
                 {
