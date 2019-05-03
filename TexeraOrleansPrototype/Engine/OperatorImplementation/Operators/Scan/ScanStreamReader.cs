@@ -9,7 +9,7 @@ using Engine.OperatorImplementation.Common;
 class ScanStreamReader
 {
     public const int buffer_size = 4096;
-    private enum FileType{unknown,csv,pdf,txt};
+    private enum FileType{unknown,csv,pdf,txt,tbl};
     private FileType file_type;
     private string file_path;
     private System.IO.StreamReader file=null;
@@ -30,6 +30,7 @@ class ScanStreamReader
         switch(file_type)
         {
             case FileType.csv:
+            case FileType.tbl:
             ulong ByteCount;
             string res=ReadLine(out ByteCount);
             Console.WriteLine("Skip: "+res);
