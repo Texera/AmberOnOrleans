@@ -140,6 +140,7 @@ namespace OrleansClient
             await so.Start();
             foreach(Operator op in workflow.StartOperators)
             {
+                Console.WriteLine("initing: "+op.GetType().ToString());
                 await op.PrincipalGrain.Start();
             }
 
