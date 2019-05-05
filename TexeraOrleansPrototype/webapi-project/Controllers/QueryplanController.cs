@@ -53,14 +53,13 @@ namespace webapi.Controllers
                 throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString().Substring(16)}");
             }
             Workflow workflow=new Workflow(workflowID);
-            int table_id=0;
             foreach (JObject operator1 in operators)
             {
                 Operator op=null;
                 if((string)operator1["operatorType"] == "ScanSource")
                 {
                     //example path to HDFS through WebHDFS API: "http://localhost:50070/webhdfs/v1/input/very_large_input.csv"
-                    ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"],table_id++);
+                    ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"]);
                     op = new ScanOperator(scanPredicate);
                 }
                 else if((string)operator1["operatorType"] == "KeywordMatcher")
@@ -95,14 +94,14 @@ namespace webapi.Controllers
                 else if((string)operator1["operatorType"] == "CrossRippleJoin")
                 {
                     int inputLimit=operator1["batchingLimit"]==null?1000:int.Parse(operator1["batchingLimit"].ToString());
-                    CrossRippleJoinPredicate crossRippleJoinPredicate=new CrossRippleJoinPredicate(table_id++,inputLimit);
+                    CrossRippleJoinPredicate crossRippleJoinPredicate=new CrossRippleJoinPredicate(inputLimit);
                     op = new CrossRippleJoinOperator(crossRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "HashRippleJoin")
                 {
                     int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
                     int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
-                    HashRippleJoinPredicate hashRippleJoinPredicate=new HashRippleJoinPredicate(innerIndex,outerIndex,table_id++);
+                    HashRippleJoinPredicate hashRippleJoinPredicate=new HashRippleJoinPredicate(innerIndex,outerIndex);
                     op = new HashRippleJoinOperator(hashRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "InsertionSort")
@@ -141,7 +140,7 @@ namespace webapi.Controllers
                 {
                     int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
                     int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
-                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(innerIndex,outerIndex,table_id++);
+                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(innerIndex,outerIndex);
                     op = new HashJoinOperator(hashJoinPredicate);
                 }
 
@@ -169,7 +168,6 @@ namespace webapi.Controllers
             foreach(TexeraTuple tuple in results)
             {
                 JObject jsonTuple=new JObject();
-                jsonTuple.Add("TableID",tuple.TableID);
                 for(int i=0;i<tuple.FieldList.Length;++i)
                 {
                     jsonTuple.Add("_c"+i,tuple.FieldList[i]);

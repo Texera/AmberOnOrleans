@@ -9,12 +9,10 @@ namespace Engine.OperatorImplementation.Operators
         public int OuterTableIndex;
         public Guid InnerTableID=Guid.Empty;
         public Guid outerTableID=Guid.Empty;
-        public int TableID;
-        public HashRippleJoinPredicate(int innerTableIndex,int outerTableIndex, int tableID,int batchingLimit=1000):base(batchingLimit)
+        public HashRippleJoinPredicate(int innerTableIndex,int outerTableIndex,int batchingLimit=1000):base(batchingLimit)
         {
             InnerTableIndex=innerTableIndex; 
             OuterTableIndex=outerTableIndex;
-            TableID=tableID;
         }
 
         public override void WhenAddInOperator(Operator operatorToAdd)

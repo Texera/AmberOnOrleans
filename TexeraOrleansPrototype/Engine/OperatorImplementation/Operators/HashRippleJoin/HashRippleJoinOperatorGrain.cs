@@ -20,7 +20,6 @@ namespace Engine.OperatorImplementation.Operators
         int innerTableIndex=-1;
         int outerTableIndex=-1;
         Guid innerTableGuid=Guid.Empty;
-        int TableID;
 
         int joinFieldIndex;
         Dictionary<string,List<TexeraTuple>> joinedTuples;
@@ -33,7 +32,6 @@ namespace Engine.OperatorImplementation.Operators
             innerTableIndex=((HashRippleJoinPredicate)predicate).InnerTableIndex;
             outerTableIndex=((HashRippleJoinPredicate)predicate).OuterTableIndex;
             innerTableGuid=((HashRippleJoinPredicate)predicate).InnerTableID;
-            TableID=((HashRippleJoinPredicate)predicate).TableID;
             return Task.CompletedTask;
         }
 
@@ -64,7 +62,7 @@ namespace Engine.OperatorImplementation.Operators
             {
                 foreach(TexeraTuple joinedTuple in joinedTuples[field])
                 {
-                    output.Add(new TexeraTuple(TableID,joinedTuple.FieldList.Concat(fields).ToArray()));
+                    output.Add(new TexeraTuple(joinedTuple.FieldList.Concat(fields).ToArray()));
                 }
             }
             if(!toInsert.ContainsKey(field))

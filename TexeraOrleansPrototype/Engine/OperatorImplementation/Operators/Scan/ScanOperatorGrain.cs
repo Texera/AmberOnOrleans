@@ -15,7 +15,6 @@ namespace Engine.OperatorImplementation.Operators
     {
         private ulong start,end,tuple_counter=0;
         private ScanStreamReader reader;
-        private int tableId;
         public static int GenerateLimit=1000;
         private string separator;
 
@@ -64,7 +63,6 @@ namespace Engine.OperatorImplementation.Operators
         {
             base.Init(self,predicate,principalGrain);
             ulong filesize=((ScanPredicate)predicate).FileSize;
-            tableId=((ScanPredicate)predicate).TableID;
             separator=((ScanPredicate)predicate).Separator;
             string extensionKey = "";
             Guid key = this.GetPrimaryKey(out extensionKey);
@@ -102,7 +100,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 try
                 {
-                    tx=new TexeraTuple(tableId, res.Split(separator));
+                    tx=new TexeraTuple(res.Split(separator));
                     ++tuple_counter;
                     return true;
                 }

@@ -8,9 +8,8 @@ namespace Engine.OperatorImplementation.Operators
         public int NumberOfGrains;
         public string File;
         public ulong FileSize;
-        public int TableID;
         public string Separator;
-        public ScanPredicate(string file,int tableID,int batchingLimit=1000):base(batchingLimit)
+        public ScanPredicate(string file,int batchingLimit=1000):base(batchingLimit)
         {
             if(file == null)
             {
@@ -27,7 +26,6 @@ namespace Engine.OperatorImplementation.Operators
                 else
                     FileSize=(ulong)new System.IO.FileInfo(file).Length;
             }
-            TableID=tableID;
             if(file.EndsWith(".tbl"))
                 Separator="|";
             else

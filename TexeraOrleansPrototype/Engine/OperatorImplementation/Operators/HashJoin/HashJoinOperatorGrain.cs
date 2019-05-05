@@ -22,14 +22,12 @@ namespace Engine.OperatorImplementation.Operators
         bool isCurrentInnerTable=false;
         bool isInnerTableFinished=false;
         Guid innerTableGuid=Guid.Empty;
-        int TableID;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);
             innerTableIndex=((HashJoinPredicate)predicate).InnerTableIndex;
             outerTableIndex=((HashJoinPredicate)predicate).OuterTableIndex;
             innerTableGuid=((HashJoinPredicate)predicate).InnerTableID;
-            TableID=((HashJoinPredicate)predicate).TableID;
             return Task.CompletedTask;
         }
 
@@ -66,7 +64,7 @@ namespace Engine.OperatorImplementation.Operators
                     {
                         foreach(TexeraTuple t in hashTable[field])
                         {  
-                            output.Add(new TexeraTuple(TableID,t.FieldList.Concat(fields).ToArray()));
+                            output.Add(new TexeraTuple(t.FieldList.Concat(fields).ToArray()));
                         }
                     }
                 }
