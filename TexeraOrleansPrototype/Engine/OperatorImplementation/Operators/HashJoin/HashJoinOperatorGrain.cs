@@ -15,7 +15,10 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class HashJoinOperatorGrain : WorkerGrain, IHashJoinOperatorGrain
     {
-        Dictionary<int,Dictionary<string,List<TexeraTuple>>> joinedTuples=new Dictionary<int, Dictionary<string, List<TexeraTuple>>>();
+        Dictionary<String,List<TexeraTuple>> hashTable=new Dictionary<string, List<TexeraTuple>>();
+        int tableSource=-1;
+        string sourceOperator=null;
+        List<TexeraTuple> otherTable=new List<TexeraTuple>();
         int joinFieldIndex=-1;
         int TableID;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
@@ -25,37 +28,81 @@ namespace Engine.OperatorImplementation.Operators
             TableID=((HashJoinPredicate)predicate).TableID;
             return Task.CompletedTask;
         }
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple)
         {
-            string field=tuple.FieldList[joinFieldIndex];
-            List<string> fields=tuple.FieldList.ToList();
-            fields.RemoveAt(joinFieldIndex);
-            List<TexeraTuple> output=new List<TexeraTuple>();
-            foreach(KeyValuePair<int,Dictionary<string,List<TexeraTuple>>> entry in joinedTuples)
+            if(tableSource==-1)
             {
-                if(entry.Key!=tuple.TableID && entry.Value.ContainsKey(field))
-                {
-                    foreach(TexeraTuple joinedTuple in entry.Value[field])
-                    {
-                        output.Add(new TexeraTuple(TableID,joinedTuple.FieldList.Concat(fields).ToArray()));
-                    }
-                }
+                tableSource=tuple.TableID;
             }
-            if(!joinedTuples.ContainsKey(tuple.TableID))
+            if(tuple.TableID.Equals(tableSource))
             {
-                Dictionary<string,List<TexeraTuple>> d = new Dictionary<string, List<TexeraTuple>>();
-                d.Add(field,new List<TexeraTuple>{tuple});
-                joinedTuples.Add(tuple.TableID,d);
-            }
-            else if(!joinedTuples[tuple.TableID].ContainsKey(field))
-            {
-                joinedTuples[tuple.TableID].Add(field,new List<TexeraTuple>{tuple});
+                string source=tuple.FieldList[joinFieldIndex];
+                if(!hashTable.ContainsKey(source))
+                    hashTable[source]=new List<TexeraTuple>{tuple};
+                else
+                    hashTable[source].Add(tuple);
             }
             else
             {
-                joinedTuples[tuple.TableID][field].Add(tuple);
+                if(inputInfo[sourceOperator]!=0)
+                {
+                    otherTable.Add(tuple);
+                }
+                else
+                {
+                    string field=tuple.FieldList[joinFieldIndex];
+                    List<string> fields=tuple.FieldList.ToList();
+                    fields.RemoveAt(joinFieldIndex);
+                    foreach(TexeraTuple t in hashTable[field])
+                    {  
+                        outputTuples.Enqueue(new TexeraTuple(TableID,t.FieldList.Concat(fields).ToArray()));
+                    }
+                }
             }
-            return output;
+        }
+
+        protected override void AfterProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        {
+            if(inputInfo[sourceOperator]==0 && otherTable!=null)
+            {
+                var batch=otherTable;
+                Action action=async ()=>
+                {
+                    if(batch!=null)
+                    {
+                        ProcessBatch(batch);
+                    }
+                    if(isPaused)
+                    {
+                        return;
+                    }
+                    currentIndex=0;
+                    await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    lock(actionQueue)
+                    {
+                        actionQueue.Dequeue();
+                        if(!isPaused && actionQueue.Count>0)
+                        {
+                            Task.Run(actionQueue.Peek());
+                        }
+                    }
+                };
+                lock(actionQueue)
+                {
+                    actionQueue.Enqueue(action);
+                    if(actionQueue.Count==1)
+                    {
+                        Task.Run(action);
+                    }
+                }
+                otherTable=null;
+            }
+        }
+
+        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        {
+            if(sourceOperator==null)
+                sourceOperator=message.Value.SenderIdentifer.Split(' ')[0];
         }
     }
 

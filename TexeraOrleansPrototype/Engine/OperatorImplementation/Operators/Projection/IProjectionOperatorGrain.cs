@@ -7,8 +7,7 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public interface IJoinOperatorGrain : IWorkerGrain
+    public interface IProjectionOperatorGrain : IWorkerGrain
     {
     }
-
 }

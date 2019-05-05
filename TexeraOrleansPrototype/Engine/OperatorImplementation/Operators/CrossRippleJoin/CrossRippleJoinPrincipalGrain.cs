@@ -9,12 +9,12 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class JoinPrinicipalGrain : PrincipalGrain, IJoinPrincipalGrain
+    public class CrossRippleJoinPrinicipalGrain : PrincipalGrain, ICrossRippleJoinPrincipalGrain
     {
         public override int DefaultNumGrainsInOneLayer { get { return 1; } }
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
-            return this.GrainFactory.GetGrain<IJoinOperatorGrain>(this.GetPrimaryKey(), extension);
+            return this.GrainFactory.GetGrain<ICrossRippleJoinOperatorGrain>(this.GetPrimaryKey(), extension);
         }
     }
 }

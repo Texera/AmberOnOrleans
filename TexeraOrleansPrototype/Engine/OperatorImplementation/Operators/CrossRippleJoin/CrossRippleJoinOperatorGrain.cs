@@ -13,40 +13,38 @@ using System.Linq;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class JoinOperatorGrain : WorkerGrain, IJoinOperatorGrain
+    public class CrossRippleJoinOperatorGrain : WorkerGrain, ICrossRippleJoinOperatorGrain
     {
-        Dictionary<int,List<TexeraTuple>> joinedTuples=new Dictionary<int, List<TexeraTuple>>();
+        Dictionary<int,List<TexeraTuple>> CrossRippleJoinedTuples=new Dictionary<int, List<TexeraTuple>>();
         int TableID;
         int counter=0;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);
-            TableID=((JoinPredicate)predicate).TableID;
+            TableID=((CrossRippleJoinPredicate)predicate).TableID;
             return Task.CompletedTask;
         }
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple)
         {
             //Console.WriteLine(++counter+" tuple processed");
-            List<TexeraTuple> output=new List<TexeraTuple>();
-            foreach(KeyValuePair<int,List<TexeraTuple>> entry in joinedTuples)
+            foreach(KeyValuePair<int,List<TexeraTuple>> entry in CrossRippleJoinedTuples)
             {
                 if(entry.Key!=tuple.TableID)
                 {
                     foreach(TexeraTuple t in entry.Value)
                     {
-                        output.Add(new TexeraTuple(TableID,tuple.FieldList.Concat(t.FieldList).ToArray()));
+                        outputTuples.Enqueue(new TexeraTuple(TableID,tuple.FieldList.Concat(t.FieldList).ToArray()));
                     }
                 }
             }
-            if(joinedTuples.ContainsKey(tuple.TableID))
+            if(CrossRippleJoinedTuples.ContainsKey(tuple.TableID))
             {
-                joinedTuples[tuple.TableID].Add(tuple);
+                CrossRippleJoinedTuples[tuple.TableID].Add(tuple);
             }
             else
             {
-                joinedTuples.Add(tuple.TableID,new List<TexeraTuple>{tuple});
+                CrossRippleJoinedTuples.Add(tuple.TableID,new List<TexeraTuple>{tuple});
             }
-            return output;
         }
     }
 

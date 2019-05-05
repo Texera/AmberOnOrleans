@@ -17,6 +17,7 @@ namespace Engine.OperatorImplementation.Operators
         private ScanStreamReader reader;
         private int tableId;
         public static int GenerateLimit=1000;
+        private string separator;
 
         protected override void Start()
         {
@@ -46,7 +47,7 @@ namespace Engine.OperatorImplementation.Operators
                 TexeraTuple tuple;
                 if(ReadTuple(out tuple))
                 {
-                    outputTuples.Add(tuple);
+                    outputTuples.Enqueue(tuple);
                     i++;
                 }
                 if(reader.IsEOF())
@@ -64,6 +65,7 @@ namespace Engine.OperatorImplementation.Operators
             base.Init(self,predicate,principalGrain);
             ulong filesize=((ScanPredicate)predicate).FileSize;
             tableId=((ScanPredicate)predicate).TableID;
+            separator=((ScanPredicate)predicate).Separator;
             string extensionKey = "";
             Guid key = this.GetPrimaryKey(out extensionKey);
             ulong i=UInt64.Parse(extensionKey);
@@ -100,7 +102,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 try
                 {
-                    tx=new TexeraTuple(tableId, res.Split(","));
+                    tx=new TexeraTuple(tableId, res.Split(separator));
                     ++tuple_counter;
                     return true;
                 }

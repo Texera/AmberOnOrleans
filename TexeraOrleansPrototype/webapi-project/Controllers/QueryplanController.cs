@@ -39,7 +39,8 @@ namespace webapi.Controllers
             Stream req = Request.Body;
             req.Seek(0, System.IO.SeekOrigin.Begin);
             string json = new StreamReader(req).ReadToEnd();
-
+            //apply TPC-H Query-1
+            //json="{\"logicalPlan\":{\"operators\":[{\"tableName\":\"<file>\",\"operatorID\":\"operator-3bc05014-357d-45f5-a053-9baf1a62bd27\",\"operatorType\":\"ScanSource\"},{\"attributeName\":\"_c10\",\"attributeType\":\"date\",\"comparisonType\":\">\",\"compareTo\":\"1991-01-01\",\"operatorID\":\"operator-345a8b3d-2b1b-485e-b7c1-1cd9f579ce4f\",\"operatorType\":\"Comparison\"},{\"groupByAttribute\":\"_c8\",\"aggregationAttribute\":\"_c4\",\"aggregationFunction\":\"sum\",\"operatorID\":\"operator-89854b72-7c28-436b-b162-ead3daa75f72\",\"operatorType\":\"GroupBy\"},{\"attributeName\":\"_c0\",\"attributeType\":\"string\",\"operatorID\":\"operator-c7d7e79c-49ca-46a4-8420-490c25cd052d\",\"operatorType\":\"InsertionSort\"}],\"links\":[{\"origin\":\"operator-3bc05014-357d-45f5-a053-9baf1a62bd27\",\"destination\":\"operator-345a8b3d-2b1b-485e-b7c1-1cd9f579ce4f\"},{\"origin\":\"operator-345a8b3d-2b1b-485e-b7c1-1cd9f579ce4f\",\"destination\":\"operator-89854b72-7c28-436b-b162-ead3daa75f72\"},{\"origin\":\"operator-89854b72-7c28-436b-b162-ead3daa75f72\",\"destination\":\"operator-c7d7e79c-49ca-46a4-8420-490c25cd052d\"}]},\"workflowID\":\"texera-workflow-824ec494-8f6c-41a3-a3c0-29ca6dc7fe97\"}";
             Console.WriteLine("JSON BODY = " + json);
             Dictionary<string, Operator> map = new Dictionary<string, Operator>();
 
@@ -74,24 +75,70 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "Comparison")
                 {
-                    FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),float.Parse(operator1["compareTo"].ToString()),operator1["comparisonType"].ToString());
-                    op = new FilterOperator(filterPredicate);
+                    FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["compareTo"].ToString(),operator1["comparisonType"].ToString());
+                    switch(operator1["attributeType"].ToString())
+                    {
+                        case "int":
+                            op = new FilterOperator<int>(filterPredicate);
+                            break;
+                        case "double":
+                            op = new FilterOperator<double>(filterPredicate);
+                            break;
+                        case "date":
+                            op=new FilterOperator<DateTime>(filterPredicate);
+                            break;
+                        case "string":
+                            op=new FilterOperator<string>(filterPredicate);
+                            break;
+                    }
                 }
                 else if((string)operator1["operatorType"] == "CrossRippleJoin")
                 {
                     int inputLimit=operator1["batchingLimit"]==null?1000:int.Parse(operator1["batchingLimit"].ToString());
-                    JoinPredicate joinPredicate=new JoinPredicate(table_id++,inputLimit);
-                    op = new JoinOperator(joinPredicate);
+                    CrossRippleJoinPredicate crossRippleJoinPredicate=new CrossRippleJoinPredicate(table_id++,inputLimit);
+                    op = new CrossRippleJoinOperator(crossRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "HashRippleJoin")
                 {
-                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
-                    op = new HashJoinOperator(hashJoinPredicate);
+                    HashRippleJoinPredicate hashRippleJoinPredicate=new HashRippleJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
+                    op = new HashRippleJoinOperator(hashRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "InsertionSort")
                 {
                     SortPredicate sortPredicate=new SortPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")));
-                    op=new SortOperator(sortPredicate);
+                    switch(operator1["attributeType"].ToString())
+                    {
+                        case "int":
+                            op = new SortOperator<int>(sortPredicate);
+                            break;
+                        case "double":
+                            op = new SortOperator<double>(sortPredicate);
+                            break;
+                        case "date":
+                            op= new SortOperator<DateTime>(sortPredicate);
+                            break;
+                        case "string":
+                            op= new SortOperator<string>(sortPredicate);
+                            break;
+                    }
+                }
+                else if((string)operator1["operatorType"] == "GroupBy")
+                {
+                    int groupByIndex=int.Parse(operator1["groupByAttribute"].ToString().Replace("_c",""));
+                    int aggregationIndex=int.Parse(operator1["aggregationAttribute"].ToString().Replace("_c",""));
+                    GroupByPredicate groupByPredicate=new GroupByPredicate(groupByIndex,aggregationIndex,operator1["aggregationFunction"].ToString());
+                    op=new GroupByOperator(groupByPredicate);
+                }
+                else if((string)operator1["operatorType"] == "Projection")
+                {
+                    List<int> projectionIndexs=operator1["projectionAttributes"].ToString().Split(",").Select(x=>int.Parse(x.Replace("_c",""))).ToList();
+                    ProjectionPredicate projectionPredicate=new ProjectionPredicate(projectionIndexs);
+                    op=new ProjectionOperator(projectionPredicate);
+                }
+                else if((string)operator1["operatorType"] == "HashJoin")
+                {
+                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
+                    op = new HashJoinOperator(hashJoinPredicate);
                 }
 
                 if(op!=null)

@@ -10,12 +10,15 @@ using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
 using System.Linq;
+using System.Reflection;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class SortOperatorGrain : WorkerGrain, ISortOperatorGrain
+    public class SortOperatorGrain<T> : WorkerGrain, ISortOperatorGrain<T> where T:IComparable<T>
     {
+        private static MethodInfo ParseInfo = typeof(T).GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string) }, null);
         List<TexeraTuple> sortedTuples=new List<TexeraTuple>();
+        List<T> sortedValues=new List<T>();
         int sortIndex;
         int counter=0;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
@@ -24,28 +27,31 @@ namespace Engine.OperatorImplementation.Operators
             sortIndex=((SortPredicate)predicate).SortIndex;
             return Task.CompletedTask;
         }
-        protected override List<TexeraTuple> ProcessTuple(TexeraTuple tuple)
+
+        private static T Parse(string value)
         {
-            //Console.WriteLine(++counter+" tuples sorted");
-            int idx=-1;
-            for(int i=0;i<sortedTuples.Count;++i)
-            {
-                if(String.Compare(sortedTuples[i].FieldList[sortIndex],tuple.FieldList[sortIndex])==1)
-                {
-                    idx=i;
-                    break;
-                }
-            }
-            if(idx!=-1)
-                sortedTuples.Insert(idx,tuple);
+            if (typeof(T) == typeof(string))
+                return (T)(object)value;
             else
-                sortedTuples.Add(tuple);
-            return null;
+                return (T)ParseInfo.Invoke(null, new[] { value });
         }
 
-        protected override List<TexeraTuple> MakeFinalOutputTuples()
+        protected override void ProcessTuple(TexeraTuple tuple)
         {
-            return sortedTuples;
+            T value=Parse(tuple.FieldList[sortIndex]);
+            int index = sortedValues.BinarySearch(value);
+            if(index<0)
+            {
+                index=~index;
+            }
+            sortedTuples.Insert(index,tuple);
+            sortedValues.Insert(index,value);
+        }
+
+        protected override void MakeFinalOutputTuples()
+        {
+            foreach(TexeraTuple tuple in sortedTuples)
+                outputTuples.Enqueue(tuple);
         }
     }
 

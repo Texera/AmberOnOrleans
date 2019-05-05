@@ -7,7 +7,7 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public interface IFilterOperatorGrain : IWorkerGrain
+    public interface IFilterOperatorGrain<T> : IWorkerGrain where T:IComparable<T>
     {
     }
 

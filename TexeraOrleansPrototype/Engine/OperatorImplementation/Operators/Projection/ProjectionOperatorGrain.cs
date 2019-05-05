@@ -16,24 +16,26 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class KeywordSearchOperatorGrain : WorkerGrain, IKeywordSearchOperatorGrain
+    public class ProjectionOperatorGrain : WorkerGrain, IProjectionOperatorGrain
     {
-        int searchIndex;
-        string keyword;
-
+        List<int> projectionIndexs;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);
-            searchIndex=((KeywordPredicate)predicate).SearchIndex;
-            keyword=((KeywordPredicate)predicate).Query;
+            projectionIndexs=((ProjectionPredicate)predicate).ProjectionIndexs;
             return Task.CompletedTask;
         }
 
 
         protected override void ProcessTuple(TexeraTuple tuple)
         {
-            if(tuple.FieldList!=null && tuple.FieldList[searchIndex].Contains(keyword))
-                outputTuples.Enqueue(tuple);
+            TexeraTuple result=new TexeraTuple(tuple.TableID,new string[projectionIndexs.Count]);
+            int i=0;
+            foreach(int attr in projectionIndexs)
+            {
+                result.FieldList[i++]=tuple.FieldList[attr];
+            }
+            outputTuples.Enqueue(result);
         }
     }
 }

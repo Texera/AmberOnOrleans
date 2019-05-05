@@ -9,6 +9,7 @@ namespace Engine.OperatorImplementation.Operators
         public string File;
         public ulong FileSize;
         public int TableID;
+        public string Separator;
         public ScanPredicate(string file,int tableID,int batchingLimit=1000):base(batchingLimit)
         {
             if(file == null)
@@ -27,6 +28,10 @@ namespace Engine.OperatorImplementation.Operators
                     FileSize=(ulong)new System.IO.FileInfo(file).Length;
             }
             TableID=tableID;
+            if(file.EndsWith(".tbl"))
+                Separator="|";
+            else
+                Separator=",";
         }
     }
 }

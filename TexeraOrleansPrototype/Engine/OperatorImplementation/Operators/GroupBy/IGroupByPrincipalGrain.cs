@@ -9,7 +9,7 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public interface IJoinPrincipalGrain : IPrincipalGrain
+    public interface IGroupByPrincipalGrain : IPrincipalGrain
     {
 
     }

@@ -9,11 +9,11 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class FilterPrinicipalGrain : PrincipalGrain, IFilterPrincipalGrain
+    public class FilterPrinicipalGrain<T> : PrincipalGrain, IFilterPrincipalGrain<T> where T:IComparable<T>
     {
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
-            return this.GrainFactory.GetGrain<IFilterOperatorGrain>(this.GetPrimaryKey(), extension);
+            return this.GrainFactory.GetGrain<IFilterOperatorGrain<T>>(this.GetPrimaryKey(), extension);
         }
     }
 }
