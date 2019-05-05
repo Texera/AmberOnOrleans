@@ -16,15 +16,19 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class HashJoinPrinicipalGrain : PrincipalGrain, IHashJoinPrincipalGrain
     {
-        public override int DefaultNumGrainsInOneLayer { get { return 4; } }
+        public override int DefaultNumGrainsInOneLayer { get { return 1; } }
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
             return this.GrainFactory.GetGrain<IHashJoinOperatorGrain>(this.GetPrimaryKey(), extension);
         }
 
-        public override Task<ISendStrategy> GetInputSendStrategy()
+        public override Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
-            int joinFieldIndex=((HashJoinPredicate)predicate).JoinFieldIndex;
+            int joinFieldIndex;
+            if(requester.GetPrimaryKey().Equals(((HashJoinPredicate)predicate).InnerTableID))
+                joinFieldIndex=((HashJoinPredicate)predicate).InnerTableIndex;
+            else
+                joinFieldIndex=((HashJoinPredicate)predicate).OuterTableIndex;
             Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
             return Task.FromResult(new Shuffle(inputGrains,serializer.SerializeText(exp)) as ISendStrategy);

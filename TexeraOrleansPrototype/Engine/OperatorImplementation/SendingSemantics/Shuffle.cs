@@ -51,7 +51,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         }
 
 
-        public override void SendBatchedMessages(string senderIdentifier)
+        public override void SendBatchedMessages(IGrain senderIdentifier)
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeBatchedPayloads())
             {
@@ -59,7 +59,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
         }
 
-        public override void SendEndMessages(string senderIdentifier)
+        public override void SendEndMessages(IGrain senderIdentifier)
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeLastPayload())
             {

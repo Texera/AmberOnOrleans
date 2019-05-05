@@ -16,27 +16,36 @@ namespace Engine.OperatorImplementation.Operators
     public class HashJoinOperatorGrain : WorkerGrain, IHashJoinOperatorGrain
     {
         Dictionary<String,List<TexeraTuple>> hashTable=new Dictionary<string, List<TexeraTuple>>();
-        int tableSource=-1;
-        string sourceOperator=null;
         List<TexeraTuple> otherTable=new List<TexeraTuple>();
-        int joinFieldIndex=-1;
+        int innerTableIndex=-1;
+        int outerTableIndex=-1;
+        bool isCurrentInnerTable=false;
+        bool isInnerTableFinished=false;
+        Guid innerTableGuid=Guid.Empty;
         int TableID;
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);
-            joinFieldIndex=((HashJoinPredicate)predicate).JoinFieldIndex;
+            innerTableIndex=((HashJoinPredicate)predicate).InnerTableIndex;
+            outerTableIndex=((HashJoinPredicate)predicate).OuterTableIndex;
+            innerTableGuid=((HashJoinPredicate)predicate).InnerTableID;
             TableID=((HashJoinPredicate)predicate).TableID;
             return Task.CompletedTask;
         }
+
+
+        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        {
+            string ext;
+            isCurrentInnerTable=innerTableGuid.Equals(message.Value.SenderIdentifer.GetPrimaryKey(out ext));
+            isInnerTableFinished=(inputInfo[innerTableGuid]==0);
+        }
+
         protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
-            if(tableSource==-1)
+            if(isCurrentInnerTable)
             {
-                tableSource=tuple.TableID;
-            }
-            if(tuple.TableID.Equals(tableSource))
-            {
-                string source=tuple.FieldList[joinFieldIndex];
+                string source=tuple.FieldList[innerTableIndex];
                 if(!hashTable.ContainsKey(source))
                     hashTable[source]=new List<TexeraTuple>{tuple};
                 else
@@ -44,18 +53,21 @@ namespace Engine.OperatorImplementation.Operators
             }
             else
             {
-                if(inputInfo[sourceOperator]!=0)
+                if(!isInnerTableFinished)
                 {
                     otherTable.Add(tuple);
                 }
                 else
                 {
-                    string field=tuple.FieldList[joinFieldIndex];
+                    string field=tuple.FieldList[outerTableIndex];
                     List<string> fields=tuple.FieldList.ToList();
-                    fields.RemoveAt(joinFieldIndex);
-                    foreach(TexeraTuple t in hashTable[field])
-                    {  
-                        output.Add(new TexeraTuple(TableID,t.FieldList.Concat(fields).ToArray()));
+                    fields.RemoveAt(outerTableIndex);
+                    if(hashTable.ContainsKey(field))
+                    {
+                        foreach(TexeraTuple t in hashTable[field])
+                        {  
+                            output.Add(new TexeraTuple(TableID,t.FieldList.Concat(fields).ToArray()));
+                        }
                     }
                 }
             }
@@ -63,11 +75,13 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void AfterProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
         {
-            if(inputInfo[sourceOperator]==0 && otherTable!=null)
+            if(inputInfo[innerTableGuid]==0 && otherTable!=null)
             {
                 var batch=otherTable;
                 Action action=async ()=>
                 {
+                    isCurrentInnerTable=false;
+                    isInnerTableFinished=true;
                     if(batch!=null)
                     {
                         ProcessBatch(batch);
@@ -98,12 +112,5 @@ namespace Engine.OperatorImplementation.Operators
                 otherTable=null;
             }
         }
-
-        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
-        {
-            if(sourceOperator==null)
-                sourceOperator=message.Value.SenderIdentifer.Split(' ')[0];
-        }
     }
-
 }

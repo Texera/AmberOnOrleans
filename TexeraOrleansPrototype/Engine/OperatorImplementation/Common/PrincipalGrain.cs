@@ -86,11 +86,11 @@ namespace Engine.OperatorImplementation.Common
 
         public async Task LinkWorkerGrains()
         {
-            Dictionary<string,int> inputInfo=new Dictionary<string, int>();
+            Dictionary<Guid,int> inputInfo=new Dictionary<Guid, int>();
             foreach(IPrincipalGrain prevPrincipal in prevPrincipalGrains)
             {
                 List<IWorkerGrain> prevOutputGrains=await prevPrincipal.GetOutputGrains();
-                inputInfo[prevPrincipal.GetPrimaryKey().ToString()]=prevOutputGrains.Count;
+                inputInfo[prevPrincipal.GetPrimaryKey()]=prevOutputGrains.Count;
             }
             if(inputInfo.Count>0)
             {
@@ -104,7 +104,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 foreach(IPrincipalGrain nextPrincipal in nextPrincipalGrains)
                 {
-                    ISendStrategy strategy = await nextPrincipal.GetInputSendStrategy();
+                    ISendStrategy strategy = await nextPrincipal.GetInputSendStrategy(self);
                     for(int i=0;i<outputGrains.Count;++i)
                     {
                         await outputGrains[i].SetSendStrategy(operatorID,strategy);
@@ -162,7 +162,7 @@ namespace Engine.OperatorImplementation.Common
                     List<Task> taskList=new List<Task>();
                     foreach(IWorkerGrain grain in grainList)
                     {
-                        taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Pause))));
+                        taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause))));
                     }
                     await Task.WhenAll(taskList);
                 }
@@ -199,7 +199,7 @@ namespace Engine.OperatorImplementation.Common
                 List<Task> taskList=new List<Task>();
                 foreach(IWorkerGrain grain in grainList)
                 {
-                    taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Resume))));
+                    taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume))));
                 }
                 await Task.WhenAll(taskList);
             }
@@ -221,13 +221,13 @@ namespace Engine.OperatorImplementation.Common
             List<Task> taskList=new List<Task>();
             foreach(IWorkerGrain grain in inputGrains)
             {
-                taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(ReturnGrainIndentifierString(self),sequenceNumber,ControlMessage.ControlMessageType.Start))));
+                taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start))));
             }
             await Task.WhenAll(taskList);
             sequenceNumber++;
         }
 
-        public virtual Task<ISendStrategy> GetInputSendStrategy()
+        public virtual Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
             return Task.FromResult(new RoundRobin(inputGrains,predicate.BatchingLimit) as ISendStrategy);
         }

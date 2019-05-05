@@ -15,7 +15,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
         }
 
-        public override void SendBatchedMessages(string senderIdentifier)
+        public override void SendBatchedMessages(IGrain senderIdentifier)
         {
             while(true)
             {
@@ -28,7 +28,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
         }
 
-        public override void SendEndMessages(string senderIdentifier)
+        public override void SendEndMessages(IGrain senderIdentifier)
         {
             PayloadMessage message=MakeLastMessage(senderIdentifier,outputSequenceNumbers[roundRobinIndex]);
             if(message!=null)

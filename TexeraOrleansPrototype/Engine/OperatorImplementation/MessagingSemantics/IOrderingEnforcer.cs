@@ -14,7 +14,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
     {
         bool PreProcess(Immutable<PayloadMessage> message);
         List<ControlMessage.ControlMessageType> PreProcess(Immutable<ControlMessage> message);
-        void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, string sender);
-        void CheckStashed(ref List<ControlMessage.ControlMessageType> controlMessages, string sender);
+        void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, IGrain sender);
+        void CheckStashed(ref List<ControlMessage.ControlMessageType> controlMessages, IGrain sender);
     }
 }

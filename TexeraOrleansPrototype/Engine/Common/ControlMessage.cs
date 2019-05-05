@@ -9,7 +9,7 @@ namespace Engine
 {
     public class ControlMessage: TexeraMessage
     {
-        public ControlMessage(string sender, ulong sequenceNumber, ControlMessageType type):base(sender,sequenceNumber)
+        public ControlMessage(IGrain sender, ulong sequenceNumber, ControlMessageType type):base(sender,sequenceNumber)
         {
             Type=type;
         }

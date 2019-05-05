@@ -26,7 +26,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
         }
 
-        protected PayloadMessage MakeBatchedMessage(string senderIdentifier,ulong sequenceNumber)
+        protected PayloadMessage MakeBatchedMessage(IGrain senderIdentifier,ulong sequenceNumber)
         {
             PayloadMessage outputMessage=null;
             if(outputRows.Count>=batchingLimit)
@@ -41,7 +41,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             return outputMessage;
         }
 
-        protected PayloadMessage MakeLastMessage(string senderIdentifier,ulong sequenceNumber)
+        protected PayloadMessage MakeLastMessage(IGrain senderIdentifier,ulong sequenceNumber)
         {
             if(outputRows.Count==0)return null;
             List<TexeraTuple> payload=new List<TexeraTuple>();

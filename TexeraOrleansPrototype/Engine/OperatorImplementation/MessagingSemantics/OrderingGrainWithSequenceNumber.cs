@@ -13,9 +13,9 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 {
     public class OrderingGrainWithSequenceNumber : IOrderingEnforcer
     {
-        private Dictionary<string,Dictionary<ulong, Pair<bool,List<TexeraTuple>>>> stashedPayloadMessages = new Dictionary<string, Dictionary<ulong, Pair<bool, List<TexeraTuple>>>>();
-        private Dictionary<string,Dictionary<ulong, ControlMessage.ControlMessageType>> stashedControlMessages = new Dictionary<string, Dictionary<ulong, ControlMessage.ControlMessageType>>();
-        private Dictionary<string,ulong> inSequenceNumberMap=new Dictionary<string, ulong>();
+        private Dictionary<IGrain,Dictionary<ulong, Pair<bool,List<TexeraTuple>>>> stashedPayloadMessages = new Dictionary<IGrain, Dictionary<ulong, Pair<bool, List<TexeraTuple>>>>();
+        private Dictionary<IGrain,Dictionary<ulong, ControlMessage.ControlMessageType>> stashedControlMessages = new Dictionary<IGrain, Dictionary<ulong, ControlMessage.ControlMessageType>>();
+        private Dictionary<IGrain,ulong> inSequenceNumberMap=new Dictionary<IGrain, ulong>();
         private enum MessageStatus
         {
             Vaild,
@@ -23,7 +23,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             Ahead,
         }
 
-        private MessageStatus CheckMessage(string sender, ulong sequenceNum)
+        private MessageStatus CheckMessage(IGrain sender, ulong sequenceNum)
         {
             if(!inSequenceNumberMap.ContainsKey(sender))
             {
@@ -44,7 +44,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 
         public bool PreProcess(Immutable<PayloadMessage> message)
         {
-            string sender=message.Value.SenderIdentifer;
+            IGrain sender=message.Value.SenderIdentifer;
             ulong sequenceNum=message.Value.SequenceNumber;
             switch(CheckMessage(sender,sequenceNum))
             {
@@ -66,7 +66,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             return false;
         }
 
-        public void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, string sender)
+        public void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, IGrain sender)
         {
             if(stashedPayloadMessages.ContainsKey(sender))
             {
@@ -99,7 +99,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 
         public List<ControlMessage.ControlMessageType> PreProcess(Immutable<ControlMessage> message)
         {
-            string sender=message.Value.SenderIdentifer;
+            IGrain sender=message.Value.SenderIdentifer;
             ulong sequenceNum=message.Value.SequenceNumber;
             switch(CheckMessage(sender,sequenceNum))
             {
@@ -119,7 +119,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             return null;
         }
 
-        public void CheckStashed(ref List<ControlMessage.ControlMessageType> controlMessages, string sender)
+        public void CheckStashed(ref List<ControlMessage.ControlMessageType> controlMessages, IGrain sender)
         {
             if(stashedControlMessages.ContainsKey(sender))
             {

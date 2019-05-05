@@ -32,9 +32,9 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
         }
 
-        public abstract void SendBatchedMessages(string senderIdentifier);
+        public abstract void SendBatchedMessages(IGrain senderIdentifier);
 
-        public abstract void SendEndMessages(string senderIdentifier);
+        public abstract void SendEndMessages(IGrain senderIdentifier);
 
         protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
         {

@@ -19,7 +19,7 @@ namespace Engine.OperatorImplementation.Operators
             return this.GrainFactory.GetGrain<IGroupByOperatorGrain>(this.GetPrimaryKey(), extension);
         }
 
-        public override Task<ISendStrategy> GetInputSendStrategy()
+        public override Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
             int groupByIndex=((GroupByPredicate)predicate).GroupByIndex;
             Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[groupByIndex].GetHashCode();

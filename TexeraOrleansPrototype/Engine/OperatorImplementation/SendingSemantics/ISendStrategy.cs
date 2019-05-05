@@ -11,8 +11,8 @@ namespace Engine.OperatorImplementation.SendingSemantics
     public interface ISendStrategy
     {
         void Enqueue(IEnumerable<TexeraTuple> output);
-        void SendBatchedMessages(string senderIdentifier);
-        void SendEndMessages(string senderIdentifier);
+        void SendBatchedMessages(IGrain senderIdentifier);
+        void SendEndMessages(IGrain senderIdentifier);
         void AddReceiver(IWorkerGrain receiver);
         void AddReceivers(List<IWorkerGrain> receivers);
     }

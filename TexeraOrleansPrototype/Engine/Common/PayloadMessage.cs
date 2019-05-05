@@ -9,7 +9,7 @@ namespace Engine
 {
     public class PayloadMessage: TexeraMessage
     {
-        public PayloadMessage(string sender, ulong sequenceNumber, List<TexeraTuple> payload,bool isEnd):base(sender, sequenceNumber)
+        public PayloadMessage(IGrain sender, ulong sequenceNumber, List<TexeraTuple> payload,bool isEnd):base(sender, sequenceNumber)
         {
             Payload=payload;
             IsEnd=isEnd;

@@ -100,7 +100,9 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "HashRippleJoin")
                 {
-                    HashRippleJoinPredicate hashRippleJoinPredicate=new HashRippleJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
+                    int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
+                    int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
+                    HashRippleJoinPredicate hashRippleJoinPredicate=new HashRippleJoinPredicate(innerIndex,outerIndex,table_id++);
                     op = new HashRippleJoinOperator(hashRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "InsertionSort")
@@ -137,7 +139,9 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "HashJoin")
                 {
-                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
+                    int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
+                    int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
+                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(innerIndex,outerIndex,table_id++);
                     op = new HashJoinOperator(hashJoinPredicate);
                 }
 

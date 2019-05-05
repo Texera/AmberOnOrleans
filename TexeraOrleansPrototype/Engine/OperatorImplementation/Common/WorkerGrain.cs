@@ -37,7 +37,7 @@ namespace Engine.OperatorImplementation.Common
         protected IWorkerGrain self = null;
         private IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
         private Dictionary<Guid,ISendStrategy> sendStrategies = new Dictionary<Guid, ISendStrategy>();
-        protected Dictionary<string,int> inputInfo;
+        protected Dictionary<Guid,int> inputInfo;
         protected Queue<Action> actionQueue=new Queue<Action>();
         protected int currentIndex=0;
         protected int currentEndFlagCount=int.MaxValue;
@@ -79,7 +79,8 @@ namespace Engine.OperatorImplementation.Common
                     currentIndex=0;
                     if(isEnd)
                     {
-                        inputInfo[message.Value.SenderIdentifer.Split(' ')[0]]--;
+                        string ext;
+                        inputInfo[message.Value.SenderIdentifer.GetPrimaryKey(out ext)]--;
                         currentEndFlagCount--;
                     }
                     AfterProcessBatch(message,orleansScheduler);
@@ -110,8 +111,7 @@ namespace Engine.OperatorImplementation.Common
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
-                string identifer=ReturnGrainIndentifierString(self);
-                strategy.SendBatchedMessages(identifer);
+                strategy.SendBatchedMessages(self);
             }
             outputTuples=new List<TexeraTuple>();
             if(currentEndFlagCount==0 && actionQueue.Count==1)
@@ -131,9 +131,8 @@ namespace Engine.OperatorImplementation.Common
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
-                string identifer=ReturnGrainIndentifierString(self);
-                strategy.SendBatchedMessages(identifer);
-                strategy.SendEndMessages(identifer);
+                strategy.SendBatchedMessages(self);
+                strategy.SendEndMessages(self);
             }
             outputTuples= new List<TexeraTuple>();
         }
@@ -222,13 +221,13 @@ namespace Engine.OperatorImplementation.Common
         }
 
 
-        public string ReturnGrainIndentifierString(IWorkerGrain grain)
-        {
-            //string a="Engine.OperatorImplementation.Operators.OrleansCodeGen";
-            string extension;
-            //grain.GetPrimaryKey(out extension);
-            return grain.GetPrimaryKey(out extension).ToString()+" "+extension;
-        }
+        // public string ReturnGrainIndentifierString(IWorkerGrain grain)
+        // {
+        //     //string a="Engine.OperatorImplementation.Operators.OrleansCodeGen";
+        //     string extension;
+        //     //grain.GetPrimaryKey(out extension);
+        //     return grain.GetPrimaryKey(out extension).ToString()+" "+extension;
+        // }
 
         protected virtual void Pause()
         {
@@ -260,7 +259,7 @@ namespace Engine.OperatorImplementation.Common
             throw new NotImplementedException();
         }
 
-        public Task SetInputInformation(Dictionary<string,int> inputInfo)
+        public Task SetInputInformation(Dictionary<Guid,int> inputInfo)
         {
             currentEndFlagCount=inputInfo.Values.Sum();
             this.inputInfo=inputInfo;
@@ -281,8 +280,7 @@ namespace Engine.OperatorImplementation.Common
                 {
                     foreach(ISendStrategy strategy in sendStrategies.Values)
                     {
-                        string identifer=ReturnGrainIndentifierString(self);
-                        strategy.SendEndMessages(identifer);
+                        strategy.SendEndMessages(self);
                     }
                 }
             }

@@ -20,10 +20,12 @@ namespace Engine.OperatorImplementation.Common
         public void AddOutOperator(Operator operatorToAdd)
         {
             outOperators.Add(operatorToAdd);
+            Predicate.WhenAddOutOperator(operatorToAdd);
         }
         public void AddInOperator(Operator operatorToAdd)
         {
             inOperators.Add(operatorToAdd);
+            Predicate.WhenAddInOperator(operatorToAdd);
         }
         public HashSet<Operator> GetAllOutOperators()
         {

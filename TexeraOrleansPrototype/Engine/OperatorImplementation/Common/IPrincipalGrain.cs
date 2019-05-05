@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using TexeraUtilities;
 using Engine.OperatorImplementation.SendingSemantics;
+using Orleans.Core;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -18,7 +19,7 @@ namespace Engine.OperatorImplementation.Common
         Task Resume();
         Task Init(IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator);
         Task<List<IWorkerGrain>> GetInputGrains();
-        Task<ISendStrategy> GetInputSendStrategy();
+        Task<ISendStrategy> GetInputSendStrategy(IGrain requester);
         Task<List<IWorkerGrain>> GetOutputGrains();
         Task LinkWorkerGrains();
         Task Start();

@@ -29,7 +29,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             throw new NotImplementedException();
         }
 
-        public void SendBatchedMessages(string senderIdentifier)
+        public void SendBatchedMessages(IGrain senderIdentifier)
         {
             while(true)
             {
@@ -40,7 +40,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
         }
 
-        public void SendEndMessages(string senderIdentifier)
+        public void SendEndMessages(IGrain senderIdentifier)
         {
             PayloadMessage message = MakeLastMessage(senderIdentifier,sequenceNumber);
             if(message!=null)

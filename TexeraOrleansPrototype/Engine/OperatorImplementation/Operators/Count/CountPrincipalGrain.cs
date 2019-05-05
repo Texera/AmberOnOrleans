@@ -30,7 +30,7 @@ namespace Engine.OperatorImplementation.Operators
                 operatorGrains[0].Add(grain);
             }
             //set target end flag
-            await finalGrain.SetInputInformation(new Dictionary<string, int>{{this.GetPrimaryKeyString(),DefaultNumGrainsInOneLayer}});
+            await finalGrain.SetInputInformation(new Dictionary<Guid, int>{{this.GetPrimaryKey(),DefaultNumGrainsInOneLayer}});
         }
     }
 }
