@@ -36,64 +36,71 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
-            try
+            string field=tuple.FieldList[groupByIndex];
+            if(counter.ContainsKey(field))
             {
-                string field=tuple.FieldList[groupByIndex];
-                double value=double.Parse(tuple.FieldList[aggregationIndex]);
-                if(results.ContainsKey(field))
+                counter[field]++;
+            }
+            else
+            {
+                counter[field]=1;
+            }
+            if(!aggregationFunc.Equals("count"))
+            {
+                try
                 {
-                    counter[field]++;
-                    double oldValue=results[field];
-                    switch(aggregationFunc)
+                    double value=double.Parse(tuple.FieldList[aggregationIndex]);
+                    if(results.ContainsKey(field))
                     {
-                        case "max":
-                            results[field]=Math.Max(oldValue,value);
-                            break;
-                        case "min":
-                            results[field]=Math.Min(oldValue,value);
-                            break;
-                        case "avg":
-                            results[field]+=value;
-                            break;
-                        case "sum":
-                            results[field]+=value;
-                            break;
-                        case "count":
-                            break;
+                        double oldValue=results[field];
+                        switch(aggregationFunc)
+                        {
+                            case "max":
+                                results[field]=Math.Max(oldValue,value);
+                                break;
+                            case "min":
+                                results[field]=Math.Min(oldValue,value);
+                                break;
+                            case "avg":
+                                results[field]+=value;
+                                break;
+                            case "sum":
+                                results[field]+=value;
+                                break;
+                        }
+                    }
+                    else
+                    {
+                        results[field]=value;
                     }
                 }
-                else
+                catch(Exception e)
                 {
-                    results[field]=value;
-                    counter[field]=1;
+                    Console.WriteLine(e);
                 }
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine(e);
             }
         }
         protected override List<TexeraTuple> MakeFinalOutputTuples()
         {
             List<TexeraTuple> result=new List<TexeraTuple>();
-            foreach(KeyValuePair<string,double> pair in results)
+            foreach(KeyValuePair<string,int> pair in counter)
             {
                 switch(aggregationFunc)
                 {
                     case "max":
-                        result.Add(new TexeraTuple(new string[]{pair.Key,pair.Value.ToString()}));
+                        result.Add(new TexeraTuple(new string[]{pair.Key,results[pair.Key].ToString()}));
                         break;
                     case "min":
-                        result.Add(new TexeraTuple(new string[]{pair.Key,pair.Value.ToString()}));
+                        result.Add(new TexeraTuple(new string[]{pair.Key,results[pair.Key].ToString()}));
                         break;
                     case "avg":
-                        result.Add(new TexeraTuple(new string[]{pair.Key,(pair.Value/counter[pair.Key]).ToString()}));
+                        result.Add(new TexeraTuple(new string[]{pair.Key,(results[pair.Key]/pair.Value).ToString()}));
                         break;
                     case "sum":
-                        result.Add(new TexeraTuple(new string[]{pair.Key,pair.Value.ToString()}));
+                        result.Add(new TexeraTuple(new string[]{pair.Key,results[pair.Key].ToString()}));
                         break;
                     case "count":
-                        result.Add(new TexeraTuple(new string[]{pair.Key,counter[pair.Key].ToString()}));
+                        result.Add(new TexeraTuple(new string[]{pair.Key,pair.Value.ToString()}));
                         break;
                 }
             }
