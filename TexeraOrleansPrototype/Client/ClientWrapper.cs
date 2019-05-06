@@ -129,7 +129,7 @@ namespace OrleansClient
             var streamProvider = client.GetStreamProvider("SMSProvider");
             var so = new StreamObserver();
             var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflow.GetStreamGuid(), "OutputStream");
-            await stream.SubscribeAsync(so);
+            var handle = await stream.SubscribeAsync(so);
             int numEndGrains=0;
             foreach(Operator o in workflow.EndOperators)
             {
@@ -148,6 +148,7 @@ namespace OrleansClient
             {
 
             }
+            await handle.UnsubscribeAsync();
             await workflow.Deactivate();
             instance.IDToWorkflowEntry.Remove(workflow.WorkflowID);
             return so.resultsToRet;

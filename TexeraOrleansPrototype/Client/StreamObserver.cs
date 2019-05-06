@@ -57,7 +57,11 @@ namespace OrleansClient
             if(currentSequenceNumber[sender]<seqNum)
             {
                 //ahead
-                stashedMessage[sender][seqNum]=item;
+                if(!stashedMessage.ContainsKey(sender))
+                {
+                    stashedMessage.Add(sender,new Dictionary<ulong, Immutable<PayloadMessage>>());
+                }
+                stashedMessage[sender].Add(seqNum,item);
             }
             else if(currentSequenceNumber[sender]>seqNum)
             {
@@ -73,7 +77,7 @@ namespace OrleansClient
                     {
                         resultsToRet.AddRange(currentPayload);
                     }
-                    ulong nextSeqNum=currentSequenceNumber[sender]++;
+                    ulong nextSeqNum=++currentSequenceNumber[sender];
                     if(stashedMessage.ContainsKey(sender) && stashedMessage[sender].ContainsKey(nextSeqNum))
                     {
                         Immutable<PayloadMessage> message=stashedMessage[sender][nextSeqNum];

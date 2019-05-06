@@ -24,6 +24,15 @@ namespace Engine.OperatorImplementation.Operators
         int aggregationIndex;
         string aggregationFunc;
 
+        public override Task OnDeactivateAsync()
+        {
+            base.OnDeactivateAsync();
+            results=null;
+            counter=null;
+            GC.Collect();
+            return Task.CompletedTask;
+        }
+
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);

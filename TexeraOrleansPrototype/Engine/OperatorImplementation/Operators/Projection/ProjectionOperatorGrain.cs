@@ -19,6 +19,15 @@ namespace Engine.OperatorImplementation.Operators
     public class ProjectionOperatorGrain : WorkerGrain, IProjectionOperatorGrain
     {
         List<int> projectionIndexs;
+
+        public override Task OnDeactivateAsync()
+        {
+            base.OnDeactivateAsync();
+            projectionIndexs=null;
+            GC.Collect();
+            return Task.CompletedTask;
+        }
+
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);

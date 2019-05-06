@@ -40,7 +40,7 @@ namespace webapi.Controllers
             req.Seek(0, System.IO.SeekOrigin.Begin);
             string json = new StreamReader(req).ReadToEnd();
             //apply TPC-H Query-1
-            //json="{\"logicalPlan\":{\"operators\":[{\"tableName\":\"<file>\",\"operatorID\":\"operator-3bc05014-357d-45f5-a053-9baf1a62bd27\",\"operatorType\":\"ScanSource\"},{\"attributeName\":\"_c10\",\"attributeType\":\"date\",\"comparisonType\":\">\",\"compareTo\":\"1997-01-01\",\"operatorID\":\"operator-345a8b3d-2b1b-485e-b7c1-1cd9f579ce4f\",\"operatorType\":\"Comparison\"},{\"groupByAttribute\":\"_c8\",\"aggregationAttribute\":\"_c4\",\"aggregationFunction\":\"sum\",\"operatorID\":\"operator-89854b72-7c28-436b-b162-ead3daa75f72\",\"operatorType\":\"GroupBy\"},{\"attributeName\":\"_c0\",\"attributeType\":\"string\",\"operatorID\":\"operator-c7d7e79c-49ca-46a4-8420-490c25cd052d\",\"operatorType\":\"InsertionSort\"}],\"links\":[{\"origin\":\"operator-3bc05014-357d-45f5-a053-9baf1a62bd27\",\"destination\":\"operator-345a8b3d-2b1b-485e-b7c1-1cd9f579ce4f\"},{\"origin\":\"operator-345a8b3d-2b1b-485e-b7c1-1cd9f579ce4f\",\"destination\":\"operator-89854b72-7c28-436b-b162-ead3daa75f72\"},{\"origin\":\"operator-89854b72-7c28-436b-b162-ead3daa75f72\",\"destination\":\"operator-c7d7e79c-49ca-46a4-8420-490c25cd052d\"}]},\"workflowID\":\"texera-workflow-824ec494-8f6c-41a3-a3c0-29ca6dc7fe97\"}";
+            //json="{\"logicalPlan\":{\"operators\":[{\"tableName\":\"D:\\\\median_input.csv\",\"operatorID\":\"operator-348819d9-d8f7-4751-b9fb-60d84354c667\",\"operatorType\":\"ScanSource\"},{\"attributeName\":\"_c0\",\"attributeType\":\"string\",\"operatorID\":\"operator-20c3d1f3-bad1-4118-931a-4e28d95eaab1\",\"operatorType\":\"InsertionSort\"},{\"projectionAttributes\":\"_c0\",\"operatorID\":\"operator-9925727b-5a6c-4ce7-884d-34f9368bdfa8\",\"operatorType\":\"Projection\"}],\"links\":[{\"origin\":\"operator-348819d9-d8f7-4751-b9fb-60d84354c667\",\"destination\":\"operator-20c3d1f3-bad1-4118-931a-4e28d95eaab1\"},{\"origin\":\"operator-20c3d1f3-bad1-4118-931a-4e28d95eaab1\",\"destination\":\"operator-9925727b-5a6c-4ce7-884d-34f9368bdfa8\"}]},\"workflowID\":\"texera-workflow-d60c3150-bc78-4304-bf36-757aa7324ef1\"}";
             Console.WriteLine("JSON BODY = " + json);
             Dictionary<string, Operator> map = new Dictionary<string, Operator>();
 
@@ -178,7 +178,6 @@ namespace webapi.Controllers
             texeraResult.code = 0;
             texeraResult.result = resultJson;
             texeraResult.resultID = Guid.NewGuid();
-
             return Json(texeraResult);
         }
     }

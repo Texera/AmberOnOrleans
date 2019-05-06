@@ -22,6 +22,16 @@ namespace Engine.OperatorImplementation.Operators
         bool isCurrentInnerTable=false;
         bool isInnerTableFinished=false;
         Guid innerTableGuid=Guid.Empty;
+
+        public override Task OnDeactivateAsync()
+        {
+            base.OnDeactivateAsync();
+            hashTable=null;
+            otherTable=null;
+            GC.Collect();
+            return Task.CompletedTask;
+        }
+
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);

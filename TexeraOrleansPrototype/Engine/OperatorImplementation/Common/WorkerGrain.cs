@@ -51,7 +51,18 @@ namespace Engine.OperatorImplementation.Common
             this.predicate=predicate;
             return Task.CompletedTask;
         }
-        
+    
+
+        public override Task OnDeactivateAsync()
+        {
+            pausedMessages=null;
+            orderingEnforcer=null;
+            sendStrategies=null;
+            actionQueue=null;
+            GC.Collect();
+            return Task.CompletedTask;
+        }
+
         public Task Process(Immutable<PayloadMessage> message)
         {
             if(isPaused)
@@ -72,6 +83,8 @@ namespace Engine.OperatorImplementation.Common
                     {
                         ProcessBatch(batch);
                     }
+                    batch=null;
+                    GC.Collect();
                     if(isPaused)
                     {
                         return;
@@ -157,6 +170,7 @@ namespace Engine.OperatorImplementation.Common
                     lock(outputTuples)
                     {
                         outputTuples.AddRange(localList);
+                        localList=null;
                     }
                     return;
                 }
@@ -165,6 +179,7 @@ namespace Engine.OperatorImplementation.Common
             lock(outputTuples)
             {
                 outputTuples.AddRange(localList);
+                localList=null;
             }
         }
 

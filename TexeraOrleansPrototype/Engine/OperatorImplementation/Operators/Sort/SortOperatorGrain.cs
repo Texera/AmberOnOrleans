@@ -21,6 +21,17 @@ namespace Engine.OperatorImplementation.Operators
         List<T> sortedValues=new List<T>();
         int sortIndex;
         int counter=0;
+
+        public override Task OnDeactivateAsync()
+        {
+            base.OnDeactivateAsync();
+            sortedValues=null;
+            sortedTuples=null;
+            GC.Collect();
+            return Task.CompletedTask;
+        }
+
+
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);

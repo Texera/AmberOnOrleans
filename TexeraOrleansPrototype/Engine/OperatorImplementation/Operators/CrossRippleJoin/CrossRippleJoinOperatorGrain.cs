@@ -26,6 +26,15 @@ namespace Engine.OperatorImplementation.Operators
         Dictionary<string,List<TexeraTuple>> toInsert;
 
 
+        public override Task OnDeactivateAsync()
+        {
+            base.OnDeactivateAsync();
+            innerJoinedTuples=null;
+            outerJoinedTuples=null;
+            GC.Collect();
+            return Task.CompletedTask;
+        }
+
         public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             base.Init(self,predicate,principalGrain);
