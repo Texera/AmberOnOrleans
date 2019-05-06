@@ -63,6 +63,16 @@ namespace Engine.WorkflowImplementation
             await Task.WhenAll(taskList);
         }
 
+        public async Task Deactivate()
+        {
+            List<Task> taskList=new List<Task>();
+            foreach(Operator o in AllOperators)
+            {
+                taskList.Add(o.Deactivate());
+            }
+            await Task.WhenAll(taskList);
+        }
+
 
         public Guid GetStreamGuid()
         {

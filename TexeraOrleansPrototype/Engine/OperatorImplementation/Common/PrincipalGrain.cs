@@ -215,7 +215,6 @@ namespace Engine.OperatorImplementation.Common
             });
         }
 
-
         public virtual async Task Start()
         {
             List<Task> taskList=new List<Task>();
@@ -230,6 +229,22 @@ namespace Engine.OperatorImplementation.Common
         public virtual Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
             return Task.FromResult(new RoundRobin(inputGrains,predicate.BatchingLimit) as ISendStrategy);
+        }
+
+
+        public virtual async Task Deactivate()
+        {
+            List<Task> taskList=new List<Task>();
+            foreach(List<IWorkerGrain> layer in operatorGrains)
+            {
+                foreach(IWorkerGrain grain in layer)
+                {
+                    taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Deactivate))));
+                }
+            }
+            await Task.WhenAll(taskList);
+            sequenceNumber++;
+            DeactivateOnIdle();
         }
     }
 }

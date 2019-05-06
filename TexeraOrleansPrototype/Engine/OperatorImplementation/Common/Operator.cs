@@ -97,5 +97,10 @@ namespace Engine.OperatorImplementation.Common
             await PrincipalGrain.Resume();
         }
 
+        public async Task Deactivate()
+        {
+            await PrincipalGrain.Deactivate();
+        }
+
     }
 }

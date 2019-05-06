@@ -192,6 +192,9 @@ namespace Engine.OperatorImplementation.Common
                         case ControlMessage.ControlMessageType.Start:
                             Start();
                             break;
+                        case ControlMessage.ControlMessageType.Deactivate:
+                            DeactivateOnIdle();
+                            break;
                     }
                 }
             }

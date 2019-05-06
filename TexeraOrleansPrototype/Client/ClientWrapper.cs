@@ -148,6 +148,7 @@ namespace OrleansClient
             {
 
             }
+            await workflow.Deactivate();
             instance.IDToWorkflowEntry.Remove(workflow.WorkflowID);
             return so.resultsToRet;
         }

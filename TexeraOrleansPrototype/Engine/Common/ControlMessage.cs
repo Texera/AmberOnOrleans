@@ -18,7 +18,7 @@ namespace Engine
             Pause,
             Resume,
             Start,
-            End,
+            Deactivate,
         }
         public ControlMessageType Type;
     }    

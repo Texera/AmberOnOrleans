@@ -17,6 +17,7 @@ namespace Engine.OperatorImplementation.Common
         Task AddPrevPrincipalGrain(IPrincipalGrain prevGrain);
         Task Pause();
         Task Resume();
+        Task Deactivate();
         Task Init(IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator);
         Task<List<IWorkerGrain>> GetInputGrains();
         Task<ISendStrategy> GetInputSendStrategy(IGrain requester);
