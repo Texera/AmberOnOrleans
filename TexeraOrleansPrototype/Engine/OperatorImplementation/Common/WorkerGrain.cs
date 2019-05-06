@@ -84,7 +84,7 @@ namespace Engine.OperatorImplementation.Common
                         ProcessBatch(batch);
                     }
                     batch=null;
-                    GC.Collect();
+                    //GC.Collect();
                     if(isPaused)
                     {
                         return;

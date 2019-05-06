@@ -6,6 +6,9 @@
 
   <PropertyGroup>
   <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+  <ServerGarbageCollection>true</ServerGarbageCollection>
+  <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
+  <RetainVMGarbageCollection>true</RetainVMGarbageCollection>
 </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
