@@ -61,7 +61,7 @@ namespace OrleansClient
             var clientBuilder = new ClientBuilder()
                     .UseAdoNetClustering(options =>
                     {
-                        options.ConnectionString = Constants.connectionString;
+                        options.ConnectionString = "";//?
                         options.Invariant = "MySql.Data.MySqlClient";
                     })
                     .AddSimpleMessageStreamProvider("SMSProvider")

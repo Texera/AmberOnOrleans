@@ -7,24 +7,41 @@ namespace Engine.OperatorImplementation.Operators
     {
         public int NumberOfGrains;
         public string File;
-        public ulong FileSize;
+        private ulong fileSize;
+        public ulong FileSize 
+        {
+            get
+            {
+                if(!filesize_init)
+                {
+                    if(File.StartsWith("http://"))
+                    {
+                        fileSize=Utils.GetFileLengthFromHDFS(File);
+                    }
+                    else
+                        fileSize=(ulong)new System.IO.FileInfo(File).Length;
+                    return fileSize;
+                }
+                else
+                    return fileSize;
+            }
+        }
         public string Separator;
+        bool filesize_init=false;
         public ScanPredicate(string file,int batchingLimit=1000):base(batchingLimit)
         {
             if(file == null)
             {
                 File = "";
-                FileSize=0;
+                fileSize=0;
+                filesize_init=true;
             }
             else
             {
                 File = file;
-                if(file.StartsWith("http://"))
-                {
-                    FileSize=Utils.GetFileLengthFromHDFS(file);
-                }
-                else
-                    FileSize=(ulong)new System.IO.FileInfo(file).Length;
+                fileSize=0;
+                filesize_init=false;
+                
             }
             if(file.EndsWith(".tbl"))
                 Separator="|";

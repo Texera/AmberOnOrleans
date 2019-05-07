@@ -18,6 +18,6 @@ namespace TexeraUtilities
         public const bool conditions_on = false;
         public const bool ordered_on = true;
         public const string delivery = "RPC";
-        public const string connectionString = "server=cherry00.ics.uci.edu;uid=avinash;pwd=<pwd>;database=orleanstest;SslMode=none";
+        public static string connectionString = "server=cherry00.ics.uci.edu;uid=avinash;pwd=<pwd>;database=shengorleans;SslMode=none";
     }
 }
