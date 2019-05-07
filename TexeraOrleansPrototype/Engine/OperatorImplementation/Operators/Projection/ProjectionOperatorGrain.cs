@@ -24,7 +24,6 @@ namespace Engine.OperatorImplementation.Operators
         {
             base.OnDeactivateAsync();
             projectionIndexs=null;
-            GC.Collect();
             return Task.CompletedTask;
         }
 

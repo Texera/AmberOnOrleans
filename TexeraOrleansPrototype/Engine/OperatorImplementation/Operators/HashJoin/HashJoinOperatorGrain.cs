@@ -28,7 +28,6 @@ namespace Engine.OperatorImplementation.Operators
             base.OnDeactivateAsync();
             hashTable=null;
             otherTable=null;
-            GC.Collect();
             return Task.CompletedTask;
         }
 

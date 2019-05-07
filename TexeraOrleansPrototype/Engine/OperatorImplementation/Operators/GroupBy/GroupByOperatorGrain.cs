@@ -29,7 +29,6 @@ namespace Engine.OperatorImplementation.Operators
             base.OnDeactivateAsync();
             results=null;
             counter=null;
-            GC.Collect();
             return Task.CompletedTask;
         }
 

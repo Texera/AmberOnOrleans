@@ -31,7 +31,6 @@ namespace Engine.OperatorImplementation.Operators
             base.OnDeactivateAsync();
             innerJoinedTuples=null;
             outerJoinedTuples=null;
-            GC.Collect();
             return Task.CompletedTask;
         }
 

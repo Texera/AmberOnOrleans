@@ -27,7 +27,6 @@ namespace Engine.OperatorImplementation.Operators
             base.OnDeactivateAsync();
             sortedValues=null;
             sortedTuples=null;
-            GC.Collect();
             return Task.CompletedTask;
         }
 

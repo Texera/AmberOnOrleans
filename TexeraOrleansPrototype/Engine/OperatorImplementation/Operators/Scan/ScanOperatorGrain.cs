@@ -21,7 +21,6 @@ namespace Engine.OperatorImplementation.Operators
         protected override void Start()
         {
             StartGenerate(0);
-            Console.WriteLine("start");
         }
 
         protected override void Resume()
