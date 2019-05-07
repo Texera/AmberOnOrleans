@@ -7,13 +7,17 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
-
+using TexeraUtilities;
 namespace webapi
 {
     public class Program
     {
         public static void Main(string[] args)
         {
+            Console.WriteLine("Enter Password For MySQL Database:");
+            Constants.connectionString=Constants.connectionString.Replace("<pwd>",Console.ReadLine());
+            Console.WriteLine(Constants.connectionString);
+            Console.WriteLine("Ready to build connection...");
             BuildWebHost(args).Run();
         }
 
