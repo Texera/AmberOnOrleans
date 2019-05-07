@@ -13,6 +13,7 @@ using Engine.OperatorImplementation.Operators;
 using Engine.WorkflowImplementation;
 using TexeraUtilities;
 using System.Threading;
+using System.Net;
 using Engine;
 
 namespace OrleansClient
@@ -58,7 +59,11 @@ namespace OrleansClient
             attempt = 0;
             IClusterClient client;
             var clientBuilder = new ClientBuilder()
-                    .UseLocalhostClustering()
+                    .UseAdoNetClustering(options =>
+                    {
+                        options.ConnectionString = Constants.connectionString;
+                        options.Invariant = "MySql.Data.MySqlClient";
+                    })
                     .AddSimpleMessageStreamProvider("SMSProvider")
                     .Configure<ClusterOptions>(options =>
                     {

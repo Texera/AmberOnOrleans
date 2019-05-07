@@ -5,6 +5,7 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
+using TexeraUtilities;
 
 namespace SiloHost
 {
@@ -41,7 +42,11 @@ namespace SiloHost
         private static async Task<ISiloHost> StartSilo()
         {
             var siloBuilder = new SiloHostBuilder()
-                .UseLocalhostClustering()
+                .UseAdoNetClustering(options =>
+                 {
+                     options.ConnectionString = Constants.connectionString;
+                     options.Invariant = "MySql.Data.MySqlClient";
+                 })
                 .AddSimpleMessageStreamProvider("SMSProvider")
                 // add storage to store list of subscriptions
                 .AddMemoryGrainStorage("PubSubStore")
@@ -51,8 +56,7 @@ namespace SiloHost
                     options.ClusterId = "dev";
                     options.ServiceId = "TexeraOrleansPrototype";
                 })
-                .Configure<EndpointOptions>(options =>
-                    options.AdvertisedIPAddress = IPAddress.Loopback)
+                .ConfigureEndpoints(siloPort: 11111, gatewayPort: 30000)
                 .ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Critical).AddConsole())
                 .Configure<SiloMessagingOptions>(options => { options.ResendOnTimeout = true; options.MaxResendCount = 60; options.ResponseTimeout = new TimeSpan(0,2,0); });
 

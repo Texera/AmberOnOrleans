@@ -11,21 +11,15 @@ using Newtonsoft.Json.Linq;
 using Orleans;
 using Orleans.Hosting;
 using OrleansClient;
-using SiloHost;
 
 namespace webapi.Controllers
 {
     //[Route("api/[controller]")]
     public class ValuesController : Controller
     {
-        private static ISiloHost host;
         private static IClusterClient client;
         public ValuesController()
         {
-            if(host == null)
-            {
-                host = SiloWrapper.Instance.host;
-            }
             
             if(client == null)
             {

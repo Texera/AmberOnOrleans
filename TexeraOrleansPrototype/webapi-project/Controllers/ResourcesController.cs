@@ -7,7 +7,6 @@ using Microsoft.AspNetCore.Mvc;
 using Orleans;
 using Orleans.Hosting;
 using OrleansClient;
-using SiloHost;
 
 namespace webapi.Controllers
 {

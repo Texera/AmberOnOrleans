@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using Orleans;
 using Orleans.Hosting;
 using OrleansClient;
-using SiloHost;
 using Engine.WorkflowImplementation;
 using Engine.OperatorImplementation.Common;
 using Engine.OperatorImplementation.Operators;
@@ -19,17 +18,12 @@ namespace webapi.Controllers
     // [Route("api/[controller]")]
     public class QueryplanController : Controller
     {
-        private static ISiloHost host;
         private static IClusterClient client;
 
         [HttpPost]
         [Route("api/queryplan/execute")]
         public IActionResult Execute([FromBody]string logicalPlanJson)
         {
-            if(host == null)
-            {
-                host = SiloWrapper.Instance.host;
-            }
             
             if(client == null)
             {
