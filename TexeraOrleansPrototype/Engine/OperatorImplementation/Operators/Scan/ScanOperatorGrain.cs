@@ -33,7 +33,7 @@ namespace Engine.OperatorImplementation.Operators
             StartGenerate(0);
         }
 
-        protected override void GenerateTuples()
+        protected async override void GenerateTuples()
         {
             int i=0;
             while(i<GenerateLimit)
@@ -44,7 +44,7 @@ namespace Engine.OperatorImplementation.Operators
                     break;
                 }
                 TexeraTuple tuple;
-                if(ReadTuple(out tuple))
+                if(await ReadTuple(out tuple))
                 {
                     outputTuples.Add(tuple);
                     i++;
@@ -85,13 +85,12 @@ namespace Engine.OperatorImplementation.Operators
         
 
 
-        private bool ReadTuple(out TexeraTuple tx)
+        private async Task<bool> ReadTuple(out TexeraTuple tx)
         {
             try
             {
-                ulong ByteCount;
-                string res = reader.ReadLine(out ByteCount);
-                start += ByteCount;
+                Tuple<string,ulong> res = await reader.ReadLine();
+                start += res.Item2;
                 if (reader.IsEOF())
                 {
                     start = end + 1;
@@ -100,7 +99,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 try
                 {
-                    tx=new TexeraTuple(res.Split(separator));
+                    tx=new TexeraTuple(res.Item1.Split(separator));
                     ++tuple_counter;
                     return true;
                 }

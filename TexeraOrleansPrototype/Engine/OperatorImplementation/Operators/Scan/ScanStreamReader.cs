@@ -77,10 +77,10 @@ class ScanStreamReader
         return true;
     }
 
-    public string ReadLine(out ulong ByteCount)
+    public async Task<Tuple<string,ulong>> ReadLine()
     {
         if(file==null)throw new Exception("ReadLine: File Not Exists");
-        ByteCount=0;
+        ulong ByteCount=0;
         StringBuilder sb=new StringBuilder();
         char[] charbuf=new char[buffer_size];
         while(true)
@@ -90,7 +90,7 @@ class ScanStreamReader
                 buffer_start=0;
                 try
                 {
-                    buffer_end=file.BaseStream.Read(buffer,0,buffer_size);
+                    buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);
                 }
                 catch(Exception e)
                 {
@@ -109,7 +109,7 @@ class ScanStreamReader
                     charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
                     sb.Append(charbuf,0,charbuf_length);
                     buffer_start=i+1;
-                    return sb.ToString().TrimEnd();
+                    return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
                 }
             }
             ByteCount+=(ulong)(buffer_end-buffer_start);
@@ -117,7 +117,7 @@ class ScanStreamReader
             sb.Append(charbuf,0,charbuf_length);
             buffer_start=buffer_end;
         }
-        return sb.ToString().TrimEnd();
+        return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
     }
     public void Close()
     {
