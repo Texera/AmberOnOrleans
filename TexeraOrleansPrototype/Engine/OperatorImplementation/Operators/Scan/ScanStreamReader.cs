@@ -24,17 +24,16 @@ class ScanStreamReader
     }
 
 
-    public ulong TrySkipFirst()
+    public async Task<ulong> TrySkipFirst()
     {
         if(file==null)throw new Exception("TrySkipFirst: File Not Exists");
         switch(file_type)
         {
             case FileType.csv:
             case FileType.tbl:
-            ulong ByteCount;
-            string res=ReadLine(out ByteCount);
+            Tuple<string,ulong> res=await ReadLine();
             Console.WriteLine("Skip: "+res);
-            return ByteCount;
+            return res.Item2;
             default:
             //not implemented
             break;

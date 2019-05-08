@@ -73,11 +73,11 @@ namespace Engine.OperatorImplementation.Operators
             ulong end_byte=num_grains-1==i?filesize:(i+1)*partition;
             reader=new ScanStreamReader(((ScanPredicate)predicate).File);
             if(!reader.GetFile(start_byte))
-                return Task.FromException(new Exception("unable to get file"));
+                throw new Exception("unable to get file");
             start=start_byte;
             end=end_byte;
             if(start!=0)
-                start+=reader.TrySkipFirst();
+                start+=reader.TrySkipFirst().Result;
             Console.WriteLine("Init: start byte: "+start.ToString()+" end byte: "+end.ToString());
             return Task.CompletedTask;
         }
