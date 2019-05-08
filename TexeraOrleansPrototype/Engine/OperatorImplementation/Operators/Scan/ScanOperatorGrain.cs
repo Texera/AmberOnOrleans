@@ -43,8 +43,8 @@ namespace Engine.OperatorImplementation.Operators
                     isFinished=true;
                     break;
                 }
-                TexeraTuple tuple;
-                if(await ReadTuple(out tuple))
+                TexeraTuple tuple=await ReadTuple();
+                if(tuple!=null)
                 {
                     outputTuples.Add(tuple);
                     i++;
@@ -85,7 +85,7 @@ namespace Engine.OperatorImplementation.Operators
         
 
 
-        private async Task<bool> ReadTuple(out TexeraTuple tx)
+        private async Task<TexeraTuple> ReadTuple()
         {
             try
             {
@@ -94,20 +94,17 @@ namespace Engine.OperatorImplementation.Operators
                 if (reader.IsEOF())
                 {
                     start = end + 1;
-                    tx=null;
-                    return false;
+                    return null;
                 }
                 try
                 {
-                    tx=new TexeraTuple(res.Item1.Split(separator));
                     ++tuple_counter;
-                    return true;
+                    return new TexeraTuple(res.Item1.Split(separator));
                 }
                 catch
                 {
-                    tx=null;
                     Console.WriteLine("Failed to parse the tuple");
-                    return false;
+                    return null;
                 }
             }
             catch(Exception ex)
@@ -115,8 +112,7 @@ namespace Engine.OperatorImplementation.Operators
                 Console.WriteLine("EXCEPTION in Reading Tuples from File - "+ ex.ToString());
                 Console.WriteLine("start_offset: "+start.ToString()+" end_offset: "+end.ToString());
                 if(!reader.GetFile(start))throw new Exception("Reading Tuple: Cannot Get File");
-                tx=null;
-                return false;
+                return null;
             }
         }
         
