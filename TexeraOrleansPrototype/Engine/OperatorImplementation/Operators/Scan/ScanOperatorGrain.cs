@@ -33,7 +33,7 @@ namespace Engine.OperatorImplementation.Operators
             StartGenerate(0);
         }
 
-        protected async override void GenerateTuples()
+        protected async override Task GenerateTuples()
         {
             int i=0;
             while(i<GenerateLimit)

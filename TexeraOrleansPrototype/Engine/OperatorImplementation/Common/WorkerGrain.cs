@@ -284,11 +284,11 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public Task Generate()
+        public async Task Generate()
         {
             if(!isPaused)
             {
-                GenerateTuples();
+                await GenerateTuples();
                 if(!isFinished || outputTuples.Count>0)
                 {
                     MakePayloadMessagesThenSend();
@@ -302,10 +302,9 @@ namespace Engine.OperatorImplementation.Common
                     }
                 }
             }
-            return Task.CompletedTask;
         }
 
-        protected virtual void GenerateTuples()
+        protected async virtual Task GenerateTuples()
         {
             
         }
