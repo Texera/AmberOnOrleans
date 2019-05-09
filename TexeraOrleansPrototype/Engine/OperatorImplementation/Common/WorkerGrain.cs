@@ -49,7 +49,10 @@ namespace Engine.OperatorImplementation.Common
             this.self=self;
             this.principalGrain=principalGrain;
             this.predicate=predicate;
-            Console.WriteLine("Init: "+self.GetType().Name+" "+self);
+            string ext1,opType1;
+            self.GetPrimaryKey(out ext1);
+            opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
+            Console.WriteLine("Init: "+opType1+" "+ext1);
             return Task.CompletedTask;
         }
     
