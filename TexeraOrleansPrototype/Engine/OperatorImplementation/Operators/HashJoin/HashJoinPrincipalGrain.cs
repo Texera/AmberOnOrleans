@@ -29,7 +29,7 @@ namespace Engine.OperatorImplementation.Operators
                 joinFieldIndex=((HashJoinPredicate)predicate).InnerTableIndex;
             else
                 joinFieldIndex=((HashJoinPredicate)predicate).OuterTableIndex;
-            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetHashCode();
+            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
             return Task.FromResult(new Shuffle(inputGrains,serializer.SerializeText(exp)) as ISendStrategy);
         }

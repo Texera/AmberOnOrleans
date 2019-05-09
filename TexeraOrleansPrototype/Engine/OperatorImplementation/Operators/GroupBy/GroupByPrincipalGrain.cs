@@ -23,7 +23,7 @@ namespace Engine.OperatorImplementation.Operators
         public override Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
             int groupByIndex=((GroupByPredicate)predicate).GroupByIndex;
-            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[groupByIndex].GetHashCode();
+            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[groupByIndex].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
             return Task.FromResult(new Shuffle(inputGrains,serializer.SerializeText(exp)) as ISendStrategy);
         }
