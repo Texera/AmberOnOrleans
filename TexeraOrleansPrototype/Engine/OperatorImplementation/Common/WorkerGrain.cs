@@ -268,7 +268,7 @@ namespace Engine.OperatorImplementation.Common
             string ext1,opType1;
             self.GetPrimaryKey(out ext1);
             opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
-            Console.WriteLine("Pause: "+opType1+" "+ext1);
+            Console.WriteLine("Resume: "+opType1+" "+ext1);
             isPaused=false;
             if(isFinished)
             {
