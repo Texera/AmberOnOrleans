@@ -42,8 +42,12 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                 {
-                    Console.WriteLine(message.Value.SenderIdentifer.GetType().Name+"("+message.Value.SenderIdentifer+") re-send message with retry count "+retryCount);
+                    Console.WriteLine(message.Value.SenderIdentifer.GetType().Name+"("+message.Value.SenderIdentifer+") re-send message to "+nextGrain+"with retry count "+retryCount);
                     SendMessageTo(nextGrain,message, retryCount + 1);
+                }
+                else if(retryCount>0)
+                {
+                    Console.WriteLine(message.Value.SenderIdentifer.GetType().Name+"("+message.Value.SenderIdentifer+") re-send message to "+nextGrain+" success!");
                 }
             });
         }

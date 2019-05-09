@@ -49,6 +49,7 @@ namespace Engine.OperatorImplementation.Common
             this.self=self;
             this.principalGrain=principalGrain;
             this.predicate=predicate;
+            Console.WriteLine("Init: "+self.GetType().Name+" "+self);
             return Task.CompletedTask;
         }
     

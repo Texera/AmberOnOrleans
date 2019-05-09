@@ -178,10 +178,10 @@ namespace Engine.OperatorImplementation.Common
 
         private async Task SendPauseToNextPrincipalGrain(IPrincipalGrain nextGrain, int retryCount)
         {
-            nextGrain.Pause().ContinueWith((t)=>
+            await nextGrain.Pause().ContinueWith(async (t)=>
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                    SendPauseToNextPrincipalGrain(nextGrain,retryCount+1);
+                    await SendPauseToNextPrincipalGrain(nextGrain,retryCount+1);
             });
         }
 
@@ -210,10 +210,10 @@ namespace Engine.OperatorImplementation.Common
 
         private async Task SendResumeToNextPrincipalGrain(IPrincipalGrain nextGrain, int retryCount)
         {
-            nextGrain.Resume().ContinueWith((t)=>
+            await nextGrain.Resume().ContinueWith(async (t)=>
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                    SendResumeToNextPrincipalGrain(nextGrain,retryCount+1);
+                    await SendResumeToNextPrincipalGrain(nextGrain,retryCount+1);
             });
         }
 
