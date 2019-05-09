@@ -51,7 +51,7 @@ namespace Engine.OperatorImplementation.Common
             // return new OrderingGrainWithContinuousSending();
         }
 
-        public static readonly string[] OperatorTypes=new string[]{"Scan","Filter","GroupBy","HashJoin","HashRippleJoin","CrossRippleJoin","Count","KeywordSearch","Projection"}; 
+        public static readonly string[] OperatorTypes=new string[]{"Scan","Sort","Filter","GroupBy","HashJoin","HashRippleJoin","CrossRippleJoin","Count","KeywordSearch","Projection"}; 
 
         static public string GenerateURLForHDFSWebAPI(string filename,ulong offset)
         {
