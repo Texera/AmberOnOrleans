@@ -32,10 +32,11 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
         {
-            nextGrain.ReceivePayloadMessage(message).ContinueWith((t)=>
+            await nextGrain.ReceivePayloadMessage(message).ContinueWith((t)=>
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                 {
+                    Console.WriteLine(message.Value.SenderIdentifer.GetType().Name+"("+message.Value.SenderIdentifer+") re-send message with retry count "+retryCount);
                     SendMessageTo(nextGrain,message, retryCount + 1);
                 }
             });

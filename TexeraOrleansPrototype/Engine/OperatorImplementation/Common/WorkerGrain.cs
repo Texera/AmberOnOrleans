@@ -229,7 +229,10 @@ namespace Engine.OperatorImplementation.Common
             self.Process(message).ContinueWith((t)=>
             {  
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                {
+                    Console.WriteLine(this.GetType().Name+"("+self+")"+" re-receive message with retry count "+retryCount);
                     SendPayloadMessageToSelf(message, retryCount + 1); 
+                }
             });
         }
 
@@ -315,7 +318,8 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                 {
-                    StartGenerate(retryCount);
+                    Console.WriteLine(this.GetType().Name+"("+self+")"+" re-receive message with retry count "+retryCount);
+                    StartGenerate(retryCount+1);
                 }
             });
         }
