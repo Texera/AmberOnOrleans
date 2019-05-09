@@ -59,9 +59,9 @@ namespace Engine.OperatorImplementation.Operators
 
         
 
-        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        public async override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
-            base.Init(self,predicate,principalGrain);
+            await base.Init(self,predicate,principalGrain);
             ulong filesize=((ScanPredicate)predicate).FileSize;
             separator=((ScanPredicate)predicate).Separator;
             string extensionKey = "";
@@ -77,9 +77,8 @@ namespace Engine.OperatorImplementation.Operators
             start=start_byte;
             end=end_byte;
             if(start!=0)
-                start+=reader.TrySkipFirst().Result;
+                start+=await reader.TrySkipFirst();
             Console.WriteLine("Init: start byte: "+start.ToString()+" end byte: "+end.ToString());
-            return Task.CompletedTask;
         }
 
         
