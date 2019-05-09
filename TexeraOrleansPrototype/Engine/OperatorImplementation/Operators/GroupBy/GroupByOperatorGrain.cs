@@ -44,6 +44,7 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
+            Console.WriteLine(self+" receives "+tuple.FieldList[groupByIndex]);
             string field=tuple.FieldList[groupByIndex];
             if(counter.ContainsKey(field))
             {
