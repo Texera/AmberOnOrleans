@@ -105,11 +105,6 @@ namespace Engine.OperatorImplementation.Common
                 foreach(IPrincipalGrain nextPrincipal in nextPrincipalGrains)
                 {
                     ISendStrategy strategy = await nextPrincipal.GetInputSendStrategy(self);
-                    Console.WriteLine(this.GetType()+"Links to:");
-                    foreach(var grain in await nextPrincipal.GetInputGrains())
-                    {
-                        Console.WriteLine("\t"+grain);
-                    };
                     for(int i=0;i<outputGrains.Count;++i)
                     {
                         await outputGrains[i].SetSendStrategy(operatorID,strategy);
@@ -119,7 +114,6 @@ namespace Engine.OperatorImplementation.Common
             else
             {
                 //last operator, build stream
-                Console.WriteLine(this.GetType()+"Links to: OutputStream");
                 var streamProvider = GetStreamProvider("SMSProvider");
                 var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflowID,"OutputStream");
                 ISendStrategy strategy=new SendToStream(stream);
