@@ -36,12 +36,22 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                 {
-                    Console.WriteLine(message.Value.SenderIdentifer.GetType().Name+"("+message.Value.SenderIdentifer+") re-send message with sequence num: "+message.Value.SequenceNumber +" to "+nextGrain+"with retry count "+retryCount);
+                    string ext1,ext2,opType1,opType2;
+                    message.Value.SenderIdentifer.GetPrimaryKey(out ext1);
+                    opType1=Utils.GetOperatorTypeFromGrainClass(message.Value.SenderIdentifer.GetType().Name);
+                    nextGrain.GetPrimaryKey(out ext2);
+                    opType2=Utils.GetOperatorTypeFromGrainClass(nextGrain.GetType().Name);
+                    Console.WriteLine(opType1+" "+ext1+" re-send message with sequence num: "+message.Value.SequenceNumber +" to "+opType2+" "+ext2+" with retry count "+retryCount);
                     SendMessageTo(nextGrain,message, retryCount + 1);
                 }
                 else if(retryCount>0)
                 {
-                    Console.WriteLine(message.Value.SenderIdentifer.GetType().Name+"("+message.Value.SenderIdentifer+") re-send message with sequence num: "+message.Value.SequenceNumber+" to "+nextGrain+" success!");
+                    string ext1,ext2,opType1,opType2;
+                    message.Value.SenderIdentifer.GetPrimaryKey(out ext1);
+                    opType1=Utils.GetOperatorTypeFromGrainClass(message.Value.SenderIdentifer.GetType().Name);
+                    nextGrain.GetPrimaryKey(out ext2);
+                    opType2=Utils.GetOperatorTypeFromGrainClass(nextGrain.GetType().Name);
+                    Console.WriteLine(opType1+" "+ext1+" re-send message with sequence num: "+message.Value.SequenceNumber+" to "+opType2+" "+ext2+" success!");
                 }
             });
         }

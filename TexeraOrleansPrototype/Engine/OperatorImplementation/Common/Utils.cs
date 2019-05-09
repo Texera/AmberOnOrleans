@@ -51,6 +51,8 @@ namespace Engine.OperatorImplementation.Common
             // return new OrderingGrainWithContinuousSending();
         }
 
+        public static readonly string[] OperatorTypes=new string[]{"Scan","Filter","GroupBy","HashJoin","HashRippleJoin","CrossRippleJoin","Count","KeywordSearch","Projection"}; 
+
         static public string GenerateURLForHDFSWebAPI(string filename,ulong offset)
         {
             StringBuilder sb=new StringBuilder();
@@ -116,6 +118,20 @@ namespace Engine.OperatorImplementation.Common
         public static bool IsTaskTimedOutAndStillNeedRetry(Task t, int retryCount)
         {
             return IsTaskTimedOut(t) && retryCount<Constants.max_retries;
+        }
+
+
+        public static string GetOperatorTypeFromGrainClass(string grainClass)
+        {
+            foreach(string op in OperatorTypes)
+            {
+                if(grainClass.Contains(op))
+                {
+                    return op;
+                }
+            }
+            Console.WriteLine("Unknown Operator Found! Make sure to register it in Utils.cs");
+            return "Unknown";
         }
     }
 }
