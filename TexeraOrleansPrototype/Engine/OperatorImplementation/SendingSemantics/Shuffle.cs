@@ -32,6 +32,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             foreach(TexeraTuple tuple in output)
             {
                 int idx=NonNegativeModular(selector(tuple),outputRows.Count);
+                Console.WriteLine(tuple.FieldList[0]+" map to "+selector(tuple)+" and result is "+idx);
                 outputRows[idx].Enqueue(tuple);
             }
         }
