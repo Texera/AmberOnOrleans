@@ -46,7 +46,6 @@ namespace Engine.OperatorImplementation.Common
             using (StreamReader Reader = new StreamReader(response.GetResponseStream()))
             {
                 string str_response=Reader.ReadToEnd();
-                Console.WriteLine(str_response);
                 JObject obj =JObject.Parse(str_response);
                 return UInt64.Parse(obj["FileStatus"]["length"].ToString());
             }

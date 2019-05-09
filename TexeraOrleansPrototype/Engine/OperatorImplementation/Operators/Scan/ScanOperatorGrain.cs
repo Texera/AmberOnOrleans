@@ -78,7 +78,7 @@ namespace Engine.OperatorImplementation.Operators
             end=end_byte;
             if(start!=0)
                 start+=await reader.TrySkipFirst();
-            Console.WriteLine("Init: start byte: "+start.ToString()+" end byte: "+end.ToString());
+            //Console.WriteLine("Init: start byte: "+start.ToString()+" end byte: "+end.ToString());
         }
 
         

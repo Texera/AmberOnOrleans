@@ -32,7 +32,7 @@ class ScanStreamReader
             case FileType.csv:
             case FileType.tbl:
             Tuple<string,ulong> res=await ReadLine();
-            Console.WriteLine("Skip: "+res);
+            //Console.WriteLine("Skip: "+res);
             return res.Item2;
             default:
             //not implemented
