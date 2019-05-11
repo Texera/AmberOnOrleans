@@ -41,7 +41,7 @@ namespace webapi.Controllers
             JObject o = JObject.Parse(json);
             JArray operators = (JArray)o["logicalPlan"]["operators"];
             Guid workflowID;
-            //remove "texera-workflow-" at the begining of workflowID to make it parsable
+            //remove "texera-workflow-" at the begining of workflowID to make it parsable to Guid
             if(!Guid.TryParse(o["workflowID"].ToString().Substring(16),out workflowID))
             {
                 throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString().Substring(16)}");
@@ -136,6 +136,12 @@ namespace webapi.Controllers
                     int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
                     HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(innerIndex,outerIndex);
                     op = new HashJoinOperator(hashJoinPredicate);
+                }
+                else if((string)operator1["operatorType"]=="SentimentAnalysis")
+                {
+                    int predictIndex=int.Parse(operator1["targetAttribute"].ToString().Replace("_c",""));
+                    SentimentAnalysisPredicate sentimentAnalysisPredicate= new SentimentAnalysisPredicate(predictIndex);
+                    op=new SentimentAnalysisOperator(sentimentAnalysisPredicate);
                 }
 
                 if(op!=null)
