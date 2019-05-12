@@ -12,6 +12,7 @@ using Engine.OperatorImplementation.SendingSemantics;
 using System.Threading;
 using System.Linq;
 using System.Collections.Concurrent;
+using Orleans.Placement;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -28,6 +29,7 @@ namespace Engine.OperatorImplementation.Common
     };
 
 
+    [PreferLocalPlacement]
     public class WorkerGrain : Grain, IWorkerGrain
     {
         protected PredicateBase predicate = null;
