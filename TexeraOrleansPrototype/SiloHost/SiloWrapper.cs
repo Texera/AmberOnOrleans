@@ -5,7 +5,10 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
+using Orleans.Runtime;
 using TexeraUtilities;
+using Engine.OperatorImplementation.Operators;
+using Orleans.Runtime.Placement;
 
 namespace SiloHost
 {
@@ -55,6 +58,11 @@ namespace SiloHost
                 {
                     options.ClusterId = "dev";
                     options.ServiceId = "TexeraOrleansPrototype";
+                })
+                .ConfigureServices(services => 
+                {
+                    services.AddSingletonNamedService<PlacementStrategy, ScanPlacement>(nameof(ScanPlacement));
+                    services.AddSingletonKeyedService<Type, IPlacementDirector, ScanPlacementDirector>(typeof(ScanPlacement));
                 })
                 .ConfigureEndpoints(siloPort: 11111, gatewayPort: 30000)
                 .ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Critical).AddConsole())

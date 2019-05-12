@@ -15,7 +15,6 @@ using Orleans.Placement;
 
 namespace Engine.OperatorImplementation.Common
 {
-    [PreferLocalPlacement]
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
         public virtual int DefaultNumGrainsInOneLayer { get { return 6; } }

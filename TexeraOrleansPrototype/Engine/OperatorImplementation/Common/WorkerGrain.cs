@@ -28,8 +28,7 @@ namespace Engine.OperatorImplementation.Common
         public U Second { get; set; }
     };
 
-
-    [PreferLocalPlacement]
+    //[PreferLocalPlacement]
     public class WorkerGrain : Grain, IWorkerGrain
     {
         protected PredicateBase predicate = null;
