@@ -15,6 +15,7 @@ using TexeraUtilities;
 using System.Threading;
 using System.Net;
 using Engine;
+using Orleans.Runtime.Placement;
 
 namespace OrleansClient
 {
@@ -69,6 +70,11 @@ namespace OrleansClient
                     {
                         options.ClusterId = "dev";
                         options.ServiceId = "TexeraOrleansPrototype";
+                    })
+                    .ConfigureServices(services => 
+                    {
+                        services.AddSingletonNamedService<PlacementStrategy, ScanPlacement>(nameof(ScanPlacement));
+                        services.AddSingletonKeyedService<Type, IPlacementDirector, ScanPlacementDirector>(typeof(ScanPlacement));
                     })
                     .ConfigureLogging(logging => logging.AddConsole());
 
