@@ -28,6 +28,10 @@ namespace Engine.OperatorImplementation.Operators
             var a=RequestContext.Get("ext");
             var silos = context.GetCompatibleSilos(target).OrderBy(s => s).ToArray();
             Console.WriteLine("request context: "+a);
+            foreach(SiloAddress addr in silos)
+            {
+                Console.WriteLine("available silo addr: "+addr);
+            }
             return Task.FromResult(silos[0]);
         }
     }
