@@ -44,8 +44,9 @@ namespace Engine.OperatorImplementation.Common
         protected int currentEndFlagCount=int.MaxValue;
         protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
         protected bool isFinished=false;
+        protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
 
-        public virtual Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        public virtual async Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             this.self=self;
             this.principalGrain=principalGrain;
@@ -54,7 +55,9 @@ namespace Engine.OperatorImplementation.Common
             self.GetPrimaryKey(out ext1);
             opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
             Console.WriteLine("Init: "+opType1+" "+ext1);
-            return Task.CompletedTask;
+            var streamProvider = GetStreamProvider("SMSProvider");
+            var stream=streamProvider.GetStream<Immutable<ControlMessage>>(principalGrain.GetPrimaryKey(), "Ctrl");
+            await stream.SubscribeAsync(this);
         }
     
 
@@ -64,6 +67,7 @@ namespace Engine.OperatorImplementation.Common
             orderingEnforcer=null;
             sendStrategies=null;
             actionQueue=null;
+            controlMessageStreamHandle.UnsubscribeAsync();
             GC.Collect();
             return Task.CompletedTask;
         }
@@ -193,34 +197,7 @@ namespace Engine.OperatorImplementation.Common
 
         }
 
-        public Task ProcessControlMessage(Immutable<ControlMessage> message)
-        {
-            List<ControlMessage.ControlMessageType> executeSequence = orderingEnforcer.PreProcess(message);
-            if(executeSequence!=null)
-            {
-                orderingEnforcer.CheckStashed(ref executeSequence,message.Value.SenderIdentifer);
-                foreach(ControlMessage.ControlMessageType type in executeSequence)
-                {
-                    switch(type)
-                    {
-                        case ControlMessage.ControlMessageType.Pause:
-                            Pause();
-                            break;
-                        case ControlMessage.ControlMessageType.Resume:
-                            Resume();
-                            break;
-                        case ControlMessage.ControlMessageType.Start:
-                            Start();
-                            break;
-                        case ControlMessage.ControlMessageType.Deactivate:
-                            DeactivateOnIdle();
-                            break;
-                    }
-                }
-            }
-            return Task.CompletedTask;
-        }
-
+        
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
             //Console.WriteLine(MakeIdentifier(self) + " received message from "+message.Value.SenderIdentifer+"with seqnum "+message.Value.SequenceNumber);
@@ -341,6 +318,44 @@ namespace Engine.OperatorImplementation.Common
         {
             sendStrategies[operatorGuid]=sendStrategy;
             return Task.CompletedTask;
+        }
+
+        public Task OnNextAsync(Immutable<ControlMessage> message, StreamSequenceToken token = null)
+        {
+            List<ControlMessage.ControlMessageType> executeSequence = orderingEnforcer.PreProcess(message);
+            if(executeSequence!=null)
+            {
+                orderingEnforcer.CheckStashed(ref executeSequence,message.Value.SenderIdentifer);
+                foreach(ControlMessage.ControlMessageType type in executeSequence)
+                {
+                    switch(type)
+                    {
+                        case ControlMessage.ControlMessageType.Pause:
+                            Pause();
+                            break;
+                        case ControlMessage.ControlMessageType.Resume:
+                            Resume();
+                            break;
+                        case ControlMessage.ControlMessageType.Start:
+                            Start();
+                            break;
+                        case ControlMessage.ControlMessageType.Deactivate:
+                            DeactivateOnIdle();
+                            break;
+                    }
+                }
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task OnCompletedAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public Task OnErrorAsync(Exception ex)
+        {
+            throw new NotImplementedException();
         }
     }
 }

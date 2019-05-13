@@ -13,6 +13,7 @@ using Engine.Controller;
 using System.Linq;
 using Orleans.Placement;
 using Orleans.Runtime;
+using Orleans.Streams;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -32,6 +33,7 @@ namespace Engine.OperatorImplementation.Common
         private IControllerGrain controllerGrain;
         private ulong sequenceNumber=0;
         private int currentPauseFlag=0;
+        protected IAsyncObserver<Immutable<ControlMessage>> controlMessageStream;
         
         public virtual async Task<IWorkerGrain> GetOperatorGrain(string extension)
         {
@@ -58,6 +60,8 @@ namespace Engine.OperatorImplementation.Common
             this.self=currentOperator.PrincipalGrain;
             this.predicate=currentOperator.Predicate;
             PassExtraParametersByPredicate(ref this.predicate);
+            var provider=GetStreamProvider("SMSProvider");
+            this.controlMessageStream=provider.GetStream<Immutable<ControlMessage>>(self.GetPrimaryKey(),"Ctrl");
             await BuildWorkerTopology();
         }
 
@@ -159,7 +163,7 @@ namespace Engine.OperatorImplementation.Common
                     List<Task> taskList=new List<Task>();
                     foreach(IWorkerGrain grain in grainList)
                     {
-                        taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause))));
+                        taskList.Add(grain.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause))));
                     }
                     await Task.WhenAll(taskList);
                 }
@@ -191,15 +195,7 @@ namespace Engine.OperatorImplementation.Common
                 await SendResumeToNextPrincipalGrain(next,0);
             }
             isPaused = false;
-            foreach(List<IWorkerGrain> grainList in operatorGrains)
-            {
-                List<Task> taskList=new List<Task>();
-                foreach(IWorkerGrain grain in grainList)
-                {
-                    taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume))));
-                }
-                await Task.WhenAll(taskList);
-            }
+            await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
             sequenceNumber++;
         }
 
@@ -214,12 +210,7 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Start()
         {
-            List<Task> taskList=new List<Task>();
-            foreach(IWorkerGrain grain in inputGrains)
-            {
-                taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start))));
-            }
-            await Task.WhenAll(taskList);
+            await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start)));
             sequenceNumber++;
         }
 
@@ -232,14 +223,7 @@ namespace Engine.OperatorImplementation.Common
         public virtual async Task Deactivate()
         {
             List<Task> taskList=new List<Task>();
-            foreach(List<IWorkerGrain> layer in operatorGrains)
-            {
-                foreach(IWorkerGrain grain in layer)
-                {
-                    taskList.Add(grain.ProcessControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Deactivate))));
-                }
-            }
-            await Task.WhenAll(taskList);
+            await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Deactivate)));
             sequenceNumber++;
             DeactivateOnIdle();
         }

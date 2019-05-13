@@ -10,7 +10,7 @@ using Engine.OperatorImplementation.SendingSemantics;
 
 namespace Engine.OperatorImplementation.Common
 {
-    public interface IWorkerGrain : IGrainWithGuidCompoundKey
+    public interface IWorkerGrain : IGrainWithGuidCompoundKey,IAsyncObserver<Immutable<ControlMessage>>
     {
 
         #region used by operators that have subsequent operators
@@ -26,7 +26,6 @@ namespace Engine.OperatorImplementation.Common
         Receives and processes the control message completely. This is because the
         control message needs to be acted upon ASAP.
          */
-        Task ProcessControlMessage(Immutable<ControlMessage> message);
 
         /*
         Just receives the payload message, sends message to itself to process it and returns. The
