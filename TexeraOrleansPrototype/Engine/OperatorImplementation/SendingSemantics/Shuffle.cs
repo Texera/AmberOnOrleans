@@ -51,24 +51,24 @@ namespace Engine.OperatorImplementation.SendingSemantics
         }
 
 
-        public override void SendBatchedMessages(IGrain senderIdentifier)
+        public override async void SendBatchedMessages(IGrain senderIdentifier)
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeBatchedPayloads())
             {
-                SendMessageTo(receivers[pair.First],new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable(),0);
+                await SendMessageTo(receivers[pair.First],new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable(),0);
             }
         }
 
-        public override void SendEndMessages(IGrain senderIdentifier)
+        public override async void SendEndMessages(IGrain senderIdentifier)
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeLastPayload())
             {
-                SendMessageTo(receivers[pair.First],new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable(),0);
+                await SendMessageTo(receivers[pair.First],new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable(),0);
             }
             for(int i=0;i<receivers.Count;++i)
             {
                 PayloadMessage message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
-                SendMessageTo(receivers[i],message.AsImmutable(),0);
+                await SendMessageTo(receivers[i],message.AsImmutable(),0);
             }
 
         }

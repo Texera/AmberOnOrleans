@@ -38,7 +38,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
         {
-            nextGrain.ReceivePayloadMessage(message).ContinueWith((t)=>
+            await nextGrain.ReceivePayloadMessage(message).ContinueWith(async (t)=>
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                 {
@@ -48,7 +48,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
                     nextGrain.GetPrimaryKey(out ext2);
                     opType2=Utils.GetOperatorTypeFromGrainClass(nextGrain.GetType().Name);
                     Console.WriteLine(opType1+" "+ext1+" re-send message with sequence num: "+message.Value.SequenceNumber +" to "+opType2+" "+ext2+" with retry count "+retryCount);
-                    SendMessageTo(nextGrain,message, retryCount + 1);
+                    await SendMessageTo(nextGrain,message, retryCount + 1);
                 }
                 else if(retryCount>0)
                 {
