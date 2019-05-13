@@ -158,6 +158,7 @@ namespace Engine.OperatorImplementation.Common
                     return;
                 }
                 isPaused = true;
+                Console.WriteLine(this.GetType()+"sending pause to workers...");
                 foreach(List<IWorkerGrain> grainList in operatorGrains)
                 {
                     List<Task> taskList=new List<Task>();
@@ -167,6 +168,7 @@ namespace Engine.OperatorImplementation.Common
                     }
                     await Task.WhenAll(taskList);
                 }
+                Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
                 foreach(IPrincipalGrain next in nextPrincipalGrains)
                 {
