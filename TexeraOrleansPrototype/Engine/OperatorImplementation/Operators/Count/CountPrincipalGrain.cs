@@ -20,12 +20,14 @@ namespace Engine.OperatorImplementation.Operators
             operatorGrains=Enumerable.Range(0, 2).Select(x=>new List<IWorkerGrain>()).ToList();
             //last layer
             IWorkerGrain finalGrain=this.GrainFactory.GetGrain<ICountFinalOperatorGrain>(this.GetPrimaryKey(),"final");
+            await finalGrain.Init(finalGrain,predicate,self);
             operatorGrains[1].Add(finalGrain);            
             //first layer
             ISendStrategy strategy=new RoundRobin(new List<IWorkerGrain>{finalGrain});
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
                 IWorkerGrain grain=this.GrainFactory.GetGrain<ICountOperatorGrain>(this.GetPrimaryKey(),i.ToString());
+                await grain.Init(grain,predicate,self);
                 await grain.SetSendStrategy(this.GetPrimaryKey(),strategy);
                 operatorGrains[0].Add(grain);
             }

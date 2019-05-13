@@ -14,10 +14,11 @@ namespace Engine.OperatorImplementation.Operators
     {
         public override int DefaultNumGrainsInOneLayer { get { return 3; } }
 
-        public override IWorkerGrain GetOperatorGrain(string extension)
+        public override async Task<IWorkerGrain> GetOperatorGrain(string extension)
         {
             RequestContext.Set("ext",extension);
             var grain=this.GrainFactory.GetGrain<IScanOperatorGrain>(this.GetPrimaryKey(), extension);
+            await grain.Init(grain,predicate,self);
             RequestContext.Clear();
             return grain;
         }

@@ -12,9 +12,11 @@ namespace Engine.OperatorImplementation.Operators
     public class SortPrinicipalGrain<T> : PrincipalGrain, ISortPrincipalGrain<T> where T:IComparable<T>
     {
         public override int DefaultNumGrainsInOneLayer { get { return 1; } }
-        public override IWorkerGrain GetOperatorGrain(string extension)
+        public override async Task<IWorkerGrain> GetOperatorGrain(string extension)
         {
-            return this.GrainFactory.GetGrain<ISortOperatorGrain<T>>(this.GetPrimaryKey(), extension);
+            var grain=this.GrainFactory.GetGrain<ISortOperatorGrain<T>>(this.GetPrimaryKey(), extension);
+            await grain.Init(grain,predicate,self);
+            return grain;
         }
     }
 }

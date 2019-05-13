@@ -11,9 +11,12 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class SentimentAnalysisPrinicipalGrain : PrincipalGrain, ISentimentAnalysisPrincipalGrain
     {
-        public override IWorkerGrain GetOperatorGrain(string extension)
+        public override async Task<IWorkerGrain> GetOperatorGrain(string extension)
         {
-            return this.GrainFactory.GetGrain<ISentimentAnalysisOperatorGrain>(this.GetPrimaryKey(), extension);
+            var grain=this.GrainFactory.GetGrain<ISentimentAnalysisOperatorGrain>(this.GetPrimaryKey(), extension);
+            await grain.Init(grain,predicate,self);
+            return grain;
         }
+
     }
 }

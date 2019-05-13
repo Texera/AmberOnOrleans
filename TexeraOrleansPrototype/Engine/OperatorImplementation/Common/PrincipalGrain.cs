@@ -12,6 +12,7 @@ using System.Collections.ObjectModel;
 using Engine.Controller;
 using System.Linq;
 using Orleans.Placement;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -26,13 +27,13 @@ namespace Engine.OperatorImplementation.Common
         protected List<IWorkerGrain> outputGrains {get{return operatorGrains.Last();}}
         protected List<IWorkerGrain> inputGrains {get{return operatorGrains.First();}}
         protected PredicateBase predicate;
-        private IPrincipalGrain self=null;
+        protected IPrincipalGrain self=null;
         private Guid workflowID;
         private IControllerGrain controllerGrain;
         private ulong sequenceNumber=0;
         private int currentPauseFlag=0;
         
-        public virtual IWorkerGrain GetOperatorGrain(string extension)
+        public virtual async Task<IWorkerGrain> GetOperatorGrain(string extension)
         {
             throw new NotImplementedException();
         }
@@ -56,15 +57,8 @@ namespace Engine.OperatorImplementation.Common
             this.operatorID=currentOperator.OperatorGuid;
             this.self=currentOperator.PrincipalGrain;
             this.predicate=currentOperator.Predicate;
-            await BuildWorkerTopology();
             PassExtraParametersByPredicate(ref this.predicate);
-            foreach(List<IWorkerGrain> grainList in operatorGrains)
-            {
-                foreach(IWorkerGrain grain in grainList)
-                {
-                    await grain.Init(grain,predicate,self);
-                }
-            }
+            await BuildWorkerTopology();
         }
 
 
@@ -79,7 +73,7 @@ namespace Engine.OperatorImplementation.Common
             //one-layer init
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
-                IWorkerGrain grain=GetOperatorGrain(i.ToString());
+                IWorkerGrain grain=await GetOperatorGrain(i.ToString());
                 operatorGrains[0].Add(grain);
             }
             // for multiple-layer init, do some linking inside...

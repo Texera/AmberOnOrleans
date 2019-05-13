@@ -17,11 +17,12 @@ namespace Engine.OperatorImplementation.Operators
     public class HashRippleJoinPrinicipalGrain : PrincipalGrain, IHashRippleJoinPrincipalGrain
     {
         public override int DefaultNumGrainsInOneLayer { get { return 6; } }
-        public override IWorkerGrain GetOperatorGrain(string extension)
+        public override async Task<IWorkerGrain> GetOperatorGrain(string extension)
         {
-            return this.GrainFactory.GetGrain<IHashRippleJoinOperatorGrain>(this.GetPrimaryKey(), extension);
+            var grain=this.GrainFactory.GetGrain<IHashRippleJoinOperatorGrain>(this.GetPrimaryKey(), extension);
+            await grain.Init(grain,predicate,self);
+            return grain;
         }
-
         public override Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
             int joinFieldIndex;

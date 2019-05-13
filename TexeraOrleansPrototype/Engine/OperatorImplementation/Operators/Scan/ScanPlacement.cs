@@ -25,8 +25,9 @@ namespace Engine.OperatorImplementation.Operators
     {
         public Task<SiloAddress> OnAddActivation(PlacementStrategy strategy, PlacementTarget target, IPlacementContext context)
         {
+            var a=RequestContext.Get("ext");
             var silos = context.GetCompatibleSilos(target).OrderBy(s => s).ToArray();
-            Console.WriteLine("request context: "+target.RequestContextData["ext"]);
+            Console.WriteLine("request context: "+a);
             return Task.FromResult(silos[0]);
         }
     }

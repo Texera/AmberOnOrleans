@@ -15,9 +15,11 @@ namespace Engine.OperatorImplementation.Operators
     public class GroupByPrinicipalGrain : PrincipalGrain, IGroupByPrincipalGrain
     {
         public override int DefaultNumGrainsInOneLayer { get { return 3; } }
-        public override IWorkerGrain GetOperatorGrain(string extension)
+        public override async Task<IWorkerGrain> GetOperatorGrain(string extension)
         {
-            return this.GrainFactory.GetGrain<IGroupByOperatorGrain>(this.GetPrimaryKey(), extension);
+            var grain=this.GrainFactory.GetGrain<IGroupByOperatorGrain>(this.GetPrimaryKey(), extension);
+            await grain.Init(grain,predicate,self);
+            return grain;
         }
 
         public override Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
