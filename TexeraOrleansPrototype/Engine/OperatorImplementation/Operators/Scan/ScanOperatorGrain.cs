@@ -11,7 +11,6 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    [ScanPlacement]
     public class ScanOperatorGrain : WorkerGrain, IScanOperatorGrain
     {
         private ulong start,end,tuple_counter=0;
