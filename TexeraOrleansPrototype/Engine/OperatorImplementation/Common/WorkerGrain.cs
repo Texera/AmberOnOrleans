@@ -253,7 +253,6 @@ namespace Engine.OperatorImplementation.Common
             }
             if(actionQueue.Count>0)
             {
-               
                 new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
             }
             foreach(Immutable<PayloadMessage> message in pausedMessages)
@@ -284,30 +283,35 @@ namespace Engine.OperatorImplementation.Common
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
-                    if(!isPaused)
+                    if(isPaused)
                     {
-                        await GenerateTuples();
-                        Console.WriteLine("Scan finish generate");
-                        if(!isFinished || outputTuples.Count>0)
+                        return;
+                    }
+                    await GenerateTuples();
+                    Console.WriteLine("Scan finish generate");
+                    if(isPaused)
+                    {
+                        return;
+                    }
+                    if(!isFinished || outputTuples.Count>0)
+                    {
+                        await Task.Factory.StartNew(()=>
                         {
-                            await Task.Factory.StartNew(()=>
-                            {
-                                Console.WriteLine("Scan start to send");
-                                MakePayloadMessagesThenSend();
-                                Console.WriteLine("Scan finish send");
-                                StartGenerate(0);
-                            },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
-                        }
-                        else
+                            Console.WriteLine("Scan start to send");
+                            MakePayloadMessagesThenSend();
+                            Console.WriteLine("Scan finish send");
+                            StartGenerate(0);
+                        },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    }
+                    else
+                    {
+                        await Task.Factory.StartNew(()=>
                         {
-                            await Task.Factory.StartNew(()=>
+                            foreach(ISendStrategy strategy in sendStrategies.Values)
                             {
-                                foreach(ISendStrategy strategy in sendStrategies.Values)
-                                {
-                                    strategy.SendEndMessages(self);
-                                }
-                            },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
-                        }
+                                strategy.SendEndMessages(self);
+                            }
+                        },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                     }
                     lock(actionQueue)
                     {
