@@ -313,7 +313,6 @@ namespace Engine.OperatorImplementation.Common
                     }
                     else
                     {
-                        Console.WriteLine("Scan start to send end message");
                         await Task.Factory.StartNew(()=>
                         {
                             foreach(ISendStrategy strategy in sendStrategies.Values)
@@ -325,7 +324,6 @@ namespace Engine.OperatorImplementation.Common
                             opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
                             Console.WriteLine("Finished: "+opType1+" "+ext1);
                         },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
-                        Console.WriteLine("Scan finish to send end message");
                         lock(actionQueue)
                         {
                             actionQueue.Clear();
@@ -340,7 +338,6 @@ namespace Engine.OperatorImplementation.Common
                         Task.Run(action);
                     }
                 }
-                Console.WriteLine("Scan finish create generate task");
             }
             return Task.CompletedTask;
         }

@@ -19,6 +19,13 @@ namespace Engine.OperatorImplementation.Operators
             RequestContext.Set("ext",extension);
             var grain=this.GrainFactory.GetGrain<IScanOperatorGrain>(this.GetPrimaryKey(), extension);
             await grain.Init(grain,predicate,self);
+            var slios=RequestContext.Get("return");
+            if(slios!=null)
+            {
+                Console.WriteLine("receives: "+slios);
+            }
+            else
+                Console.WriteLine("cannot return value from placement");
             RequestContext.Clear();
             return grain;
         }
