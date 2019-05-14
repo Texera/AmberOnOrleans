@@ -52,7 +52,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     inSequenceNumberMap[sender]++;
                     return true;
                 case MessageStatus.Ahead:
-                    //Console.WriteLine("expected "+inSequenceNumberMap[sender]+" but get "+sequenceNum);
+                    Console.WriteLine("expected "+inSequenceNumberMap[sender]+" but get "+sequenceNum);
                     if(!stashedPayloadMessages.ContainsKey(sender))
                     {
                         stashedPayloadMessages[sender]=new Dictionary<ulong, Pair<bool, List<TexeraTuple>>>();
@@ -60,7 +60,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     stashedPayloadMessages[sender].Add(sequenceNum, new Pair<bool, List<TexeraTuple>>(message.Value.IsEnd,message.Value.Payload));
                     break;
                 case MessageStatus.Duplicated:
-                    //Console.WriteLine("expected "+inSequenceNumberMap[sender]+" but get "+sequenceNum+" duplicated");
+                    Console.WriteLine("expected "+inSequenceNumberMap[sender]+" but get "+sequenceNum+" duplicated");
                     break;
             }
             return false;
