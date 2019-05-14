@@ -305,6 +305,7 @@ namespace Engine.OperatorImplementation.Common
                     }
                     else
                     {
+                        Console.WriteLine("Scan start to send end message");
                         await Task.Factory.StartNew(()=>
                         {
                             foreach(ISendStrategy strategy in sendStrategies.Values)
@@ -312,6 +313,7 @@ namespace Engine.OperatorImplementation.Common
                                 strategy.SendEndMessages(self);
                             }
                         },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                        Console.WriteLine("Scan finish to send end message");
                     }
                     lock(actionQueue)
                     {
