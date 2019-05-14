@@ -284,27 +284,30 @@ namespace Engine.OperatorImplementation.Common
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
-                    await GenerateTuples();
-                    Console.WriteLine("Scan finish generate");
-                    if(!isFinished || outputTuples.Count>0)
+                    if(!isPaused)
                     {
-                        await Task.Factory.StartNew(()=>
+                        await GenerateTuples();
+                        Console.WriteLine("Scan finish generate");
+                        if(!isFinished || outputTuples.Count>0)
                         {
-                            Console.WriteLine("Scan start to send");
-                            MakePayloadMessagesThenSend();
-                            Console.WriteLine("Scan finish send");
-                            StartGenerate(0);
-                        },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
-                    }
-                    else
-                    {
-                        await Task.Factory.StartNew(()=>
-                        {
-                            foreach(ISendStrategy strategy in sendStrategies.Values)
+                            await Task.Factory.StartNew(()=>
                             {
-                                strategy.SendEndMessages(self);
-                            }
-                        },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                                Console.WriteLine("Scan start to send");
+                                MakePayloadMessagesThenSend();
+                                Console.WriteLine("Scan finish send");
+                                StartGenerate(0);
+                            },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                        }
+                        else
+                        {
+                            await Task.Factory.StartNew(()=>
+                            {
+                                foreach(ISendStrategy strategy in sendStrategies.Values)
+                                {
+                                    strategy.SendEndMessages(self);
+                                }
+                            },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                        }
                     }
                     lock(actionQueue)
                     {
