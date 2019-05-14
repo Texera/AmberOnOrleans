@@ -280,15 +280,19 @@ namespace Engine.OperatorImplementation.Common
         {
             if(!isPaused)
             {
+                Console.WriteLine("Scan receive generate task");
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
                     await GenerateTuples();
+                    Console.WriteLine("Scan finish generate");
                     if(!isFinished || outputTuples.Count>0)
                     {
                         await Task.Factory.StartNew(()=>
                         {
+                            Console.WriteLine("Scan start to send");
                             MakePayloadMessagesThenSend();
+                            Console.WriteLine("Scan finish send");
                             StartGenerate(0);
                         },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                     }
@@ -319,6 +323,7 @@ namespace Engine.OperatorImplementation.Common
                         Task.Run(action);
                     }
                 }
+                Console.WriteLine("Scan finish create generate task");
             }
             return Task.CompletedTask;
         }
