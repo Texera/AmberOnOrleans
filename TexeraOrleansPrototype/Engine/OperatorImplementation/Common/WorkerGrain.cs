@@ -28,7 +28,7 @@ namespace Engine.OperatorImplementation.Common
         public U Second { get; set; }
     };
 
-    //[PreferLocalPlacement]
+    [PreferLocalPlacement]
     public class WorkerGrain : Grain, IWorkerGrain
     {
         protected PredicateBase predicate = null;
@@ -283,7 +283,6 @@ namespace Engine.OperatorImplementation.Common
         {
             if(!isPaused)
             {
-                Console.WriteLine("Scan receive generate task");
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
@@ -292,7 +291,6 @@ namespace Engine.OperatorImplementation.Common
                         return;
                     }
                     await GenerateTuples();
-                    Console.WriteLine("Scan finish generate");
                     if(isPaused)
                     {
                         return;
@@ -301,9 +299,7 @@ namespace Engine.OperatorImplementation.Common
                     {
                         await Task.Factory.StartNew(()=>
                         {
-                            Console.WriteLine("Scan start to send");
                             MakePayloadMessagesThenSend();
-                            Console.WriteLine("Scan finish send");
                             StartGenerate(0);
                         },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                         lock(actionQueue)
