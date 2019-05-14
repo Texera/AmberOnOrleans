@@ -93,7 +93,6 @@ namespace Engine.OperatorImplementation.Common
                         ProcessBatch(batch);
                     }
                     batch=null;
-                    //GC.Collect();
                     if(isPaused)
                     {
                         return;
@@ -277,24 +276,51 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public async Task Generate()
+        public Task Generate()
         {
             if(!isPaused)
             {
-                await GenerateTuples();
-                if(!isFinished || outputTuples.Count>0)
+                var orleansScheduler=TaskScheduler.Current;
+                Action action=async ()=>
                 {
-                    MakePayloadMessagesThenSend();
-                    StartGenerate(0);
-                }
-                else
-                {
-                    foreach(ISendStrategy strategy in sendStrategies.Values)
+                    await GenerateTuples();
+                    if(!isFinished || outputTuples.Count>0)
                     {
-                        strategy.SendEndMessages(self);
+                        await Task.Factory.StartNew(()=>
+                        {
+                            MakePayloadMessagesThenSend();
+                            StartGenerate(0);
+                        },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    }
+                    else
+                    {
+                        await Task.Factory.StartNew(()=>
+                        {
+                            foreach(ISendStrategy strategy in sendStrategies.Values)
+                            {
+                                strategy.SendEndMessages(self);
+                            }
+                        },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    }
+                    lock(actionQueue)
+                    {
+                        actionQueue.Dequeue();
+                        if(!isPaused && actionQueue.Count>0)
+                        {
+                            Task.Run(actionQueue.Peek());
+                        }
+                    }
+                };
+                lock(actionQueue)
+                {
+                    actionQueue.Enqueue(action);
+                    if(actionQueue.Count==1)
+                    {
+                        Task.Run(action);
                     }
                 }
             }
+            return Task.CompletedTask;
         }
 
         protected async virtual Task GenerateTuples()
