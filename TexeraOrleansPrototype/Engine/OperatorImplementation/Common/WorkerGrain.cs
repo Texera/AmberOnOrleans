@@ -306,6 +306,14 @@ namespace Engine.OperatorImplementation.Common
                             Console.WriteLine("Scan finish send");
                             StartGenerate(0);
                         },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                        lock(actionQueue)
+                        {
+                            actionQueue.Dequeue();
+                            if(!isPaused && actionQueue.Count>0)
+                            {
+                                Task.Run(actionQueue.Peek());
+                            }
+                        }
                     }
                     else
                     {
@@ -322,13 +330,9 @@ namespace Engine.OperatorImplementation.Common
                             Console.WriteLine("Finished: "+opType1+" "+ext1);
                         },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                         Console.WriteLine("Scan finish to send end message");
-                    }
-                    lock(actionQueue)
-                    {
-                        actionQueue.Dequeue();
-                        if(!isPaused && actionQueue.Count>0)
+                        lock(actionQueue)
                         {
-                            Task.Run(actionQueue.Peek());
+                            actionQueue.Clear();
                         }
                     }
                 };
