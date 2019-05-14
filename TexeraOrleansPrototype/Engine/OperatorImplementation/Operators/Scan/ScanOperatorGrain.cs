@@ -20,16 +20,13 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void Start()
         {
+            base.Start();
             StartGenerate(0);
         }
 
         protected override void Resume()
         {
-            isPaused=false;
-            if(isFinished)
-            {
-                return;
-            }
+            base.Resume();
             StartGenerate(0);
         }
 
