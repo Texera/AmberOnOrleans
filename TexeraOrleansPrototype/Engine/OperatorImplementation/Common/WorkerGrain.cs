@@ -138,6 +138,10 @@ namespace Engine.OperatorImplementation.Common
             if(currentEndFlagCount==0 && actionQueue.Count==1)
             {
                 isFinished=true;
+                string ext1,opType1;
+                self.GetPrimaryKey(out ext1);
+                opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
+                Console.WriteLine("Finished: "+opType1+" "+ext1);
                 MakeLastPayloadMessageThenSend();
             }
         }
@@ -312,6 +316,10 @@ namespace Engine.OperatorImplementation.Common
                             {
                                 strategy.SendEndMessages(self);
                             }
+                            string ext1,opType1;
+                            self.GetPrimaryKey(out ext1);
+                            opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
+                            Console.WriteLine("Finished: "+opType1+" "+ext1);
                         },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                         Console.WriteLine("Scan finish to send end message");
                     }
