@@ -42,7 +42,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 index=new Random().Next(0, silos.Count());
             }
-            return Task.FromResult(silos[(int)index]);
+            return Task.FromResult(silos[(int)index%silos.Count()]);
         }
     }
 }
