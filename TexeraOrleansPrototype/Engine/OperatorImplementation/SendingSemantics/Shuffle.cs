@@ -16,7 +16,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         private string selectorExpression;
         private Func<TexeraTuple,int> selector=null;
-        public Shuffle(List<IWorkerGrain> receivers, string jsonLambdaFunction, int batchingLimit=1000):base(receivers,batchingLimit)
+        public Shuffle(string jsonLambdaFunction, int batchingLimit=1000):base(batchingLimit)
         {
             this.selectorExpression=jsonLambdaFunction;
         }
@@ -77,5 +77,11 @@ namespace Engine.OperatorImplementation.SendingSemantics
             return (x%m + m)%m;
         }
 
+        public override void RemoveAllReceivers()
+        {
+            receivers.Clear();
+            this.outputSequenceNumbers.Clear();
+            this.outputRows.Clear();
+        }
     }
 }

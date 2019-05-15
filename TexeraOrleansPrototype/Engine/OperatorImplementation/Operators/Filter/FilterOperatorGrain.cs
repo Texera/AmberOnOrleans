@@ -14,6 +14,7 @@ using Orleans.Concurrency;
 using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
@@ -24,15 +25,15 @@ namespace Engine.OperatorImplementation.Operators
         int filterIndex=-1;
         FilterPredicate.FilterType type;
         T threshold;
-        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        public override async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
-            base.Init(self,predicate,principalGrain);
+            SiloAddress addr=await base.Init(self,predicate,principalGrain);
             if (typeof(T) != typeof(string) && (ParseInfo == null || !typeof(T).IsAssignableFrom(ParseInfo.ReturnType)))
                 throw new InvalidOperationException("Invalid type, must contain public static T Parse(string)");
             type=((FilterPredicate)predicate).Type;
             filterIndex=((FilterPredicate)predicate).FilterIndex;
             threshold=Parse(((FilterPredicate)predicate).Threshold);
-            return Task.CompletedTask;
+            return addr;
         }
         private static T Parse(string value)
         {

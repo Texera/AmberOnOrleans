@@ -8,6 +8,7 @@ using System.IO;
 using Orleans.Concurrency;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
@@ -55,9 +56,9 @@ namespace Engine.OperatorImplementation.Operators
 
         
 
-        public async override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        public async override Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
-            await base.Init(self,predicate,principalGrain);
+            SiloAddress addr=await base.Init(self,predicate,principalGrain);
             ulong filesize=((ScanPredicate)predicate).FileSize;
             separator=((ScanPredicate)predicate).Separator;
             string extensionKey = "";
@@ -75,6 +76,7 @@ namespace Engine.OperatorImplementation.Operators
             if(start!=0)
                 start+=await reader.TrySkipFirst();
             //Console.WriteLine("Init: start byte: "+start.ToString()+" end byte: "+end.ToString());
+            return addr;
         }
 
         

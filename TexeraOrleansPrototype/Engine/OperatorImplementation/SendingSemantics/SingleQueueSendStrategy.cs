@@ -14,10 +14,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected List<IWorkerGrain> receivers;
         protected List<ulong> outputSequenceNumbers;
-        public SingleQueueSendStrategy(List<IWorkerGrain> receivers, int batchingLimit=1000):base(batchingLimit)
+        public SingleQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
-            this.receivers=receivers;
-            this.outputSequenceNumbers=Enumerable.Repeat((ulong)0, receivers.Count).ToList();
+            this.receivers=new List<IWorkerGrain>();
+            this.outputSequenceNumbers=new List<ulong>();
         }
 
         public void AddReceiver(IWorkerGrain receiver)
@@ -30,6 +30,12 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
             receivers.AddRange(receivers);
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
+        }
+
+        public void RemoveAllReceivers()
+        {
+            receivers.Clear();
+            this.outputSequenceNumbers.Clear();
         }
 
         public abstract void SendBatchedMessages(IGrain senderIdentifier);

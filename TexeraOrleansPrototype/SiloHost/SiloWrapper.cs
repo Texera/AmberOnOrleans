@@ -9,6 +9,7 @@ using Orleans.Runtime;
 using TexeraUtilities;
 using Engine.OperatorImplementation.Operators;
 using Orleans.Runtime.Placement;
+using Engine.OperatorImplementation.Common;
 
 namespace SiloHost
 {
@@ -61,8 +62,8 @@ namespace SiloHost
                 })
                 .ConfigureServices(services => 
                 {
-                    services.AddSingletonNamedService<PlacementStrategy, ScanPlacement>(nameof(ScanPlacement));
-                    services.AddSingletonKeyedService<Type, IPlacementDirector, ScanPlacementDirector>(typeof(ScanPlacement));
+                    services.AddSingletonNamedService<PlacementStrategy, WorkerGrainPlacement>(nameof(WorkerGrainPlacement));
+                    services.AddSingletonKeyedService<Type, IPlacementDirector, WorkerGrainPlacementDirector>(typeof(WorkerGrainPlacement));
                 })
                 .ConfigureEndpoints(siloPort: 11111, gatewayPort: 30000)
                 .ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Critical).AddConsole())

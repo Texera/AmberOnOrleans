@@ -14,11 +14,14 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected List<IWorkerGrain> receivers;
         protected List<ulong> outputSequenceNumbers;
-        public MultiQueueSendStrategy(List<IWorkerGrain> receivers, int batchingLimit=1000):base(receivers.Count,batchingLimit)
+        public MultiQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
-            this.receivers=receivers;
+            receivers=new List<IWorkerGrain>();
+            outputSequenceNumbers=new List<ulong>();
             this.outputSequenceNumbers=Enumerable.Repeat((ulong)0, receivers.Count).ToList();
         }
+
+        public abstract void RemoveAllReceivers();
 
         public abstract void Enqueue(IEnumerable<TexeraTuple> output);
 

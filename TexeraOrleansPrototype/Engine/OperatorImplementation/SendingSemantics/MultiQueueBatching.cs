@@ -14,10 +14,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         private int batchingLimit;
         protected List<Queue<TexeraTuple>> outputRows;
-        public MultiQueueBatching(int numReceivers,int batchingLimit=1000)
+        public MultiQueueBatching(int batchingLimit=1000)
         {
             this.batchingLimit=batchingLimit;
-            outputRows=Enumerable.Range(0,numReceivers).Select(x=>new Queue<TexeraTuple>()).ToList();
+            outputRows=new List<Queue<TexeraTuple>>();
         }
 
         protected List<Pair<int,List<TexeraTuple>>> MakeBatchedPayloads()

@@ -10,6 +10,7 @@ using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
 using System.Linq;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
@@ -31,13 +32,13 @@ namespace Engine.OperatorImplementation.Operators
             return Task.CompletedTask;
         }
 
-        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        public override async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
-            base.Init(self,predicate,principalGrain);
+            SiloAddress addr=await base.Init(self,predicate,principalGrain);
             innerTableIndex=((HashJoinPredicate)predicate).InnerTableIndex;
             outerTableIndex=((HashJoinPredicate)predicate).OuterTableIndex;
             innerTableGuid=((HashJoinPredicate)predicate).InnerTableID;
-            return Task.CompletedTask;
+            return addr;
         }
 
 

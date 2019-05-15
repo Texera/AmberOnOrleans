@@ -12,7 +12,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
     public class RoundRobin: SingleQueueSendStrategy
     {
         private int roundRobinIndex=0;
-        public RoundRobin(List<IWorkerGrain> receivers, int batchingLimit=1000):base(receivers,batchingLimit)
+        public RoundRobin(int batchingLimit=1000):base(batchingLimit)
         {
         }
 

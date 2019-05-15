@@ -11,11 +11,9 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class KeywordPrinicipalGrain : PrincipalGrain, IKeywordPrincipalGrain
     {
-        public override async Task<IWorkerGrain> GetOperatorGrain(string extension)
+        public override IWorkerGrain GetOperatorGrain(string extension)
         {
-            var grain=this.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(this.GetPrimaryKey(), extension);
-            await grain.Init(grain,predicate,self);
-            return grain;
+            return this.GrainFactory.GetGrain<IKeywordSearchOperatorGrain>(this.GetPrimaryKey(), extension);
         }
     }
 }

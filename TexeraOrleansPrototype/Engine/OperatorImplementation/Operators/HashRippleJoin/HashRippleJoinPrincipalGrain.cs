@@ -17,11 +17,9 @@ namespace Engine.OperatorImplementation.Operators
     public class HashRippleJoinPrinicipalGrain : PrincipalGrain, IHashRippleJoinPrincipalGrain
     {
         public override int DefaultNumGrainsInOneLayer { get { return 6; } }
-        public override async Task<IWorkerGrain> GetOperatorGrain(string extension)
+        public override IWorkerGrain GetOperatorGrain(string extension)
         {
-            var grain=this.GrainFactory.GetGrain<IHashRippleJoinOperatorGrain>(this.GetPrimaryKey(), extension);
-            await grain.Init(grain,predicate,self);
-            return grain;
+            return this.GrainFactory.GetGrain<IHashRippleJoinOperatorGrain>(this.GetPrimaryKey(), extension);
         }
         public override Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
@@ -32,7 +30,7 @@ namespace Engine.OperatorImplementation.Operators
                 joinFieldIndex=((HashRippleJoinPredicate)predicate).OuterTableIndex;
             Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
-            return Task.FromResult(new Shuffle(inputGrains,serializer.SerializeText(exp)) as ISendStrategy);
+            return Task.FromResult(new Shuffle(serializer.SerializeText(exp)) as ISendStrategy);
         }
     }
 }

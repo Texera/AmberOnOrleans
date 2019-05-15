@@ -12,11 +12,9 @@ namespace Engine.OperatorImplementation.Operators
     public class CrossRippleJoinPrinicipalGrain : PrincipalGrain, ICrossRippleJoinPrincipalGrain
     {
         public override int DefaultNumGrainsInOneLayer { get { return 1; } }
-        public override async Task<IWorkerGrain> GetOperatorGrain(string extension)
+        public override IWorkerGrain GetOperatorGrain(string extension)
         {
-            var grain=this.GrainFactory.GetGrain<ICrossRippleJoinOperatorGrain>(this.GetPrimaryKey(), extension);
-            await grain.Init(grain,predicate,self);
-            return grain;
+            return this.GrainFactory.GetGrain<ICrossRippleJoinOperatorGrain>(this.GetPrimaryKey(), extension);
         }
     }
 }

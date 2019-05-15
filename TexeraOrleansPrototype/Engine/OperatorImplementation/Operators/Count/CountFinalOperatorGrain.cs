@@ -8,10 +8,11 @@ using System.IO;
 using Orleans.Concurrency;
 using TexeraUtilities;
 using Engine.OperatorImplementation.Common;
+using Orleans.Placement;
 
 namespace Engine.OperatorImplementation.Operators
 {
-
+    [PreferLocalPlacement]
     public class CountFinalOperatorGrain : WorkerGrain, ICountFinalOperatorGrain
     {
         public int count = 0;

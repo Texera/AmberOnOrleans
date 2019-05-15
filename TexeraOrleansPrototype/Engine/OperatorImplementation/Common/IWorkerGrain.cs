@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using TexeraUtilities;
 using Orleans.Streams;
 using Engine.OperatorImplementation.SendingSemantics;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -19,7 +20,7 @@ namespace Engine.OperatorImplementation.Common
         #endregion
 
         #region Used by all operators
-        Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain);
+        Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain);
         Task SetSendStrategy(Guid operatorGuid, ISendStrategy sendStrategy);
         Task SetInputInformation(Dictionary<Guid,int> inputInfo);
         /*

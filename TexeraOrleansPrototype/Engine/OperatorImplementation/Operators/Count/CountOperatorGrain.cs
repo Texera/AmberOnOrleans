@@ -9,9 +9,11 @@ using Orleans.Concurrency;
 using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
+using Orleans.Placement;
 
 namespace Engine.OperatorImplementation.Operators
 {
+    [PreferLocalPlacement]
     public class CountOperatorGrain : WorkerGrain, ICountOperatorGrain
     {
         int count=0;

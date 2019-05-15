@@ -15,5 +15,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
         void SendEndMessages(IGrain senderIdentifier);
         void AddReceiver(IWorkerGrain receiver);
         void AddReceivers(List<IWorkerGrain> receivers);
+        void RemoveAllReceivers();
     }
 }

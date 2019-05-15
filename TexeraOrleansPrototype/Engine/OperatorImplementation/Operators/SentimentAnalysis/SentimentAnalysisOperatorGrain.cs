@@ -14,23 +14,19 @@ using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using SentimentAnalyzer;
 using TexeraUtilities;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
     public class SentimentAnalysisOperatorGrain : WorkerGrain, ISentimentAnalysisOperatorGrain
     {
         int predictIndex;
-        public override Task OnDeactivateAsync()
-        {
-            base.OnDeactivateAsync();
-            return Task.CompletedTask;
-        }
 
-        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        public override async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
-            base.Init(self,predicate,principalGrain);
+            SiloAddress addr=await base.Init(self,predicate,principalGrain);
             predictIndex=((SentimentAnalysisPredicate)predicate).PredictIndex;
-            return Task.CompletedTask;
+            return addr;
         }
 
 

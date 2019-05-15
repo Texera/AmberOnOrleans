@@ -73,8 +73,8 @@ namespace OrleansClient
                     })
                     .ConfigureServices(services => 
                     {
-                        services.AddSingletonNamedService<PlacementStrategy, ScanPlacement>(nameof(ScanPlacement));
-                        services.AddSingletonKeyedService<Type, IPlacementDirector, ScanPlacementDirector>(typeof(ScanPlacement));
+                        services.AddSingletonNamedService<PlacementStrategy, WorkerGrainPlacement>(nameof(WorkerGrainPlacement));
+                        services.AddSingletonKeyedService<Type, IPlacementDirector, WorkerGrainPlacementDirector>(typeof(WorkerGrainPlacement));
                     })
                     .ConfigureLogging(logging => logging.AddConsole());
 

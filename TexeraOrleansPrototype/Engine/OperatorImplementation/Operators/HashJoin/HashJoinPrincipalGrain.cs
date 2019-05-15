@@ -11,17 +11,16 @@ using System.Linq.Expressions;
 using Engine.OperatorImplementation.SendingSemantics;
 using Serialize.Linq.Extensions;
 using Serialize.Linq.Serializers;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
     public class HashJoinPrinicipalGrain : PrincipalGrain, IHashJoinPrincipalGrain
     {
         public override int DefaultNumGrainsInOneLayer { get { return 6; } }
-        public override async Task<IWorkerGrain> GetOperatorGrain(string extension)
+        public override IWorkerGrain GetOperatorGrain(string extension)
         {
-            var grain=this.GrainFactory.GetGrain<IHashJoinOperatorGrain>(this.GetPrimaryKey(), extension);
-            await grain.Init(grain,predicate,self);
-            return grain;
+            return this.GrainFactory.GetGrain<IHashJoinOperatorGrain>(this.GetPrimaryKey(), extension);
         }
         public override Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
@@ -32,7 +31,7 @@ namespace Engine.OperatorImplementation.Operators
                 joinFieldIndex=((HashJoinPredicate)predicate).OuterTableIndex;
             Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
-            return Task.FromResult(new Shuffle(inputGrains,serializer.SerializeText(exp)) as ISendStrategy);
+            return Task.FromResult(new Shuffle(serializer.SerializeText(exp)) as ISendStrategy);
         }
     }
 }

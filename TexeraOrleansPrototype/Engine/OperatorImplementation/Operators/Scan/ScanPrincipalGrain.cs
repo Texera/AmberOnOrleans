@@ -14,20 +14,9 @@ namespace Engine.OperatorImplementation.Operators
     {
         public override int DefaultNumGrainsInOneLayer { get { return 3; } }
 
-        public override async Task<IWorkerGrain> GetOperatorGrain(string extension)
+        public override IWorkerGrain GetOperatorGrain(string extension)
         {
-            RequestContext.Set("ext",extension);
-            var grain=this.GrainFactory.GetGrain<IScanOperatorGrain>(this.GetPrimaryKey(), extension);
-            await grain.Init(grain,predicate,self);
-            var slios=RequestContext.Get("return");
-            if(slios!=null)
-            {
-                Console.WriteLine("receives: "+slios);
-            }
-            else
-                Console.WriteLine("cannot return value from placement");
-            RequestContext.Clear();
-            return grain;
+            return this.GrainFactory.GetGrain<IScanOperatorGrain>(this.GetPrimaryKey(), extension);
         }
 
         protected override void PassExtraParametersByPredicate(ref PredicateBase predicate)

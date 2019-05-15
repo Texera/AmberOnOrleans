@@ -29,6 +29,11 @@ namespace Engine.OperatorImplementation.SendingSemantics
             throw new NotImplementedException();
         }
 
+        public void RemoveAllReceivers()
+        {
+            throw new NotImplementedException();
+        }
+
         public void SendBatchedMessages(IGrain senderIdentifier)
         {
             while(true)

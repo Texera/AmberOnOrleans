@@ -13,6 +13,8 @@ using System.Threading;
 using System.Linq;
 using System.Collections.Concurrent;
 using Orleans.Placement;
+using Orleans.Runtime;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -28,7 +30,7 @@ namespace Engine.OperatorImplementation.Common
         public U Second { get; set; }
     };
 
-    [PreferLocalPlacement]
+    [WorkerGrainPlacement]
     public class WorkerGrain : Grain, IWorkerGrain
     {
         protected PredicateBase predicate = null;
@@ -45,8 +47,9 @@ namespace Engine.OperatorImplementation.Common
         protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
         protected bool isFinished=false;
         protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
+        private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
-        public virtual async Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        public virtual async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             this.self=self;
             this.principalGrain=principalGrain;
@@ -58,6 +61,8 @@ namespace Engine.OperatorImplementation.Common
             var streamProvider = GetStreamProvider("SMSProvider");
             var stream=streamProvider.GetStream<Immutable<ControlMessage>>(principalGrain.GetPrimaryKey(), "Ctrl");
             await stream.SubscribeAsync(this);
+            return localSiloDetails.SiloAddress;
+            
         }
     
 

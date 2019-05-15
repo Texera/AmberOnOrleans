@@ -24,9 +24,9 @@ namespace Engine.OperatorImplementation.Common
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
         protected bool isPaused = false;
         protected Guid operatorID;
-        protected List<List<IWorkerGrain>> operatorGrains = new List<List<IWorkerGrain>>();
-        protected List<IWorkerGrain> outputGrains {get{return operatorGrains.Last();}}
-        protected List<IWorkerGrain> inputGrains {get{return operatorGrains.First();}}
+        protected List<Dictionary<SiloAddress,List<IWorkerGrain>>> operatorGrains = new List<Dictionary<SiloAddress, List<IWorkerGrain>>>();
+        protected Dictionary<SiloAddress,List<IWorkerGrain>> outputGrains {get{return operatorGrains.Last();}}
+        protected Dictionary<SiloAddress,List<IWorkerGrain>> inputGrains {get{return operatorGrains.First();}}
         protected PredicateBase predicate;
         protected IPrincipalGrain self=null;
         private Guid workflowID;
@@ -35,7 +35,7 @@ namespace Engine.OperatorImplementation.Common
         private int currentPauseFlag=0;
         protected IAsyncObserver<Immutable<ControlMessage>> controlMessageStream;
         
-        public virtual async Task<IWorkerGrain> GetOperatorGrain(string extension)
+        public virtual IWorkerGrain GetOperatorGrain(string extension)
         {
             throw new NotImplementedException();
         }
@@ -71,14 +71,41 @@ namespace Engine.OperatorImplementation.Common
             
         }
 
+        public virtual bool IsStaged(ISendStrategy sendStrategy)
+        {
+            if(sendStrategy.GetType()==typeof(Shuffle))
+                return false;
+            else
+                return true;
+        }
         public virtual async Task BuildWorkerTopology()
         {
-            operatorGrains=Enumerable.Range(0, 1).Select(x=>new List<IWorkerGrain>()).ToList();
-            //one-layer init
+            operatorGrains=Enumerable.Range(0, 1).Select(x=>new Dictionary<SiloAddress,List<IWorkerGrain>>()).ToList();
+            // one-layer init
+            // List<SiloAddress> prevAllocation=null;
+            // foreach(IPrincipalGrain principalGrain in prevPrincipalGrains)
+            // {
+            //     if(IsStaged(principalGrain))
+            //     {
+            //         prevAllocation=(await principalGrain.GetOutputGrains()).Keys.ToList();
+            //         break;
+            //     }
+            // }
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
-                IWorkerGrain grain=await GetOperatorGrain(i.ToString());
-                operatorGrains[0].Add(grain);
+                IWorkerGrain grain=GetOperatorGrain(i.ToString());
+                // if(prevAllocation!=null)
+                // {
+                //     RequestContext.Set("targetSilo",prevAllocation[i%prevAllocation.Count]);
+                // }
+                RequestContext.Set("grainIndex",i);
+                SiloAddress addr=await grain.Init(grain,predicate,self);
+                if(!operatorGrains[0].ContainsKey(addr))
+                {
+                    operatorGrains[0].Add(addr,new List<IWorkerGrain>{grain});
+                }
+                else
+                    operatorGrains[0][addr].Add(grain);
             }
             // for multiple-layer init, do some linking inside...
         }
@@ -88,12 +115,12 @@ namespace Engine.OperatorImplementation.Common
             Dictionary<Guid,int> inputInfo=new Dictionary<Guid, int>();
             foreach(IPrincipalGrain prevPrincipal in prevPrincipalGrains)
             {
-                List<IWorkerGrain> prevOutputGrains=await prevPrincipal.GetOutputGrains();
-                inputInfo[prevPrincipal.GetPrimaryKey()]=prevOutputGrains.Count;
+                Dictionary<SiloAddress,List<IWorkerGrain>> prevOutputGrains=await prevPrincipal.GetOutputGrains();
+                inputInfo[prevPrincipal.GetPrimaryKey()]=prevOutputGrains.Values.Count;
             }
             if(inputInfo.Count>0)
             {
-                foreach(IWorkerGrain grain in inputGrains)
+                foreach(IWorkerGrain grain in inputGrains.Values.SelectMany(x=>x))
                 {
                     await grain.SetInputInformation(inputInfo);
                 }
@@ -103,10 +130,35 @@ namespace Engine.OperatorImplementation.Common
             {
                 foreach(IPrincipalGrain nextPrincipal in nextPrincipalGrains)
                 {
+                    Dictionary<SiloAddress,List<IWorkerGrain>> nextInputGrains=await nextPrincipal.GetInputGrains();
+                    Guid nextOperatorID=nextPrincipal.GetPrimaryKey();
                     ISendStrategy strategy = await nextPrincipal.GetInputSendStrategy(self);
-                    for(int i=0;i<outputGrains.Count;++i)
+                    if(IsStaged(strategy))
                     {
-                        await outputGrains[i].SetSendStrategy(operatorID,strategy);
+                        foreach(var pair in outputGrains)
+                        {
+                            if(nextInputGrains.ContainsKey(pair.Key))
+                            {
+                                strategy.AddReceivers(nextInputGrains[pair.Key]);
+                            }
+                            else
+                            {
+                                strategy.AddReceivers(nextInputGrains.Values.SelectMany(x=>x).ToList());
+                            }
+                            foreach(IWorkerGrain grain in pair.Value)
+                            {
+                                await grain.SetSendStrategy(nextOperatorID,strategy);
+                            }
+                            strategy.RemoveAllReceivers();
+                        }
+                    }
+                    else
+                    {
+                        strategy.AddReceivers(nextInputGrains.Values.SelectMany(x=>x).ToList());
+                        foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
+                        {
+                            await grain.SetSendStrategy(nextOperatorID,strategy);
+                        }
                     }
                 }
             }
@@ -116,7 +168,7 @@ namespace Engine.OperatorImplementation.Common
                 var streamProvider = GetStreamProvider("SMSProvider");
                 var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflowID,"OutputStream");
                 ISendStrategy strategy=new SendToStream(stream);
-                foreach(IWorkerGrain grain in outputGrains)
+                foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
                 {
                     await grain.SetSendStrategy(workflowID,strategy);
                 }
@@ -131,12 +183,12 @@ namespace Engine.OperatorImplementation.Common
         //     }
         // }
 
-        public Task<List<IWorkerGrain>> GetInputGrains()
+        public Task<Dictionary<SiloAddress,List<IWorkerGrain>>> GetInputGrains()
         {
             return Task.FromResult(inputGrains);
         }
 
-        public Task<List<IWorkerGrain>> GetOutputGrains()
+        public Task<Dictionary<SiloAddress,List<IWorkerGrain>>> GetOutputGrains()
         {
             return Task.FromResult(outputGrains);
         }
@@ -210,9 +262,10 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
-            return Task.FromResult(new RoundRobin(inputGrains,predicate.BatchingLimit) as ISendStrategy);
+            return Task.FromResult(new RoundRobin(predicate.BatchingLimit) as ISendStrategy);
         }
 
+        
 
         public virtual async Task Deactivate()
         {
