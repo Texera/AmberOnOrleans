@@ -28,7 +28,10 @@ namespace Engine.OperatorImplementation.Operators
         protected override void Resume()
         {
             base.Resume();
-            StartGenerate(0);
+            if(!isFinished)
+            {
+                StartGenerate(0);
+            }
         }
 
         protected async override Task GenerateTuples()
