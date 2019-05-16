@@ -110,7 +110,7 @@ namespace Engine.OperatorImplementation.Common
                         Console.WriteLine(Utils.GetReadableName(self)+" receives end flag from "+Utils.GetReadableName(message.Value.SenderIdentifer));
                     }
                     AfterProcessBatch(message,orleansScheduler);
-                    await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    await Task.Factory.StartNew(async ()=>{await MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
@@ -132,7 +132,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        protected async void MakePayloadMessagesThenSend()
+        protected async Task MakePayloadMessagesThenSend()
         {
             if(isFinished)
             {
@@ -305,9 +305,9 @@ namespace Engine.OperatorImplementation.Common
                     }
                     if(!isFinished || outputTuples.Count>0)
                     {
-                        await Task.Factory.StartNew(()=>
+                        await Task.Factory.StartNew(async ()=>
                         {
-                            MakePayloadMessagesThenSend();
+                            await MakePayloadMessagesThenSend();
                             StartGenerate(0);
                         },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                         lock(actionQueue)
