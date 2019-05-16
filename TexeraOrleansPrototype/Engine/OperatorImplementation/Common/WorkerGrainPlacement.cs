@@ -26,7 +26,7 @@ namespace Engine.OperatorImplementation.Common
         public Task<SiloAddress> OnAddActivation(PlacementStrategy strategy, PlacementTarget target, IPlacementContext context)
         {
             var targetSilo=RequestContext.Get("targetSilo");
-            var silos = context.GetCompatibleSilos(target).ToArray();
+            var silos = context.GetCompatibleSilos(target).OrderBy(x=>x).ToArray();
             if(targetSilo!=null)
             {
                 foreach(SiloAddress silo in silos)
