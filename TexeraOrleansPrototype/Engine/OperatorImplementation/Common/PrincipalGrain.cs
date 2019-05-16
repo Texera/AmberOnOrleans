@@ -112,20 +112,6 @@ namespace Engine.OperatorImplementation.Common
 
         public async Task LinkWorkerGrains()
         {
-            Dictionary<Guid,int> inputInfo=new Dictionary<Guid, int>();
-            foreach(IPrincipalGrain prevPrincipal in prevPrincipalGrains)
-            {
-                Dictionary<SiloAddress,List<IWorkerGrain>> prevOutputGrains=await prevPrincipal.GetOutputGrains();
-                inputInfo[prevPrincipal.GetPrimaryKey()]=prevOutputGrains.Values.SelectMany(x=>x).Count();
-            }
-            if(inputInfo.Count>0)
-            {
-                foreach(IWorkerGrain grain in inputGrains.Values.SelectMany(x=>x))
-                {
-                    await grain.SetInputInformation(inputInfo);
-                }
-            }
-
             if(nextPrincipalGrains.Count!=0)
             {
                 foreach(IPrincipalGrain nextPrincipal in nextPrincipalGrains)
@@ -137,14 +123,20 @@ namespace Engine.OperatorImplementation.Common
                     {
                         foreach(var pair in outputGrains)
                         {
+                            List<IWorkerGrain> receivers=null;
                             if(nextInputGrains.ContainsKey(pair.Key))
                             {
-                                strategy.AddReceivers(nextInputGrains[pair.Key]);
+                                receivers=nextInputGrains[pair.Key];
                             }
                             else
                             {
-                                strategy.AddReceivers(nextInputGrains.Values.SelectMany(x=>x).ToList());
+                                receivers=nextInputGrains.Values.SelectMany(x=>x).ToList();
                             }
+                            foreach(IWorkerGrain grain in receivers)
+                            {
+                                await grain.AddInputInformation(new Pair<Guid,int>(operatorID,pair.Value.Count));
+                            }
+                            strategy.AddReceivers(receivers);
                             foreach(IWorkerGrain grain in pair.Value)
                             {
                                 await grain.SetSendStrategy(nextOperatorID,strategy);

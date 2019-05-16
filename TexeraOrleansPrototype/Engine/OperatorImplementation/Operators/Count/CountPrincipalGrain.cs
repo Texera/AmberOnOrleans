@@ -41,7 +41,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
             }
             //set target end flag
-            await finalGrain.SetInputInformation(new Dictionary<Guid, int>{{this.GetPrimaryKey(),DefaultNumGrainsInOneLayer}});
+            await finalGrain.AddInputInformation(new Pair<Guid, int>(this.GetPrimaryKey(),DefaultNumGrainsInOneLayer));
         }
     }
 }

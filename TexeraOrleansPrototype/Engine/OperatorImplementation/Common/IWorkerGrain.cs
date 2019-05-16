@@ -22,7 +22,7 @@ namespace Engine.OperatorImplementation.Common
         #region Used by all operators
         Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain);
         Task SetSendStrategy(Guid operatorGuid, ISendStrategy sendStrategy);
-        Task SetInputInformation(Dictionary<Guid,int> inputInfo);
+        Task AddInputInformation(Pair<Guid,int> inputInfo);
         /*
         Receives and processes the control message completely. This is because the
         control message needs to be acted upon ASAP.

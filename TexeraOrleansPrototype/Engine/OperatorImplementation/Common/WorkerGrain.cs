@@ -277,10 +277,10 @@ namespace Engine.OperatorImplementation.Common
             throw new NotImplementedException();
         }
 
-        public Task SetInputInformation(Dictionary<Guid,int> inputInfo)
+        public Task AddInputInformation(Pair<Guid,int> inputInfo)
         {
-            currentEndFlagCount=inputInfo.Values.Sum();
-            this.inputInfo=inputInfo;
+            currentEndFlagCount+=inputInfo.Second;
+            this.inputInfo.Add(inputInfo.First,inputInfo.Second);
             return Task.CompletedTask;
         }
 
