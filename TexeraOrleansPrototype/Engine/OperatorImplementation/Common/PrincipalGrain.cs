@@ -149,7 +149,6 @@ namespace Engine.OperatorImplementation.Common
                             {
                                 await grain.SetSendStrategy(nextOperatorID,strategy);
                             }
-                            strategy = await nextPrincipal.GetInputSendStrategy(self);
                         }
                     }
                     else

@@ -25,6 +25,7 @@ namespace Engine.OperatorImplementation.Operators
             operatorGrains[1].Add(finalAddr,new List<IWorkerGrain>{finalGrain});            
             //first layer
             ISendStrategy strategy=new RoundRobin();
+            strategy.AddReceiver(finalGrain);
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
                 IWorkerGrain grain=this.GrainFactory.GetGrain<ICountOperatorGrain>(this.GetPrimaryKey(),i.ToString());
