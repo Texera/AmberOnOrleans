@@ -116,7 +116,7 @@ namespace Engine.OperatorImplementation.Common
             foreach(IPrincipalGrain prevPrincipal in prevPrincipalGrains)
             {
                 Dictionary<SiloAddress,List<IWorkerGrain>> prevOutputGrains=await prevPrincipal.GetOutputGrains();
-                inputInfo[prevPrincipal.GetPrimaryKey()]=prevOutputGrains.Values.Count;
+                inputInfo[prevPrincipal.GetPrimaryKey()]=prevOutputGrains.Values.SelectMany(x=>x).Count();
             }
             if(inputInfo.Count>0)
             {
