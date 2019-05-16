@@ -28,6 +28,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public void AddReceivers(List<IWorkerGrain> receivers)
         {
+            Console.WriteLine("add receivers "+receivers.Count);
             receivers.AddRange(receivers);
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
         }
