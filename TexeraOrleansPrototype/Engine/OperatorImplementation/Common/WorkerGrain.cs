@@ -40,7 +40,7 @@ namespace Engine.OperatorImplementation.Common
         protected IWorkerGrain self = null;
         private IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
         private Dictionary<Guid,ISendStrategy> sendStrategies = new Dictionary<Guid, ISendStrategy>();
-        protected Dictionary<Guid,int> inputInfo;
+        protected Dictionary<Guid,int> inputInfo=new Dictionary<Guid, int>();
         protected Queue<Action> actionQueue=new Queue<Action>();
         protected int currentIndex=0;
         protected int currentEndFlagCount=int.MaxValue;
