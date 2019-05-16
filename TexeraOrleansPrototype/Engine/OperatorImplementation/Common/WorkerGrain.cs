@@ -144,7 +144,7 @@ namespace Engine.OperatorImplementation.Common
                 await strategy.SendBatchedMessages(self);
             }
             outputTuples=new List<TexeraTuple>();
-            if(currentEndFlagCount==0 && actionQueue.Count==1)
+            if(!isFinished && currentEndFlagCount==0 && actionQueue.Count==1)
             {
                 isFinished=true;
                 Console.WriteLine("Finished: "+Utils.GetReadableName(self));
