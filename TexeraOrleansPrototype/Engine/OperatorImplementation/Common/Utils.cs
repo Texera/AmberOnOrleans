@@ -133,5 +133,13 @@ namespace Engine.OperatorImplementation.Common
             Console.WriteLine("Unknown Operator Found! Make sure to register it in Utils.cs");
             return "Unknown";
         }
+
+        public static string GetReadableName(IGrain grain)
+        {
+            string ext1,opType1;
+            string guidPrefix=grain.GetPrimaryKey(out ext1).ToString().Substring(0,8);
+            opType1=Utils.GetOperatorTypeFromGrainClass(grain.GetType().Name);
+            return opType1+" "+guidPrefix+" "+ext1;
+        }
     }
 }

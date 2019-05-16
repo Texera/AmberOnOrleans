@@ -54,10 +54,7 @@ namespace Engine.OperatorImplementation.Common
             this.self=self;
             this.principalGrain=principalGrain;
             this.predicate=predicate;
-            string ext1,opType1;
-            self.GetPrimaryKey(out ext1);
-            opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
-            Console.WriteLine("Init: "+opType1+" "+ext1);
+            Console.WriteLine("Init: "+Utils.GetReadableName(self));
             var streamProvider = GetStreamProvider("SMSProvider");
             var stream=streamProvider.GetStream<Immutable<ControlMessage>>(principalGrain.GetPrimaryKey(), "Ctrl");
             await stream.SubscribeAsync(this);
@@ -143,10 +140,7 @@ namespace Engine.OperatorImplementation.Common
             if(currentEndFlagCount==0 && actionQueue.Count==1)
             {
                 isFinished=true;
-                string ext1,opType1;
-                self.GetPrimaryKey(out ext1);
-                opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
-                Console.WriteLine("Finished: "+opType1+" "+ext1);
+                Console.WriteLine("Finished: "+Utils.GetReadableName(self));
                 MakeLastPayloadMessageThenSend();
             }
         }
@@ -242,19 +236,13 @@ namespace Engine.OperatorImplementation.Common
 
         protected virtual void Pause()
         {
-            string ext1,opType1;
-            self.GetPrimaryKey(out ext1);
-            opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
-            Console.WriteLine("Pause: "+opType1+" "+ext1);
+            Console.WriteLine("Paused: "+Utils.GetReadableName(self));
             isPaused=true;
         }
 
         protected virtual void Resume()
         {
-            string ext1,opType1;
-            self.GetPrimaryKey(out ext1);
-            opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
-            Console.WriteLine("Resume: "+opType1+" "+ext1);
+            Console.WriteLine("Resumed: "+Utils.GetReadableName(self));
             isPaused=false;
             if(isFinished)
             {
@@ -331,10 +319,7 @@ namespace Engine.OperatorImplementation.Common
                             {
                                 strategy.SendEndMessages(self);
                             }
-                            string ext1,opType1;
-                            self.GetPrimaryKey(out ext1);
-                            opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
-                            Console.WriteLine("Finished: "+opType1+" "+ext1);
+                            Console.WriteLine("Finished: "+Utils.GetReadableName(self));
                         },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                         lock(actionQueue)
                         {
