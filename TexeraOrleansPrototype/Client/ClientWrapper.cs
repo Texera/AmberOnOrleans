@@ -5,6 +5,7 @@ using Orleans.Concurrency;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using Orleans.Configuration;
 using Engine.Controller;
@@ -144,7 +145,7 @@ namespace OrleansClient
             int numEndGrains=0;
             foreach(Operator o in workflow.EndOperators)
             {
-                numEndGrains+=o.PrincipalGrain.GetOutputGrains().Result.Count;
+                numEndGrains+=(await o.PrincipalGrain.GetOutputGrains()).Values.SelectMany(x=>x).Count();
             }
             so.SetNumEndFlags(numEndGrains);
             instance.IDToWorkflowEntry[workflow.WorkflowID]=workflow;
