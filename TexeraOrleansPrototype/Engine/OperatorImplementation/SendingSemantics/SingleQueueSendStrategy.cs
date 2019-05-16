@@ -32,6 +32,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
         }
 
+
         public void RemoveAllReceivers()
         {
             receivers.Clear();
