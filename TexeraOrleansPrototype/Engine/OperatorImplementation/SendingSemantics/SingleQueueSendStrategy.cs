@@ -39,9 +39,9 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.outputSequenceNumbers.Clear();
         }
 
-        public abstract void SendBatchedMessages(IGrain senderIdentifier);
+        public abstract Task SendBatchedMessages(IGrain senderIdentifier);
 
-        public abstract void SendEndMessages(IGrain senderIdentifier);
+        public abstract Task SendEndMessages(IGrain senderIdentifier);
 
         protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
         {

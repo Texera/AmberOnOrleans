@@ -132,7 +132,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        protected void MakePayloadMessagesThenSend()
+        protected async void MakePayloadMessagesThenSend()
         {
             if(isFinished)
             {
@@ -141,7 +141,7 @@ namespace Engine.OperatorImplementation.Common
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
-                strategy.SendBatchedMessages(self);
+                await strategy.SendBatchedMessages(self);
             }
             outputTuples=new List<TexeraTuple>();
             if(currentEndFlagCount==0 && actionQueue.Count==1)
@@ -152,7 +152,7 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        private void MakeLastPayloadMessageThenSend()
+        private async void MakeLastPayloadMessageThenSend()
         {
             List<TexeraTuple> output=MakeFinalOutputTuples();
             if(output!=null)
@@ -162,8 +162,8 @@ namespace Engine.OperatorImplementation.Common
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
-                strategy.SendBatchedMessages(self);
-                strategy.SendEndMessages(self);
+                await strategy.SendBatchedMessages(self);
+                await strategy.SendEndMessages(self);
             }
             outputTuples= new List<TexeraTuple>();
         }

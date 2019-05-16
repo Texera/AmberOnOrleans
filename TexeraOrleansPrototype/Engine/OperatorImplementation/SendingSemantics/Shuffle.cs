@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Engine.OperatorImplementation.Common;
 using Orleans;
 using Orleans.Concurrency;
@@ -51,7 +52,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         }
 
 
-        public override async void SendBatchedMessages(IGrain senderIdentifier)
+        public override async Task SendBatchedMessages(IGrain senderIdentifier)
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeBatchedPayloads())
             {
@@ -59,7 +60,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
         }
 
-        public override async void SendEndMessages(IGrain senderIdentifier)
+        public override async Task SendEndMessages(IGrain senderIdentifier)
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeLastPayload())
             {
