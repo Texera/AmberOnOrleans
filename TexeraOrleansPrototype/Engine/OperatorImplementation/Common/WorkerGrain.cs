@@ -279,12 +279,15 @@ namespace Engine.OperatorImplementation.Common
 
         public Task AddInputInformation(Pair<Guid,int> inputInfo)
         {
-            string ext1,opType1;
-            self.GetPrimaryKey(out ext1);
-            opType1=Utils.GetOperatorTypeFromGrainClass(this.GetType().Name);
-            Console.WriteLine("AddInputInfo: "+opType1+" "+ext1+" "+inputInfo.First);
             currentEndFlagCount+=inputInfo.Second;
-            this.inputInfo.Add(inputInfo.First,inputInfo.Second);
+            if(this.inputInfo.ContainsKey(inputInfo.First))
+            {
+                this.inputInfo[inputInfo.First]+=inputInfo.Second;
+            }
+            else
+            {
+                this.inputInfo.Add(inputInfo.First,inputInfo.Second);
+            }
             return Task.CompletedTask;
         }
 
