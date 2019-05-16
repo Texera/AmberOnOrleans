@@ -43,7 +43,7 @@ namespace Engine.OperatorImplementation.Common
         protected Dictionary<Guid,int> inputInfo=new Dictionary<Guid, int>();
         protected Queue<Action> actionQueue=new Queue<Action>();
         protected int currentIndex=0;
-        protected int currentEndFlagCount=int.MaxValue;
+        protected int currentEndFlagCount=0;
         protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
         protected bool isFinished=false;
         protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
@@ -279,7 +279,7 @@ namespace Engine.OperatorImplementation.Common
        
         protected virtual void Start()
         {
-            throw new NotImplementedException();
+            currentEndFlagCount=-1;
         }
 
         public Task AddInputInformation(Pair<Guid,int> inputInfo)

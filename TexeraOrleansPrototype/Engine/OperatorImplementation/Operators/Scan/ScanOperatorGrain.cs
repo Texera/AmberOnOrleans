@@ -21,6 +21,7 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void Start()
         {
+            base.Start();
             StartGenerate(0);
         }
 
