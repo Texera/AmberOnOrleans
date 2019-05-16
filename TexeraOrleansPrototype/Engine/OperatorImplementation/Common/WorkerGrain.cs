@@ -90,6 +90,7 @@ namespace Engine.OperatorImplementation.Common
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
+                    Console.WriteLine(Utils.GetReadableName(self)+"Invoke process with seq num: "+message.Value.SequenceNumber);
                     BeforeProcessBatch(message,orleansScheduler);
                     if(batch!=null)
                     {
