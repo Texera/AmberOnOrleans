@@ -90,7 +90,7 @@ namespace Engine.OperatorImplementation.Common
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
-                    Console.WriteLine(Utils.GetReadableName(self)+" invokes process with seq num: "+message.Value.SequenceNumber+" from "+Utils.GetReadableName(message.Value.SenderIdentifer)+" is end: "+message.Value.IsEnd);
+                    //Console.WriteLine(Utils.GetReadableName(self)+" invokes process with seq num: "+message.Value.SequenceNumber+" from "+Utils.GetReadableName(message.Value.SenderIdentifer)+" is end: "+message.Value.IsEnd);
                     BeforeProcessBatch(message,orleansScheduler);
                     if(batch!=null)
                     {
@@ -107,7 +107,7 @@ namespace Engine.OperatorImplementation.Common
                         string ext;
                         inputInfo[message.Value.SenderIdentifer.GetPrimaryKey(out ext)]--;
                         currentEndFlagCount--;
-                        Console.WriteLine(Utils.GetReadableName(self)+" receives end flag from "+Utils.GetReadableName(message.Value.SenderIdentifer));
+                        //Console.WriteLine(Utils.GetReadableName(self)+" receives end flag from "+Utils.GetReadableName(message.Value.SenderIdentifer));
                     }
                     AfterProcessBatch(message,orleansScheduler);
                     await Task.Factory.StartNew(async ()=>{await MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
@@ -134,10 +134,10 @@ namespace Engine.OperatorImplementation.Common
 
         protected async Task MakePayloadMessagesThenSend()
         {
-            if(isFinished)
-            {
-                Console.WriteLine("error on "+Utils.GetReadableName(this)+": ready to send payload "+(outputTuples!=null?outputTuples.Count.ToString():"null"));
-            }
+            // if(isFinished)
+            // {
+            //     Console.WriteLine("error on "+Utils.GetReadableName(this)+": ready to send payload "+(outputTuples!=null?outputTuples.Count.ToString():"null"));
+            // }
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
