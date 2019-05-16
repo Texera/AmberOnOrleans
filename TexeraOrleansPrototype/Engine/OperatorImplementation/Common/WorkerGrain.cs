@@ -267,6 +267,7 @@ namespace Engine.OperatorImplementation.Common
 
         public Task AddInputInformation(Pair<Guid,int> inputInfo)
         {
+            Console.WriteLine(Utils.GetReadableName(self)+" will receive "+inputInfo.Second+" end flags from "+inputInfo.First.ToString().Substring(0,8));
             currentEndFlagCount+=inputInfo.Second;
             if(this.inputInfo.ContainsKey(inputInfo.First))
             {
