@@ -49,6 +49,11 @@ namespace Engine.OperatorImplementation.Common
         protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
+        public override Task OnActivateAsync()
+        {
+            Console.WriteLine("Activate: "+Utils.GetReadableName(self));
+            return Task.CompletedTask;
+        }
         public virtual async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             this.self=self;
