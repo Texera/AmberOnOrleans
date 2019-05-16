@@ -135,7 +135,7 @@ namespace Engine.OperatorImplementation.Common
         {
             if(isFinished)
             {
-                Console.WriteLine("error on "+Utils.GetReadableName(this));
+                Console.WriteLine("error on "+Utils.GetReadableName(this)+": ready to send payload "+(outputTuples!=null?outputTuples.Count.ToString():"null"));
             }
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
