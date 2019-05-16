@@ -51,7 +51,7 @@ namespace Engine.OperatorImplementation.Common
 
         public override Task OnActivateAsync()
         {
-            Console.WriteLine("Activate: "+Utils.GetReadableName(self));
+            Console.WriteLine("Activate: "+Utils.GetReadableName(this));
             return Task.CompletedTask;
         }
         public virtual async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
