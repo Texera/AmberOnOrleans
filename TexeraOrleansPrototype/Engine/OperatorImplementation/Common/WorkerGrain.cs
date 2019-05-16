@@ -110,7 +110,7 @@ namespace Engine.OperatorImplementation.Common
                         Console.WriteLine(Utils.GetReadableName(self)+" receives end flag from "+Utils.GetReadableName(message.Value.SenderIdentifer)+" current: "+currentEndFlagCount);
                     }
                     AfterProcessBatch(message,orleansScheduler);
-                    await Task.Factory.StartNew(async ()=>{await MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
@@ -132,7 +132,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        protected async Task MakePayloadMessagesThenSend()
+        protected void MakePayloadMessagesThenSend()
         {
             // if(isFinished)
             // {
@@ -141,7 +141,7 @@ namespace Engine.OperatorImplementation.Common
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
-                await strategy.SendBatchedMessages(self);
+                strategy.SendBatchedMessages(self);
             }
             outputTuples=new List<TexeraTuple>();
             if(!isFinished && currentEndFlagCount==0 && actionQueue.Count==1)
@@ -152,7 +152,7 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        private async void MakeLastPayloadMessageThenSend()
+        private void MakeLastPayloadMessageThenSend()
         {
             List<TexeraTuple> output=MakeFinalOutputTuples();
             if(output!=null)
@@ -162,8 +162,8 @@ namespace Engine.OperatorImplementation.Common
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
-                await strategy.SendBatchedMessages(self);
-                await strategy.SendEndMessages(self);
+                strategy.SendBatchedMessages(self);
+                strategy.SendEndMessages(self);
             }
             outputTuples= new List<TexeraTuple>();
         }
@@ -305,9 +305,9 @@ namespace Engine.OperatorImplementation.Common
                     }
                     if(!isFinished || outputTuples.Count>0)
                     {
-                        await Task.Factory.StartNew(async ()=>
+                        await Task.Factory.StartNew(()=>
                         {
-                            await MakePayloadMessagesThenSend();
+                            MakePayloadMessagesThenSend();
                             StartGenerate(0);
                         },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                         lock(actionQueue)

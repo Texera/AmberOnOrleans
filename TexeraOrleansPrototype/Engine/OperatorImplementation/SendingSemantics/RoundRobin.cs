@@ -16,7 +16,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
         }
 
-        public override async Task SendBatchedMessages(IGrain senderIdentifier)
+        public override void SendBatchedMessages(IGrain senderIdentifier)
         {
             while(true)
             {
@@ -25,16 +25,16 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 {
                     break;
                 }
-                await RoundRobinSending(message.AsImmutable());
+                RoundRobinSending(message.AsImmutable());
             }
         }
 
-        public override async Task SendEndMessages(IGrain senderIdentifier)
+        public override async void SendEndMessages(IGrain senderIdentifier)
         {
             PayloadMessage message=MakeLastMessage(senderIdentifier,outputSequenceNumbers[roundRobinIndex]);
             if(message!=null)
             {
-                await RoundRobinSending(message.AsImmutable());
+                RoundRobinSending(message.AsImmutable());
             }
             for(int i=0;i<receivers.Count;++i)
             {
@@ -43,7 +43,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
         }
 
-        private async Task RoundRobinSending(Immutable<PayloadMessage> message)
+        private async void RoundRobinSending(Immutable<PayloadMessage> message)
         {
             outputSequenceNumbers[roundRobinIndex]++;
             await SendMessageTo(receivers[roundRobinIndex],message,0);

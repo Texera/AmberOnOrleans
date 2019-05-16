@@ -29,9 +29,9 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public abstract void AddReceivers(List<IWorkerGrain> receivers);
 
-        public abstract Task SendBatchedMessages(IGrain senderIdentifier);
+        public abstract void SendBatchedMessages(IGrain senderIdentifier);
 
-        public abstract Task SendEndMessages(IGrain senderIdentifier);
+        public abstract void SendEndMessages(IGrain senderIdentifier);
 
         protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
         {
