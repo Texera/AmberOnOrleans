@@ -107,7 +107,7 @@ namespace Engine.OperatorImplementation.Common
                         string ext;
                         inputInfo[message.Value.SenderIdentifer.GetPrimaryKey(out ext)]--;
                         currentEndFlagCount--;
-                        Console.WriteLine(Utils.GetReadableName(self)+" receives end flag from "+Utils.GetReadableName(message.Value.SenderIdentifer)+" current: "+currentEndFlagCount);
+                        //Console.WriteLine(Utils.GetReadableName(self)+" receives end flag from "+Utils.GetReadableName(message.Value.SenderIdentifer)+" current: "+currentEndFlagCount);
                     }
                     AfterProcessBatch(message,orleansScheduler);
                     await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
@@ -138,6 +138,10 @@ namespace Engine.OperatorImplementation.Common
             // {
             //     Console.WriteLine("error on "+Utils.GetReadableName(this)+": ready to send payload "+(outputTuples!=null?outputTuples.Count.ToString():"null"));
             // }
+            if(sendStrategies==null)
+            {
+                Console.WriteLine("ERROR: "+Utils.GetReadableName(this)+" tries to send message but sendStrategies is null");
+            }
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
