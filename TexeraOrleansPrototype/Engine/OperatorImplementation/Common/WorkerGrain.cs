@@ -65,6 +65,7 @@ namespace Engine.OperatorImplementation.Common
 
         public override Task OnDeactivateAsync()
         {
+            Console.WriteLine("Deactivate: "+Utils.GetReadableName(self));
             pausedMessages=null;
             orderingEnforcer=null;
             sendStrategies=null;
