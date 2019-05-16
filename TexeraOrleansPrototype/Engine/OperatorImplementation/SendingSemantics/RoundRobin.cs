@@ -45,6 +45,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         private async Task RoundRobinSending(Immutable<PayloadMessage> message)
         {
+            string ext1,opType1;
+            message.Value.SenderIdentifer.GetPrimaryKey(out ext1);
+            opType1=Utils.GetOperatorTypeFromGrainClass(message.Value.SenderIdentifer.GetType().Name);
+            Console.WriteLine(opType1+"sending with receiver size ="+receivers.Count);
             outputSequenceNumbers[roundRobinIndex]++;
             await SendMessageTo(receivers[roundRobinIndex],message,0);
             roundRobinIndex = (roundRobinIndex+1)%receivers.Count;
