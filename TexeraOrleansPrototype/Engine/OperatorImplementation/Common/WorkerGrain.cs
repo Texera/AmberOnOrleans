@@ -135,7 +135,7 @@ namespace Engine.OperatorImplementation.Common
         {
             if(isFinished)
             {
-                Console.WriteLine("error on "+Utils.GetReadableName(self));
+                Console.WriteLine("error on "+Utils.GetReadableName(this));
             }
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
