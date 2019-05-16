@@ -146,8 +146,14 @@ namespace Engine.OperatorImplementation.Common
                     }
                     else
                     {
-                        strategy.AddReceivers(nextInputGrains.Values.SelectMany(x=>x).ToList());
-                        foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
+                        List<IWorkerGrain> receivers=nextInputGrains.Values.SelectMany(x=>x).ToList();
+                        List<IWorkerGrain> senders=outputGrains.Values.SelectMany(x=>x).ToList();
+                        foreach(IWorkerGrain grain in receivers)
+                        {
+                            await grain.AddInputInformation(new Pair<Guid,int>(operatorID,senders.Count));
+                        }
+                        strategy.AddReceivers(receivers);
+                        foreach(IWorkerGrain grain in senders)
                         {
                             await grain.SetSendStrategy(nextOperatorID,strategy);
                         }

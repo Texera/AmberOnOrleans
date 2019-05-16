@@ -29,6 +29,7 @@ namespace Engine.OperatorImplementation.Operators
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
                 IWorkerGrain grain=this.GrainFactory.GetGrain<ICountOperatorGrain>(this.GetPrimaryKey(),i.ToString());
+                RequestContext.Set("grainIndex",i);
                 SiloAddress addr=await grain.Init(grain,predicate,self);
                 await grain.SetSendStrategy(this.GetPrimaryKey(),strategy);
                 if(!operatorGrains[0].ContainsKey(addr))

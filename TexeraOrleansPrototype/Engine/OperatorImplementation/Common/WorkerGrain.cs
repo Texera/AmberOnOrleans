@@ -107,11 +107,6 @@ namespace Engine.OperatorImplementation.Common
                     {
                         string ext;
                         inputInfo[message.Value.SenderIdentifer.GetPrimaryKey(out ext)]--;
-                        Console.WriteLine("inputInfo:");
-                        foreach(KeyValuePair<Guid,int> p in inputInfo)
-                        {
-                            Console.WriteLine(p.Key+" "+p.Value);
-                        }
                         currentEndFlagCount--;
                     }
                     AfterProcessBatch(message,orleansScheduler);
