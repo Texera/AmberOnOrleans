@@ -149,6 +149,7 @@ namespace Engine.OperatorImplementation.Common
                             {
                                 await grain.SetSendStrategy(nextOperatorID,strategy);
                             }
+                            strategy.RemoveAllReceivers();
                         }
                     }
                     else
