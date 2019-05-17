@@ -308,35 +308,20 @@ namespace Engine.OperatorImplementation.Common
                     {
                         return;
                     }
-                    if(!isFinished || outputTuples.Count>0)
+                    await Task.Factory.StartNew(()=>
                     {
-                        await Task.Factory.StartNew(()=>
+                        MakePayloadMessagesThenSend();
+                        if(!isFinished)
                         {
-                            MakePayloadMessagesThenSend();
                             StartGenerate(0);
-                        },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
-                        lock(actionQueue)
-                        {
-                            actionQueue.Dequeue();
-                            if(!isPaused && actionQueue.Count>0)
-                            {
-                                Task.Run(actionQueue.Peek());
-                            }
                         }
-                    }
-                    else
+                    },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    lock(actionQueue)
                     {
-                        await Task.Factory.StartNew(()=>
+                        actionQueue.Dequeue();
+                        if(!isPaused && actionQueue.Count>0)
                         {
-                            foreach(ISendStrategy strategy in sendStrategies.Values)
-                            {
-                                strategy.SendEndMessages(self);
-                            }
-                            Console.WriteLine("Finished: "+Utils.GetReadableName(self));
-                        },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
-                        lock(actionQueue)
-                        {
-                            actionQueue.Clear();
+                            Task.Run(actionQueue.Peek());
                         }
                     }
                 };

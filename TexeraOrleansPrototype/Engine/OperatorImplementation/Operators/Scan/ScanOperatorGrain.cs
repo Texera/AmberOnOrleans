@@ -41,7 +41,7 @@ namespace Engine.OperatorImplementation.Operators
             {
                 if(start>end)
                 {
-                    isFinished=true;
+                    currentEndFlagCount=0;
                     break;
                 }
                 TexeraTuple tuple=await ReadTuple();
@@ -52,7 +52,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 if(reader.IsEOF())
                 {
-                    isFinished=true;
+                    currentEndFlagCount=0;
                     break;
                 }
             }
