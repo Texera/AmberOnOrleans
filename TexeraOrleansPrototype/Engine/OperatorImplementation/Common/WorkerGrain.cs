@@ -30,7 +30,7 @@ namespace Engine.OperatorImplementation.Common
         public U Second { get; set; }
     };
 
-    //[WorkerGrainPlacement]
+    [WorkerGrainPlacement]
     public class WorkerGrain : Grain, IWorkerGrain
     {
         protected PredicateBase predicate = null;
