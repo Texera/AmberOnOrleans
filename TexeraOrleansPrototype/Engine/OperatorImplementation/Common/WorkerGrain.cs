@@ -90,7 +90,7 @@ namespace Engine.OperatorImplementation.Common
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
-                    Console.WriteLine(Utils.GetReadableName(self)+" invokes process with seq num: "+message.Value.SequenceNumber+" from "+Utils.GetReadableName(message.Value.SenderIdentifer)+" is end: "+message.Value.IsEnd);
+                    //Console.WriteLine(Utils.GetReadableName(self)+" invokes process with seq num: "+message.Value.SequenceNumber+" from "+Utils.GetReadableName(message.Value.SenderIdentifer)+" is end: "+message.Value.IsEnd);
                     BeforeProcessBatch(message,orleansScheduler);
                     if(batch!=null)
                     {
@@ -107,7 +107,7 @@ namespace Engine.OperatorImplementation.Common
                         string ext;
                         inputInfo[message.Value.SenderIdentifer.GetPrimaryKey(out ext)]--;
                         currentEndFlagCount--;
-                        Console.WriteLine(Utils.GetReadableName(self)+" receives end flag from "+Utils.GetReadableName(message.Value.SenderIdentifer)+" current: "+currentEndFlagCount);
+                        //Console.WriteLine(Utils.GetReadableName(self)+" receives end flag from "+Utils.GetReadableName(message.Value.SenderIdentifer)+" current: "+currentEndFlagCount);
                     }
                     AfterProcessBatch(message,orleansScheduler);
                     await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
@@ -136,7 +136,7 @@ namespace Engine.OperatorImplementation.Common
         {
             if(isFinished)
             {
-                Console.WriteLine("ERROR: "+Utils.GetReadableName(this)+" ready to send payload "+outputTuples.Count+" after finishing its job!");
+                Console.WriteLine("ERROR: "+Utils.GetReadableName(this)+" want to send payload "+outputTuples.Count+" after finishing its job!");
             }
             if(sendStrategies==null)
             {
