@@ -29,7 +29,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
         }
 
-        public override async void SendEndMessages(IGrain senderIdentifier)
+        public override void SendEndMessages(IGrain senderIdentifier)
         {
             PayloadMessage message=MakeLastMessage(senderIdentifier,outputSequenceNumbers[roundRobinIndex]);
             if(message!=null)
@@ -40,14 +40,14 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 Console.WriteLine(Utils.GetReadableName(senderIdentifier)+"-> "+ Utils.GetReadableName(receivers[i]) +" END: "+outputSequenceNumbers[i]);
                 message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
-                await SendMessageTo(receivers[i],message.AsImmutable(),0);
+                SendMessageTo(receivers[i],message.AsImmutable(),0);
             }
         }
 
-        private async void RoundRobinSending(Immutable<PayloadMessage> message)
+        private void RoundRobinSending(Immutable<PayloadMessage> message)
         {
             outputSequenceNumbers[roundRobinIndex]++;
-            await SendMessageTo(receivers[roundRobinIndex],message,0);
+            SendMessageTo(receivers[roundRobinIndex],message,0);
             roundRobinIndex = (roundRobinIndex+1)%receivers.Count;
         }
     }

@@ -72,7 +72,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 PayloadMessage message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
                 SendMessageTo(receivers[i],message.AsImmutable(),0);
             }
-            receivers=null;
         }
 
         private int NonNegativeModular(int x, int m) {
