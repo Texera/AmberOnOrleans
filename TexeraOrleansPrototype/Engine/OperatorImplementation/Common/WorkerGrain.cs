@@ -107,7 +107,7 @@ namespace Engine.OperatorImplementation.Common
                         string ext;
                         inputInfo[message.Value.SenderIdentifer.GetPrimaryKey(out ext)]--;
                         currentEndFlagCount--;
-                        //Console.WriteLine(Utils.GetReadableName(self)+" receives end flag from "+Utils.GetReadableName(message.Value.SenderIdentifer)+" current: "+currentEndFlagCount);
+                        Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" END: "+message.Value.SequenceNumber);
                     }
                     AfterProcessBatch(message,orleansScheduler);
                     await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
