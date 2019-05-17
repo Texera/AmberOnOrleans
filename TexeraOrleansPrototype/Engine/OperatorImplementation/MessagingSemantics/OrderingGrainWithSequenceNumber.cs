@@ -15,7 +15,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
     {
         private Dictionary<IGrain,Dictionary<ulong, Pair<bool,List<TexeraTuple>>>> stashedPayloadMessages = new Dictionary<IGrain, Dictionary<ulong, Pair<bool, List<TexeraTuple>>>>();
         private Dictionary<IGrain,Dictionary<ulong, ControlMessage.ControlMessageType>> stashedControlMessages = new Dictionary<IGrain, Dictionary<ulong, ControlMessage.ControlMessageType>>();
-        private Dictionary<IGrain,ulong> inSequenceNumberMap=new Dictionary<IGrain, ulong>();
+        public Dictionary<IGrain,ulong> inSequenceNumberMap=new Dictionary<IGrain, ulong>();
         private enum MessageStatus
         {
             Vaild,

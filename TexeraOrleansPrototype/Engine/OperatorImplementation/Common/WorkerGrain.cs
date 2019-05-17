@@ -93,6 +93,8 @@ namespace Engine.OperatorImplementation.Common
                     if(isFinished)
                     {
                         Console.WriteLine("ERROR: After finishing its job, "+Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" SEQ NUM: "+message.Value.SequenceNumber);
+                        ulong num=((OrderingGrainWithSequenceNumber)orderingEnforcer).inSequenceNumberMap[message.Value.SenderIdentifer];
+                        Console.WriteLine("Expected SEQ NUM for "+Utils.GetReadableName(message.Value.SenderIdentifer)+" is "+num);
                     }
                     BeforeProcessBatch(message,orleansScheduler);
                     if(batch!=null)
@@ -155,8 +157,8 @@ namespace Engine.OperatorImplementation.Common
             if(!isFinished && currentEndFlagCount==0 && actionQueue.Count==1)
             {
                 isFinished=true;
-                Console.WriteLine("Finished: "+Utils.GetReadableName(self));
                 MakeLastPayloadMessageThenSend();
+                Console.WriteLine("Finished: "+Utils.GetReadableName(self));
             }
         }
 
