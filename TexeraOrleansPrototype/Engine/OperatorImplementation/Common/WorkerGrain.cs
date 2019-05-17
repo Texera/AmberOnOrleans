@@ -292,7 +292,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public async Task Generate()
+        public Task Generate()
         {
             if(!isPaused)
             {
@@ -349,6 +349,7 @@ namespace Engine.OperatorImplementation.Common
                     }
                 }
             }
+            return Task.CompletedTask;
         }
 
         protected async virtual Task GenerateTuples()
