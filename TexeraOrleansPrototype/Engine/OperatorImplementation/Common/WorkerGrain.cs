@@ -134,10 +134,10 @@ namespace Engine.OperatorImplementation.Common
 
         protected void MakePayloadMessagesThenSend()
         {
-            // if(isFinished)
-            // {
-            //     Console.WriteLine("error on "+Utils.GetReadableName(this)+": ready to send payload "+(outputTuples!=null?outputTuples.Count.ToString():"null"));
-            // }
+            if(isFinished)
+            {
+                Console.WriteLine("ERROR: "+Utils.GetReadableName(this)+" ready to send payload "+outputTuples.Count+" after finishing its job!");
+            }
             if(sendStrategies==null)
             {
                 Console.WriteLine("ERROR: detect a payload with size "+outputTuples.Count);
