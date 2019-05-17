@@ -57,7 +57,7 @@ namespace Engine.OperatorImplementation.Common
             Console.WriteLine("Init: "+Utils.GetReadableName(self));
             var streamProvider = GetStreamProvider("SMSProvider");
             var stream=streamProvider.GetStream<Immutable<ControlMessage>>(principalGrain.GetPrimaryKey(), "Ctrl");
-            await stream.SubscribeAsync(this);
+            controlMessageStreamHandle=await stream.SubscribeAsync(this);
             return localSiloDetails.SiloAddress;
             
         }
