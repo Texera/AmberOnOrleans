@@ -38,7 +38,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
             for(int i=0;i<receivers.Count;++i)
             {
-                Console.WriteLine(Utils.GetReadableName(senderIdentifier)+"-> "+ Utils.GetReadableName(receivers[i]) +" END: "+senderIdentifier,outputSequenceNumbers[i]);
+                Console.WriteLine(Utils.GetReadableName(senderIdentifier)+"-> "+ Utils.GetReadableName(receivers[i]) +" END: "+outputSequenceNumbers[i]);
                 message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
                 await SendMessageTo(receivers[i],message.AsImmutable(),0);
             }
