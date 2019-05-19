@@ -14,9 +14,6 @@ namespace webapi
     {
         public static void Main(string[] args)
         {
-            Console.WriteLine("Enter Password For MySQL Database:");
-            Constants.connectionString=Constants.connectionString.Replace("<pwd>",Console.ReadLine());
-            Console.WriteLine(Constants.connectionString);
             Console.WriteLine("Ready to build connection...");
             BuildWebHost(args).Run();
         }
