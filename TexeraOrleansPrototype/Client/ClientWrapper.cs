@@ -72,6 +72,9 @@ namespace OrleansClient
                         options.ClusterId = "dev";
                         options.ServiceId = "TexeraOrleansPrototype";
                     })
+                    .Configure<GatewayOptions>(options =>
+                    {
+                    })
                     .ConfigureServices(services => 
                     {
                         services.AddSingletonNamedService<PlacementStrategy, WorkerGrainPlacement>(nameof(WorkerGrainPlacement));
