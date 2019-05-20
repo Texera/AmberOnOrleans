@@ -17,7 +17,6 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class HashJoinPrinicipalGrain : PrincipalGrain, IHashJoinPrincipalGrain
     {
-        public override int DefaultNumGrainsInOneLayer { get { return 6; } }
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
             return this.GrainFactory.GetGrain<IHashJoinOperatorGrain>(this.GetPrimaryKey(), extension);

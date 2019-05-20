@@ -19,7 +19,7 @@ namespace Engine.OperatorImplementation.Common
 {
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
-        public virtual int DefaultNumGrainsInOneLayer { get { return 6; } }
+        public virtual int DefaultNumGrainsInOneLayer { get { return 5; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
         protected bool isPaused = false;
@@ -121,6 +121,14 @@ namespace Engine.OperatorImplementation.Common
                     ISendStrategy strategy = await nextPrincipal.GetInputSendStrategy(self);
                     if(IsStaged(strategy))
                     {
+                        List<IWorkerGrain> isolated=new List<IWorkerGrain>();
+                        foreach(var pair in nextInputGrains)
+                        {
+                            if(!outputGrains.ContainsKey(pair.Key))
+                            {
+                                isolated.AddRange(pair.Value);
+                            }
+                        }
                         foreach(var pair in outputGrains)
                         {
                             List<IWorkerGrain> receivers=null;
@@ -132,6 +140,7 @@ namespace Engine.OperatorImplementation.Common
                             {
                                 receivers=nextInputGrains.Values.SelectMany(x=>x).ToList();
                             }
+                            receivers.AddRange(isolated);
                             foreach(IWorkerGrain grain in receivers)
                             {
                                 await grain.AddInputInformation(new Pair<Guid,int>(operatorID,pair.Value.Count));
