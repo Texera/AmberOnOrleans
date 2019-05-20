@@ -7,14 +7,18 @@ using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
+using Orleans;
+using OrleansClient;
 using TexeraUtilities;
 namespace webapi
 {
     public class Program
     {
+        static IClusterClient client;
         public static void Main(string[] args)
         {
             Console.WriteLine("Ready to build connection...");
+            client=ClientWrapper.Instance.client;
             BuildWebHost(args).Run();
         }
 
