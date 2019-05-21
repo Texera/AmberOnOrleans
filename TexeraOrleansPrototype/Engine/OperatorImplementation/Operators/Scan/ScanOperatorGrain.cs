@@ -110,9 +110,15 @@ namespace Engine.OperatorImplementation.Operators
             }
             catch(Exception ex)
             {
-                Console.WriteLine("EXCEPTION in Reading Tuples from File - "+ ex.ToString());
+                Console.WriteLine("EXCEPTION: in Reading Tuples from File - "+ ex.ToString());
                 Console.WriteLine("start_offset: "+start.ToString()+" end_offset: "+end.ToString());
-                if(!reader.GetFile(start))throw new Exception("Reading Tuple: Cannot Get File");
+                int retry=0;
+                while(retry<10 && !reader.GetFile(start))
+                {
+                    retry++;
+                    Console.WriteLine("Cannot recover file on {retry} trial, will try again in 5 seconds");
+                    Thread.Sleep(5000);
+                };
                 return null;
             }
         }

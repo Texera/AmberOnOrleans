@@ -93,6 +93,7 @@ class ScanStreamReader
                 }
                 catch(Exception e)
                 {
+                    buffer_end=0;
                     throw e;
                 }
             }
