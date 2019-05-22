@@ -348,10 +348,13 @@ namespace Engine.OperatorImplementation.Common
                 };
                 lock(actionQueue)
                 {
-                    actionQueue.Enqueue(action);
-                    if(actionQueue.Count==1)
+                    if(actionQueue.Count<2)
                     {
-                        Task.Run(action);
+                        actionQueue.Enqueue(action);
+                        if(actionQueue.Count==1)
+                        {
+                            Task.Run(action);
+                        }
                     }
                 }
             }
