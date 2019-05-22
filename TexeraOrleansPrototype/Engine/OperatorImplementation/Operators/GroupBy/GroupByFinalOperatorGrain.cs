@@ -37,7 +37,7 @@ namespace Engine.OperatorImplementation.Operators
         protected override void ProcessTuple(TexeraTuple tuple, List<TexeraTuple> output)
         {
             string field=tuple.FieldList[0];
-            if(aggregationFunc=="count")
+            if(aggregationFunc.Equals("count"))
             {
                 if(counter.ContainsKey(field))
                     counter[field]+=int.Parse(tuple.FieldList[1]);
