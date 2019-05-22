@@ -159,8 +159,9 @@ namespace Engine.OperatorImplementation.Common
             if(!isFinished && currentEndFlagCount==0 && actionQueue.Count==1)
             {
                 isFinished=true;
+                Console.WriteLine("Finished: "+Utils.GetReadableName(self)+" ready to send end flag");
                 MakeLastPayloadMessageThenSend();
-                Console.WriteLine("Finished: "+Utils.GetReadableName(self));
+                Console.WriteLine("Finished: "+Utils.GetReadableName(self)+" finished sending end flag");
             }
         }
 
