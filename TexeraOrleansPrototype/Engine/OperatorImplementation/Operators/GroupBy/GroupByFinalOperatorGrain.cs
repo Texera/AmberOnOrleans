@@ -77,7 +77,7 @@ namespace Engine.OperatorImplementation.Operators
         protected override List<TexeraTuple> MakeFinalOutputTuples()
         {
             List<TexeraTuple> result=new List<TexeraTuple>();
-            foreach(KeyValuePair<string,double> pair in results)
+            foreach(KeyValuePair<string,int> pair in counter)
             {
                 switch(aggregationFunc)
                 {
