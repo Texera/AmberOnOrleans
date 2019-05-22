@@ -55,6 +55,7 @@ namespace Engine.OperatorImplementation.Operators
             {
                 if(start>end)
                 {
+                    Console.WriteLine(Common.Utils.GetReadableName(self)+" set currentEndFlagCount=0 actionQueue.Count="+actionQueue.Count);
                     currentEndFlagCount=0;
                     break;
                 }
@@ -66,6 +67,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 if(reader.IsEOF())
                 {
+                    Console.WriteLine(Common.Utils.GetReadableName(self)+" set currentEndFlagCount=0 actionQueue.Count="+actionQueue.Count);
                     currentEndFlagCount=0;
                     break;
                 }
