@@ -348,9 +348,9 @@ namespace Engine.OperatorImplementation.Common
                 };
                 lock(actionQueue)
                 {
-                    if(actionQueue.Count==0)
+                    actionQueue.Enqueue(action);
+                    if(actionQueue.Count==1)
                     {
-                        actionQueue.Enqueue(action);
                         Task.Run(action);
                     }
                 }
