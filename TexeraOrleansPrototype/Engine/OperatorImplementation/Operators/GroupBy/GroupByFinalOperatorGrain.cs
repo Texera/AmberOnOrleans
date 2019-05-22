@@ -88,7 +88,7 @@ namespace Engine.OperatorImplementation.Operators
                         result.Add(new TexeraTuple(new string[]{pair.Key,pair.Value.ToString()}));
                         break;
                     case "avg":
-                        result.Add(new TexeraTuple(new string[]{pair.Key,(pair.Value/counter[pair.Key]).ToString()}));
+                        result.Add(new TexeraTuple(new string[]{pair.Key,(results[pair.Key]/pair.Value).ToString()}));
                         break;
                     case "sum":
                         result.Add(new TexeraTuple(new string[]{pair.Key,pair.Value.ToString()}));
