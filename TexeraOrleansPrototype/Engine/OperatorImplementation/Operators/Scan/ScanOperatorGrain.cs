@@ -43,6 +43,7 @@ namespace Engine.OperatorImplementation.Operators
             if(restarted)
             {
                 Console.WriteLine(Common.Utils.GetReadableName(self)+" restarted scanning file");
+                restarted=false;
             }
             if(((start-original_start)/(double)size)>checkpoint)
             {
