@@ -46,6 +46,7 @@ namespace Engine.OperatorImplementation.Common
         protected int currentEndFlagCount=0;
         protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
         protected bool isFinished=false;
+        protected bool taskDidPaused=false;
         protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
@@ -104,6 +105,7 @@ namespace Engine.OperatorImplementation.Common
                     batch=null;
                     if(isPaused)
                     {
+                        taskDidPaused=true;
                         return;
                     }
                     currentIndex=0;
@@ -254,6 +256,7 @@ namespace Engine.OperatorImplementation.Common
         protected virtual void Pause()
         {
             Console.WriteLine("Paused: "+Utils.GetReadableName(self));
+            taskDidPaused=false;
             isPaused=true;
         }
 
@@ -265,7 +268,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 return;
             }
-            if(actionQueue.Count>0)
+            if(actionQueue.Count>0 && taskDidPaused)
             {
                 new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
             }
@@ -304,13 +307,23 @@ namespace Engine.OperatorImplementation.Common
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
-                    if(isPaused || isFinished)
+                    if(isFinished)
                     {
+                        lock(actionQueue)
+                        {
+                            actionQueue.Clear();
+                        }
+                        return;
+                    }
+                    if(isPaused)
+                    {
+                        taskDidPaused=true;
                         return;
                     }
                     await GenerateTuples();
                     if(isPaused)
                     {
+                        taskDidPaused=true;
                         return;
                     }
                     await Task.Factory.StartNew(()=>
