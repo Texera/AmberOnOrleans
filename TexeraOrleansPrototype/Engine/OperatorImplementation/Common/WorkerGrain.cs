@@ -317,12 +317,14 @@ namespace Engine.OperatorImplementation.Common
                     }
                     if(isPaused)
                     {
+                        Console.WriteLine(Utils.GetReadableName(self)+" Paused before generating tuples");
                         taskDidPaused=true;
                         return;
                     }
                     await GenerateTuples();
                     if(isPaused)
                     {
+                        Console.WriteLine(Utils.GetReadableName(self)+" Paused after generating tuples");
                         taskDidPaused=true;
                         return;
                     }
