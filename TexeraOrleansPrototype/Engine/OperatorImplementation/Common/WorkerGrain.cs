@@ -304,7 +304,7 @@ namespace Engine.OperatorImplementation.Common
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=async ()=>
                 {
-                    if(isPaused)
+                    if(isPaused || isFinished)
                     {
                         return;
                     }

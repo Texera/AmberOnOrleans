@@ -14,6 +14,9 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ScanOperatorGrain : WorkerGrain, IScanOperatorGrain
     {
+        private bool restarted=false;
+        private double checkpoint=0.1;
+        private ulong size=0,original_start=0;
         private ulong start,end,tuple_counter=0;
         private ScanStreamReader reader;
         public static int GenerateLimit=1000;
@@ -27,6 +30,7 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void Resume()
         {
+            restarted=true;
             base.Resume();
             if(!isFinished)
             {
@@ -36,6 +40,15 @@ namespace Engine.OperatorImplementation.Operators
 
         protected async override Task GenerateTuples()
         {
+            if(restarted)
+            {
+                Console.WriteLine(Common.Utils.GetReadableName(self)+" restarted scanning file");
+            }
+            if(((start-original_start)/(double)size)>checkpoint)
+            {
+                Console.WriteLine(Common.Utils.GetReadableName(self)+" reached checkpoint of "+checkpoint);
+                checkpoint+=0.1;
+            }
             int i=0;
             while(i<GenerateLimit)
             {
@@ -77,6 +90,8 @@ namespace Engine.OperatorImplementation.Operators
                 throw new Exception("unable to get file");
             start=start_byte;
             end=end_byte;
+            size=partition;
+            original_start=start;
             if(start!=0)
                 start+=await reader.TrySkipFirst();
             //Console.WriteLine("Init: start byte: "+start.ToString()+" end byte: "+end.ToString());
