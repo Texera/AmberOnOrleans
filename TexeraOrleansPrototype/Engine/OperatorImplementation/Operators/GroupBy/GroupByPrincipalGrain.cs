@@ -38,8 +38,7 @@ namespace Engine.OperatorImplementation.Operators
                 //set target end flag
                 await finalGrain.AddInputInformation(new Pair<Guid, int>(this.GetPrimaryKey(),DefaultNumGrainsInOneLayer));
             }            
-            int groupByIndex=((GroupByPredicate)predicate).GroupByIndex;
-            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[groupByIndex].GetStableHashCode();
+            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[0].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
             ISendStrategy strategy=new Shuffle(serializer.SerializeText(exp));
             //first layer
