@@ -332,7 +332,7 @@ namespace Engine.OperatorImplementation.Common
                     await Task.Factory.StartNew(()=>
                     {
                         MakePayloadMessagesThenSend();
-                        if(!isFinished)
+                        if(currentEndFlagCount!=0)
                         {
                             StartGenerate(0);
                         }
@@ -348,9 +348,9 @@ namespace Engine.OperatorImplementation.Common
                 };
                 lock(actionQueue)
                 {
-                    actionQueue.Enqueue(action);
-                    if(actionQueue.Count==1)
+                    if(actionQueue.Count==0)
                     {
+                        actionQueue.Enqueue(action);
                         Task.Run(action);
                     }
                 }
