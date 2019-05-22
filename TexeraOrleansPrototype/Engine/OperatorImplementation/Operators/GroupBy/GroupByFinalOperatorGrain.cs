@@ -82,15 +82,18 @@ namespace Engine.OperatorImplementation.Operators
                 switch(aggregationFunc)
                 {
                     case "max":
-                        result.Add(new TexeraTuple(new string[]{pair.Key,pair.Value.ToString()}));
+                        result.Add(new TexeraTuple(new string[]{pair.Key,results[pair.Key].ToString()}));
                         break;
                     case "min":
-                        result.Add(new TexeraTuple(new string[]{pair.Key,pair.Value.ToString()}));
+                        result.Add(new TexeraTuple(new string[]{pair.Key,results[pair.Key].ToString()}));
                         break;
                     case "avg":
                         result.Add(new TexeraTuple(new string[]{pair.Key,(results[pair.Key]/pair.Value).ToString()}));
                         break;
                     case "sum":
+                        result.Add(new TexeraTuple(new string[]{pair.Key,results[pair.Key].ToString()}));
+                        break;
+                    case "count":
                         result.Add(new TexeraTuple(new string[]{pair.Key,pair.Value.ToString()}));
                         break;
                 }
