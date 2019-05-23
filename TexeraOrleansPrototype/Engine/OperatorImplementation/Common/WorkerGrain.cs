@@ -122,7 +122,7 @@ namespace Engine.OperatorImplementation.Common
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
-                        if(!isPaused && actionQueue.Count>0)
+                        if(actionQueue.Count>0)
                         {
                             Task.Run(actionQueue.Peek());
                         }
@@ -339,7 +339,7 @@ namespace Engine.OperatorImplementation.Common
                 lock(actionQueue)
                 {
                     actionQueue.Dequeue();
-                    if(!isPaused && actionQueue.Count>0)
+                    if(actionQueue.Count>0)
                     {
                         Task.Run(actionQueue.Peek());
                     }
