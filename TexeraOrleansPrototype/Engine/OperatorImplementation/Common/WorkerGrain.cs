@@ -304,58 +304,55 @@ namespace Engine.OperatorImplementation.Common
 
         public Task Generate()
         {
-            if(!isPaused)
+            var orleansScheduler=TaskScheduler.Current;
+            Action action=async ()=>
             {
-                var orleansScheduler=TaskScheduler.Current;
-                Action action=async ()=>
+                if(isFinished)
                 {
-                    if(isFinished)
-                    {
-                        lock(actionQueue)
-                        {
-                            actionQueue.Clear();
-                        }
-                        return;
-                    }
-                    if(isPaused)
-                    {
-                        Console.WriteLine(Utils.GetReadableName(self)+" Paused before generating tuples");
-                        taskDidPaused=true;
-                        return;
-                    }
-                    GenerateTuples();
-                    if(isPaused)
-                    {
-                        Console.WriteLine(Utils.GetReadableName(self)+" Paused after generating tuples");
-                        taskDidPaused=true;
-                        return;
-                    }
-                    await Task.Factory.StartNew(()=>
-                    {
-                        MakePayloadMessagesThenSend();
-                        if(currentEndFlagCount!=0)
-                        {
-                            StartGenerate(0);
-                        }
-                    },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                     lock(actionQueue)
                     {
-                        actionQueue.Dequeue();
-                        if(!isPaused && actionQueue.Count>0)
-                        {
-                            Task.Run(actionQueue.Peek());
-                        }
+                        actionQueue.Clear();
                     }
-                };
+                    return;
+                }
+                if(isPaused)
+                {
+                    Console.WriteLine(Utils.GetReadableName(self)+" Paused before generating tuples");
+                    taskDidPaused=true;
+                    return;
+                }
+                GenerateTuples();
+                if(isPaused)
+                {
+                    Console.WriteLine(Utils.GetReadableName(self)+" Paused after generating tuples");
+                    taskDidPaused=true;
+                    return;
+                }
+                await Task.Factory.StartNew(()=>
+                {
+                    MakePayloadMessagesThenSend();
+                    if(currentEndFlagCount!=0)
+                    {
+                        StartGenerate(0);
+                    }
+                },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                 lock(actionQueue)
                 {
-                    if(actionQueue.Count<2)
+                    actionQueue.Dequeue();
+                    if(!isPaused && actionQueue.Count>0)
                     {
-                        actionQueue.Enqueue(action);
-                        if(actionQueue.Count==1)
-                        {
-                            Task.Run(action);
-                        }
+                        Task.Run(actionQueue.Peek());
+                    }
+                }
+            };
+            lock(actionQueue)
+            {
+                if(actionQueue.Count<2)
+                {
+                    actionQueue.Enqueue(action);
+                    if(actionQueue.Count==1)
+                    {
+                        Task.Run(action);
                     }
                 }
             }
