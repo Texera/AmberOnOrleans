@@ -82,7 +82,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 pausedMessages.Add(message);
                 return Task.CompletedTask;
-            
+            }
             if(orderingEnforcer.PreProcess(message))
             {
                 bool isEnd=message.Value.IsEnd;
