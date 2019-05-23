@@ -264,7 +264,7 @@ namespace Engine.OperatorImplementation.Common
 
         protected virtual void Resume()
         {
-            Console.WriteLine("Resumed: "+Utils.GetReadableName(self));
+            Console.WriteLine("Resumed: "+Utils.GetReadableName(self) +" taskDidPaused = "+taskDidPaused +" actionQueue.Count = "+actionQueue.Count);
             isPaused=false;
             if(isFinished)
             {
