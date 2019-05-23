@@ -102,12 +102,13 @@ namespace Engine.OperatorImplementation.Common
                     {
                         ProcessBatch(batch);
                     }
-                    batch=null;
                     if(isPaused)
                     {
                         taskDidPaused=true;
+                        Console.WriteLine(Utils.GetReadableName(self)+" did paused");
                         return;
                     }
+                    batch=null;
                     currentIndex=0;
                     if(isEnd)
                     {
