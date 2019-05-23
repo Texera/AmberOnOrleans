@@ -34,7 +34,7 @@ namespace Engine.OperatorImplementation.Common
     public class WorkerGrain : Grain, IWorkerGrain
     {
         protected PredicateBase predicate = null;
-        protected bool isPaused = false;
+        protected volatile bool isPaused = false;
         protected List<Immutable<PayloadMessage>> pausedMessages = new List<Immutable<PayloadMessage>>();
         protected IPrincipalGrain principalGrain;
         protected IWorkerGrain self = null;
@@ -46,7 +46,7 @@ namespace Engine.OperatorImplementation.Common
         protected int currentEndFlagCount=0;
         protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
         protected bool isFinished=false;
-        protected bool taskDidPaused=false;
+        protected volatile bool taskDidPaused=false;
         protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
@@ -82,7 +82,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 pausedMessages.Add(message);
                 return Task.CompletedTask;
-            }
+            
             if(orderingEnforcer.PreProcess(message))
             {
                 bool isEnd=message.Value.IsEnd;
