@@ -38,7 +38,7 @@ namespace Engine.OperatorImplementation.Operators
             }
         }
 
-        protected async override void GenerateTuples()
+        protected async override Task GenerateTuples()
         {
             if(restarted)
             {

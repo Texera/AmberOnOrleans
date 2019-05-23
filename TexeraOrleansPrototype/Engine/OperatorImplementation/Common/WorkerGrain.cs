@@ -321,7 +321,7 @@ namespace Engine.OperatorImplementation.Common
                     taskDidPaused=true;
                     return;
                 }
-                GenerateTuples();
+                await GenerateTuples();
                 if(isPaused)
                 {
                     Console.WriteLine(Utils.GetReadableName(self)+" Paused after generating tuples");
@@ -359,7 +359,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        protected virtual void GenerateTuples()
+        protected async virtual Task GenerateTuples()
         {
             
         }
