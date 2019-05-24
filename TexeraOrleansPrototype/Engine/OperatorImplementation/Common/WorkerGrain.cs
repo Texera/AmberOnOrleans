@@ -257,22 +257,31 @@ namespace Engine.OperatorImplementation.Common
 
         protected virtual void Pause()
         {
-            Console.WriteLine("Paused: "+Utils.GetReadableName(self));
+            lock(actionQueue)
+            {
+                Console.WriteLine("Paused: "+Utils.GetReadableName(self)+" actionQueue.Count = "+actionQueue.Count);
+            }
             taskDidPaused=false;
             isPaused=true;
         }
 
         protected virtual void Resume()
         {
-            Console.WriteLine("Resumed: "+Utils.GetReadableName(self) +" taskDidPaused = "+taskDidPaused +" actionQueue.Count = "+actionQueue.Count);
+            lock(actionQueue)
+            {
+                 Console.WriteLine("Resumed: "+Utils.GetReadableName(self) +" taskDidPaused = "+taskDidPaused +" actionQueue.Count = "+actionQueue.Count);
+            }
             isPaused=false;
             if(isFinished)
             {
                 return;
             }
-            if(actionQueue.Count>0 && taskDidPaused)
+            lock(actionQueue)
             {
-                new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+                if(actionQueue.Count>0 && taskDidPaused)
+                {
+                    new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+                }
             }
             foreach(Immutable<PayloadMessage> message in pausedMessages)
             {
