@@ -47,10 +47,6 @@ namespace Engine.OperatorImplementation.Operators
             string ext;
             isCurrentInnerTable=innerTableGuid.Equals(message.Value.SenderIdentifer.GetPrimaryKey(out ext));
             isInnerTableFinished=(inputInfo[innerTableGuid]==0);
-            if(isInnerTableFinished)
-            {
-                Console.WriteLine(Common.Utils.GetReadableName(self)+" finished building hashtable");
-            }
         }
 
         protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
@@ -68,7 +64,6 @@ namespace Engine.OperatorImplementation.Operators
                 if(!isInnerTableFinished)
                 {
                     otherTable.Add(tuple);
-                    Console.WriteLine(Common.Utils.GetReadableName(self)+" store tuples in memeory");
                 }
                 else
                 {
@@ -82,7 +77,6 @@ namespace Engine.OperatorImplementation.Operators
                             output.Add(new TexeraTuple(t.FieldList.Concat(fields).ToArray()));
                         }
                     }
-                    Console.WriteLine(Common.Utils.GetReadableName(self)+" process tuples");
                 }
             }
         }
