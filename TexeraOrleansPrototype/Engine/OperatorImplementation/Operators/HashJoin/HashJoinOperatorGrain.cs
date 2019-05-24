@@ -47,6 +47,10 @@ namespace Engine.OperatorImplementation.Operators
             string ext;
             isCurrentInnerTable=innerTableGuid.Equals(message.Value.SenderIdentifer.GetPrimaryKey(out ext));
             isInnerTableFinished=(inputInfo[innerTableGuid]==0);
+            if(isInnerTableFinished)
+            {
+                Console.WriteLine(Common.Utils.GetReadableName(self)+" finished building hashtable");
+            }
         }
 
         protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
@@ -64,6 +68,7 @@ namespace Engine.OperatorImplementation.Operators
                 if(!isInnerTableFinished)
                 {
                     otherTable.Add(tuple);
+                    Console.WriteLine(Common.Utils.GetReadableName(self)+" store tuples in memeory");
                 }
                 else
                 {
@@ -77,6 +82,7 @@ namespace Engine.OperatorImplementation.Operators
                             output.Add(new TexeraTuple(t.FieldList.Concat(fields).ToArray()));
                         }
                     }
+                    Console.WriteLine(Common.Utils.GetReadableName(self)+" process tuples");
                 }
             }
         }
@@ -96,14 +102,16 @@ namespace Engine.OperatorImplementation.Operators
                     }
                     if(isPaused)
                     {
+                        taskDidPaused=true;
                         return;
                     }
+                    batch=null;
                     currentIndex=0;
                     await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
-                        if(!isPaused && actionQueue.Count>0)
+                        if(actionQueue.Count>0)
                         {
                             Task.Run(actionQueue.Peek());
                         }
