@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -33,6 +34,7 @@ namespace webapi.Controllers
         public async Task<HttpResponseMessage> PostPause()
         {
             Console.WriteLine("action: pause");
+            Stopwatch sw=new Stopwatch();
             Stream req = Request.Body;
             string json = new StreamReader(req).ReadToEnd();
             JObject o = JObject.Parse(json);
@@ -44,8 +46,10 @@ namespace webapi.Controllers
             Console.WriteLine("target: "+workflowID);
             try
             {
+                sw.Start();
                 await ClientWrapper.Instance.PauseWorkflow(workflowID);
-                Console.WriteLine("Paused!");
+                sw.Stop();
+                Console.WriteLine("Paused! Time Taken: "+sw.Elapsed);
             }
             catch(Exception e)
             {
@@ -61,6 +65,7 @@ namespace webapi.Controllers
         public async Task<HttpResponseMessage> PostResume()
         {
             Console.WriteLine("action: resume");
+            Stopwatch sw=new Stopwatch();
             Stream req = Request.Body;
             //req.Seek(0, System.IO.SeekOrigin.Begin);
             string json = new StreamReader(req).ReadToEnd();
@@ -73,8 +78,10 @@ namespace webapi.Controllers
             Console.WriteLine("target: "+workflowID);
             try
             {
+                sw.Start();
                 await ClientWrapper.Instance.ResumeWorkflow(workflowID);
-                Console.WriteLine("Resumed!");
+                sw.Stop();
+                Console.WriteLine("Resumed! Time Taken: "+sw.Elapsed);
             }
             catch(Exception e)
             {
