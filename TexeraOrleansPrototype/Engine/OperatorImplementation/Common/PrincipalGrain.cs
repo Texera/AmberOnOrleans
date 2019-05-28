@@ -293,12 +293,13 @@ namespace Engine.OperatorImplementation.Common
             breakPointCurrent=0;
             breakPointTarget=targetValue;
             int remaining=targetValue;
+            int size=outputGrains.Count+1;
             foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
             {
-                if(remaining>targetValue/outputGrains.Count)
+                if(remaining>targetValue/size)
                 {
-                    await grain.SetTargetValue(targetValue/outputGrains.Count);
-                    remaining-=targetValue/outputGrains.Count;
+                    await grain.SetTargetValue(targetValue/size);
+                    remaining-=targetValue/size;
                 }
                 else
                 {
@@ -319,7 +320,7 @@ namespace Engine.OperatorImplementation.Common
             });
         }
 
-        public Task ReportCurrentValue(IGrain sender, int currentValue, int version)
+        public async Task ReportCurrentValue(IGrain sender, int currentValue, int version)
         {
             if(!versionTable.ContainsKey(sender))
             {
@@ -341,17 +342,18 @@ namespace Engine.OperatorImplementation.Common
                 }
                 foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
                 {
-                    grain.AskToReportCurrentValue();
+                    await grain.AskToReportCurrentValue();
                 }
             }
             if(reportToBeReceived==0)
             {
                 if(breakPointCurrent<breakPointTarget)
                 {  
-                    SetBreakPoint(breakPointTarget-breakPointCurrent);
+                    await SetBreakPoint(breakPointTarget-breakPointCurrent);
+                    await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                    sequenceNumber++;
                 }
             }
-            return Task.CompletedTask;
         }
     }
 }

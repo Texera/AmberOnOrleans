@@ -53,6 +53,7 @@ namespace Engine.OperatorImplementation.Common
         private int breakPointTarget;
         private int breakPointCurrent;
         private int version=-1;
+        private bool breakPointEnabled=false;
 
         public virtual async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
@@ -108,7 +109,7 @@ namespace Engine.OperatorImplementation.Common
                     }
                     if(isPaused)
                     {
-                        if(breakPointCurrent>=breakPointTarget)
+                        if(breakPointEnabled && breakPointCurrent>=breakPointTarget)
                         {
                             await Task.Factory.StartNew(()=>{principalGrain.ReportCurrentValue(self,breakPointCurrent,version);},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                         }
@@ -205,7 +206,7 @@ namespace Engine.OperatorImplementation.Common
             List<TexeraTuple> localList=new List<TexeraTuple>();
             for(;currentIndex<batch.Count;++currentIndex)
             {
-                if(localList.Count+breakPointCurrent>=breakPointTarget)
+                if(breakPointEnabled && localList.Count+breakPointCurrent>=breakPointTarget)
                 {
                     breakPointCurrent+=localList.Count;
                     Pause();
@@ -444,6 +445,7 @@ namespace Engine.OperatorImplementation.Common
 
         public Task SetTargetValue(int targetValue)
         {
+            breakPointEnabled=true;
             version++;
             breakPointCurrent=0;
             breakPointTarget=targetValue;
@@ -453,7 +455,10 @@ namespace Engine.OperatorImplementation.Common
 
         public Task AskToReportCurrentValue()
         {
-            Pause();
+            if(!isPaused)
+            {
+                Pause();
+            }
             principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
             return Task.CompletedTask;
         }
