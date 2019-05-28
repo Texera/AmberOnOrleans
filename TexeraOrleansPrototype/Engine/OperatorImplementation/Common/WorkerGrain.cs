@@ -50,11 +50,12 @@ namespace Engine.OperatorImplementation.Common
         protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
+#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         private int breakPointTarget;
         private int breakPointCurrent;
         private int version=-1;
         private bool breakPointEnabled=false;
-
+#endif
         public virtual async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             this.self=self;
@@ -109,10 +110,12 @@ namespace Engine.OperatorImplementation.Common
                     }
                     if(isPaused)
                     {
+                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
                         if(breakPointEnabled && breakPointCurrent>=breakPointTarget)
                         {
                             await Task.Factory.StartNew(()=>{principalGrain.ReportCurrentValue(self,breakPointCurrent,version);},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                         }
+                        #endif
                         taskDidPaused=true;
                         Console.WriteLine(Utils.GetReadableName(self)+" did paused");
                         return;
@@ -206,11 +209,13 @@ namespace Engine.OperatorImplementation.Common
             List<TexeraTuple> localList=new List<TexeraTuple>();
             for(;currentIndex<batch.Count;++currentIndex)
             {
+                #if (CONDITIONAL_BREAKPOINT)
                 if(breakPointEnabled && localList.Count+breakPointCurrent>=breakPointTarget)
                 {
                     breakPointCurrent+=localList.Count;
                     Pause();
                 }
+                #endif
                 if(isPaused)
                 {
                     lock(outputTuples)
@@ -442,7 +447,7 @@ namespace Engine.OperatorImplementation.Common
         {
             throw new NotImplementedException();
         }
-
+#if(GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         public Task SetTargetValue(int targetValue)
         {
             breakPointEnabled=true;
@@ -462,5 +467,6 @@ namespace Engine.OperatorImplementation.Common
             principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
             return Task.CompletedTask;
         }
+#endif
     }
 }

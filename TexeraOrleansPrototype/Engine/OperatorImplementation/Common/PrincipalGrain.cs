@@ -35,11 +35,13 @@ namespace Engine.OperatorImplementation.Common
         private ulong sequenceNumber=0;
         private int currentPauseFlag=0;
         protected IAsyncObserver<Immutable<ControlMessage>> controlMessageStream;
-
+        
+#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         private int breakPointTarget;
         private int breakPointCurrent;
         private Dictionary<IGrain,int> versionTable=new Dictionary<IGrain, int>();
         private int reportToBeReceived;
+#endif
         
         public virtual IWorkerGrain GetOperatorGrain(string extension)
         {
@@ -287,7 +289,7 @@ namespace Engine.OperatorImplementation.Common
             sequenceNumber++;
             DeactivateOnIdle();
         }
-
+#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         public async Task SetBreakPoint(int targetValue)
         {
             breakPointCurrent=0;
@@ -355,5 +357,6 @@ namespace Engine.OperatorImplementation.Common
                 }
             }
         }
+#endif
     }
 }

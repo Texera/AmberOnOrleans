@@ -26,9 +26,10 @@ namespace Engine.OperatorImplementation.Common
         Task LinkWorkerGrains();
         Task Start();
 
-
+#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         //global count breakpoint: 
         Task SetBreakPoint(int targetValue);
         Task ReportCurrentValue(IGrain sender, int currentValue, int version);
+#endif
     }
 }

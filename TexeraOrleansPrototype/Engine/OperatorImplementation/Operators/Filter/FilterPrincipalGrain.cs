@@ -14,7 +14,6 @@ namespace Engine.OperatorImplementation.Operators
         public override async Task Init(Controller.IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator)
         {
             await base.Init(controllerGrain,workflowID,currentOperator);
-            await SetBreakPoint(100);
         }
 
 

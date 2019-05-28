@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
+  <!--<DefineConstants>GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED</DefineConstants>-->
   <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   <ServerGarbageCollection>true</ServerGarbageCollection>
   <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>

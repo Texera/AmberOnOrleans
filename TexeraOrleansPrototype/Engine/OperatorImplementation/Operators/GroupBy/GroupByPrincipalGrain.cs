@@ -43,7 +43,7 @@ namespace Engine.OperatorImplementation.Operators
             ISendStrategy strategy=new Shuffle(serializer.SerializeText(exp));
             //first layer
             strategy.AddReceivers(operatorGrains[1].Values.SelectMany(x=>x).ToList());
-            for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
+            for(int i=0;i<2*DefaultNumGrainsInOneLayer;++i)
             {
                 IWorkerGrain grain=this.GrainFactory.GetGrain<IGroupByOperatorGrain>(this.GetPrimaryKey(),i.ToString());
                 RequestContext.Set("grainIndex",i);

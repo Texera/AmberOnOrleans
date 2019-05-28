@@ -42,9 +42,10 @@ namespace Engine.OperatorImplementation.Common
 
 
 
-
+#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         //global count breakpoint:
         Task SetTargetValue(int targetValue);
         Task AskToReportCurrentValue();
+#endif
     }
 }
