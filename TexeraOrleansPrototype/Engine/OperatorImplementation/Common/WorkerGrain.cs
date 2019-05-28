@@ -108,6 +108,10 @@ namespace Engine.OperatorImplementation.Common
                     }
                     if(isPaused)
                     {
+                        if(breakPointCurrent>=breakPointTarget)
+                        {
+                            await Task.Factory.StartNew(()=>{principalGrain.ReportCurrentValue(self,breakPointCurrent,version);},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                        }
                         taskDidPaused=true;
                         Console.WriteLine(Utils.GetReadableName(self)+" did paused");
                         return;
@@ -201,6 +205,11 @@ namespace Engine.OperatorImplementation.Common
             List<TexeraTuple> localList=new List<TexeraTuple>();
             for(;currentIndex<batch.Count;++currentIndex)
             {
+                if(localList.Count+breakPointCurrent>=breakPointTarget)
+                {
+                    breakPointCurrent+=localList.Count;
+                    Pause();
+                }
                 if(isPaused)
                 {
                     lock(outputTuples)
@@ -211,11 +220,6 @@ namespace Engine.OperatorImplementation.Common
                     return;
                 }
                 ProcessTuple(batch[currentIndex],localList);
-                if(localList.Count+breakPointCurrent==breakPointTarget)
-                {
-                    Pause();
-                    principalGrain.ReportCurrentValue(self,breakPointTarget,version);
-                }
             }
             lock(outputTuples)
             {
