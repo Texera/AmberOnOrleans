@@ -25,5 +25,10 @@ namespace Engine.OperatorImplementation.Common
         Task<Dictionary<SiloAddress,List<IWorkerGrain>>> GetOutputGrains();
         Task LinkWorkerGrains();
         Task Start();
+
+
+        //global count breakpoint: 
+        Task SetBreakPoint(int targetValue);
+        Task ReportCurrentValue(IGrain sender, int currentValue, int version);
     }
 }

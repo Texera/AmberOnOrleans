@@ -39,5 +39,12 @@ namespace Engine.OperatorImplementation.Common
         #region Used by source operators
         Task Generate();
         #endregion
+
+
+
+
+        //global count breakpoint:
+        Task SetTargetValue(int targetValue);
+        Task AskToReportCurrentValue();
     }
 }

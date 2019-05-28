@@ -14,6 +14,7 @@ using System.Linq;
 using Orleans.Placement;
 using Orleans.Runtime;
 using Orleans.Streams;
+using System.Threading;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -34,6 +35,11 @@ namespace Engine.OperatorImplementation.Common
         private ulong sequenceNumber=0;
         private int currentPauseFlag=0;
         protected IAsyncObserver<Immutable<ControlMessage>> controlMessageStream;
+
+        private int breakPointTarget;
+        private int breakPointCurrent;
+        private Dictionary<IGrain,int> versionTable=new Dictionary<IGrain, int>();
+        private int reportToBeReceived;
         
         public virtual IWorkerGrain GetOperatorGrain(string extension)
         {
@@ -52,7 +58,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public async Task Init(IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator)
+        public virtual async Task Init(IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator)
         {
             this.controllerGrain=controllerGrain;
             this.workflowID=workflowID;
@@ -280,6 +286,72 @@ namespace Engine.OperatorImplementation.Common
             await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Deactivate)));
             sequenceNumber++;
             DeactivateOnIdle();
+        }
+
+        public async Task SetBreakPoint(int targetValue)
+        {
+            breakPointCurrent=0;
+            breakPointTarget=targetValue;
+            int remaining=targetValue;
+            foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
+            {
+                if(remaining>targetValue/outputGrains.Count)
+                {
+                    await grain.SetTargetValue(targetValue/outputGrains.Count);
+                    remaining-=targetValue/outputGrains.Count;
+                }
+                else
+                {
+                    await grain.SetTargetValue(remaining);
+                    remaining=0;
+                }
+            }
+            TaskScheduler grainScheduler=TaskScheduler.Current;
+            Task.Run(async () => {
+                await Task.Delay(30000);
+                Task.Factory.StartNew(()=>
+                {
+                    foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
+                    {
+                        grain.AskToReportCurrentValue();
+                    }
+                },CancellationToken.None, TaskCreationOptions.None, grainScheduler);
+            });
+        }
+
+        public Task ReportCurrentValue(IGrain sender, int currentValue, int version)
+        {
+            if(!versionTable.ContainsKey(sender))
+            {
+                versionTable[sender]=0;
+            }
+            if(versionTable[sender]==version)
+            {
+                reportToBeReceived--;
+                Console.WriteLine(Utils.GetReadableName(self)+" received update from "+Utils.GetReadableName(sender)+" with current value = "+currentValue);
+                versionTable[sender]++;
+                breakPointCurrent+=currentValue;
+                if(breakPointCurrent==breakPointTarget)
+                {
+                    Console.WriteLine(Utils.GetReadableName(self)+" reached the global breakpoint of count = "+breakPointCurrent);
+                }
+                else if(breakPointCurrent>breakPointTarget)
+                {
+                    Console.WriteLine("ERROR: "+Utils.GetReadableName(self)+" exceed the target value of global breakpoint! current = "+breakPointCurrent+" target = "+breakPointTarget);
+                }
+                foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
+                {
+                    grain.AskToReportCurrentValue();
+                }
+            }
+            if(reportToBeReceived==0)
+            {
+                if(breakPointCurrent<breakPointTarget)
+                {  
+                    SetBreakPoint(breakPointTarget-breakPointCurrent);
+                }
+            }
+            return Task.CompletedTask;
         }
     }
 }

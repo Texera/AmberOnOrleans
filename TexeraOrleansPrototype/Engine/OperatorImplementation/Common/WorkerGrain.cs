@@ -50,6 +50,10 @@ namespace Engine.OperatorImplementation.Common
         protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
+        private int breakPointTarget;
+        private int breakPointCurrent;
+        private int version=-1;
+
         public virtual async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             this.self=self;
@@ -207,6 +211,11 @@ namespace Engine.OperatorImplementation.Common
                     return;
                 }
                 ProcessTuple(batch[currentIndex],localList);
+                if(localList.Count+breakPointCurrent==breakPointTarget)
+                {
+                    Pause();
+                    principalGrain.ReportCurrentValue(self,breakPointTarget,version);
+                }
             }
             lock(outputTuples)
             {
@@ -427,6 +436,22 @@ namespace Engine.OperatorImplementation.Common
         public Task OnErrorAsync(Exception ex)
         {
             throw new NotImplementedException();
+        }
+
+        public Task SetTargetValue(int targetValue)
+        {
+            version++;
+            breakPointCurrent=0;
+            breakPointTarget=targetValue;
+            Console.WriteLine(Utils.GetReadableName(self)+" set breakpoint! target value = "+targetValue+" version = "+version);
+            return Task.CompletedTask;
+        }
+
+        public Task AskToReportCurrentValue()
+        {
+            Pause();
+            principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
+            return Task.CompletedTask;
         }
     }
 }
