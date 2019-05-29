@@ -47,8 +47,8 @@ namespace Engine.OperatorImplementation.Operators
                 Separator="|";
             else if(file.EndsWith(".csv"))
                 Separator=",";
-            else
-                Separator="|||";
+            else 
+                Separator=null;
         }
     }
 }

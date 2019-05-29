@@ -118,7 +118,10 @@ namespace Engine.OperatorImplementation.Operators
                 try
                 {
                     ++tuple_counter;
-                    return new TexeraTuple(res.Item1.Split(separator));
+                    if(separator!=null)
+                        return new TexeraTuple(res.Item1.Split(separator));
+                    else
+                        return new TexeraTuple(new string[]{res.Item1});
                 }
                 catch
                 {
