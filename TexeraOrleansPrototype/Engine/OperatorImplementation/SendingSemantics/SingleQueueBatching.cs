@@ -13,7 +13,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         private Queue<TexeraTuple> outputRows=new Queue<TexeraTuple>();
         private int batchingLimit;
-        public SingleQueueBatching(int batchingLimit=1000)
+        public SingleQueueBatching(int batchingLimit=2000)
         {
             this.batchingLimit=batchingLimit;
         }

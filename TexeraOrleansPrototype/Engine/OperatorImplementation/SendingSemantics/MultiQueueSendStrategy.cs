@@ -14,7 +14,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected List<IWorkerGrain> receivers;
         protected List<ulong> outputSequenceNumbers;
-        public MultiQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
+        public MultiQueueSendStrategy(int batchingLimit=2000):base(batchingLimit)
         {
             receivers=new List<IWorkerGrain>();
             outputSequenceNumbers=new List<ulong>();
