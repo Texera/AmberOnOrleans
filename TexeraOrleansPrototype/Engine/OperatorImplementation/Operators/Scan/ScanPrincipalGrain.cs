@@ -12,6 +12,9 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ScanPrinicipalGrain : PrincipalGrain, IScanPrincipalGrain
     {
+
+        public override int DefaultNumGrainsInOneLayer { get { return 20; } } 
+
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
             return this.GrainFactory.GetGrain<IScanOperatorGrain>(this.GetPrimaryKey(), extension);
