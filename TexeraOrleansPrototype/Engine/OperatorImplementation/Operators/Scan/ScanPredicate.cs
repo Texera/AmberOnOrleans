@@ -45,8 +45,10 @@ namespace Engine.OperatorImplementation.Operators
             }
             if(file.EndsWith(".tbl"))
                 Separator="|";
-            else
+            else if(file.EndsWith(".csv"))
                 Separator=",";
+            else
+                Separator="|||";
         }
     }
 }
