@@ -6,7 +6,7 @@ namespace Engine.OperatorImplementation.Common
     {
         public int BatchingLimit;
 
-        public PredicateBase(int batchingLimit=2000)
+        public PredicateBase(int batchingLimit=5000)
         {
             BatchingLimit=batchingLimit;
         }
