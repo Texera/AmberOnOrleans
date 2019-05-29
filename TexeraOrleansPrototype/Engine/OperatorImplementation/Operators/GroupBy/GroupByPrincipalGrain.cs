@@ -36,7 +36,7 @@ namespace Engine.OperatorImplementation.Operators
                     operatorGrains[1][finalAddr].Add(finalGrain);
                 }
                 //set target end flag
-                await finalGrain.AddInputInformation(new Pair<Guid, int>(this.GetPrimaryKey(),DefaultNumGrainsInOneLayer));
+                await finalGrain.AddInputInformation(new Pair<Guid, int>(this.GetPrimaryKey(),2*DefaultNumGrainsInOneLayer));
             }            
             Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[0].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
