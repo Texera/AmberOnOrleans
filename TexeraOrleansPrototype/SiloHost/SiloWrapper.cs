@@ -10,6 +10,7 @@ using TexeraUtilities;
 using Engine.OperatorImplementation.Operators;
 using Orleans.Runtime.Placement;
 using Engine.OperatorImplementation.Common;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SiloHost
 {
@@ -62,6 +63,10 @@ namespace SiloHost
                 })
                 .ConfigureServices(services => 
                 {
+                    services.Configure<SchedulingOptions>(options =>
+                    {
+                        options.MaxActiveThreads = 2;
+                    });
                     services.AddSingletonNamedService<PlacementStrategy, WorkerGrainPlacement>(nameof(WorkerGrainPlacement));
                     services.AddSingletonKeyedService<Type, IPlacementDirector, WorkerGrainPlacementDirector>(typeof(WorkerGrainPlacement));
                 })
