@@ -63,10 +63,10 @@ namespace SiloHost
                 })
                 .ConfigureServices(services => 
                 {
-                    services.Configure<SchedulingOptions>(options =>
-                    {
-                        options.MaxActiveThreads = 2;
-                    });
+                    // services.Configure<SchedulingOptions>(options =>
+                    // {
+                    //     options.MaxActiveThreads = 2;
+                    // });
                     services.AddSingletonNamedService<PlacementStrategy, WorkerGrainPlacement>(nameof(WorkerGrainPlacement));
                     services.AddSingletonKeyedService<Type, IPlacementDirector, WorkerGrainPlacementDirector>(typeof(WorkerGrainPlacement));
                 })
