@@ -75,7 +75,7 @@ namespace OrleansClient
                     .Configure<GatewayOptions>(options =>
                     {
                     })
-                    .Configure<SchedulingOptions>(options => options.MaxActiveThreads=4)
+                    .Configure<SchedulingOptions>(options => options.MaxActiveThreads=2)
                     .ConfigureServices(services => 
                     {
                         services.AddSingletonNamedService<PlacementStrategy, WorkerGrainPlacement>(nameof(WorkerGrainPlacement));
