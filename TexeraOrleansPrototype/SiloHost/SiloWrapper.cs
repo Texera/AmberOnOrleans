@@ -60,6 +60,7 @@ namespace SiloHost
                     options.ClusterId = "dev";
                     options.ServiceId = "TexeraOrleansPrototype";
                 })
+                .Configure<SchedulingOptions>(options => options.MaxActiveThreads=4)
                 .ConfigureServices(services => 
                 {
                     services.AddSingletonNamedService<PlacementStrategy, WorkerGrainPlacement>(nameof(WorkerGrainPlacement));
