@@ -22,7 +22,7 @@ namespace Engine.OperatorImplementation.Operators
             //2-layer
             operatorGrains=Enumerable.Range(0, 2).Select(x=>new Dictionary<SiloAddress,List<IWorkerGrain>>()).ToList();
             //last layer
-            for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
+            for(int i=0;i<DefaultNumGrainsInOneLayer/2;++i)
             {
                 IWorkerGrain finalGrain=this.GrainFactory.GetGrain<IGroupByFinalOperatorGrain>(this.GetPrimaryKey(),"final "+i);
                 RequestContext.Set("grainIndex",i);
@@ -36,14 +36,14 @@ namespace Engine.OperatorImplementation.Operators
                     operatorGrains[1][finalAddr].Add(finalGrain);
                 }
                 //set target end flag
-                await finalGrain.AddInputInformation(new Pair<Guid, int>(this.GetPrimaryKey(),2*DefaultNumGrainsInOneLayer));
+                await finalGrain.AddInputInformation(new Pair<Guid, int>(this.GetPrimaryKey(),DefaultNumGrainsInOneLayer));
             }            
             Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[0].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
             ISendStrategy strategy=new Shuffle(serializer.SerializeText(exp));
             //first layer
             strategy.AddReceivers(operatorGrains[1].Values.SelectMany(x=>x).ToList());
-            for(int i=0;i<2*DefaultNumGrainsInOneLayer;++i)
+            for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
                 IWorkerGrain grain=this.GrainFactory.GetGrain<IGroupByOperatorGrain>(this.GetPrimaryKey(),i.ToString());
                 RequestContext.Set("grainIndex",i);

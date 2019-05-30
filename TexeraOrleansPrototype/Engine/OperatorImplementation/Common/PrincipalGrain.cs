@@ -20,7 +20,7 @@ namespace Engine.OperatorImplementation.Common
 {
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
-        public virtual int DefaultNumGrainsInOneLayer { get { return 10; } }
+        public virtual int DefaultNumGrainsInOneLayer { get { return 20; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
         protected bool isPaused = false;
@@ -35,7 +35,7 @@ namespace Engine.OperatorImplementation.Common
         private ulong sequenceNumber=0;
         private int currentPauseFlag=0;
         protected IAsyncObserver<Immutable<ControlMessage>> controlMessageStream;
-        
+
 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         private int breakPointTarget;
         private int breakPointCurrent;
