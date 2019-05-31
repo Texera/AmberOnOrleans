@@ -90,7 +90,7 @@ namespace webapi.Controllers
                 else if((string)operator1["operatorType"] == "CrossRippleJoin")
                 {
                     int inputLimit=operator1["batchingLimit"]==null?1000:int.Parse(operator1["batchingLimit"].ToString());
-                    CrossRippleJoinPredicate crossRippleJoinPredicate=new CrossRippleJoinPredicate(inputLimit,batchSize);
+                    CrossRippleJoinPredicate crossRippleJoinPredicate=new CrossRippleJoinPredicate(inputLimit);
                     op = new CrossRippleJoinOperator(crossRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "HashRippleJoin")
