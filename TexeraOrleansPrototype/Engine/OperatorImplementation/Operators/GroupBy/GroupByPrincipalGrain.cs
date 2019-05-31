@@ -27,7 +27,7 @@ namespace Engine.OperatorImplementation.Operators
                 IWorkerGrain finalGrain=this.GrainFactory.GetGrain<IGroupByFinalOperatorGrain>(this.GetPrimaryKey(),"final "+i);
                 RequestContext.Set("grainIndex",i);
                 SiloAddress finalAddr=await finalGrain.Init(finalGrain,predicate,self);
-                if(!operatorGrains[0].ContainsKey(finalAddr))
+                if(!operatorGrains[1].ContainsKey(finalAddr))
                 {
                     operatorGrains[1].Add(finalAddr,new List<IWorkerGrain>{finalGrain});
                 }
