@@ -20,6 +20,8 @@ namespace webapi.Controllers
     {
         private static IClusterClient client;
 
+        private const int batchSize=10;
+
         [HttpPost]
         [Route("api/queryplan/execute")]
         public IActionResult Execute([FromBody]string logicalPlanJson)
@@ -53,12 +55,12 @@ namespace webapi.Controllers
                 if((string)operator1["operatorType"] == "ScanSource")
                 {
                     //example path to HDFS through WebHDFS API: "http://localhost:50070/webhdfs/v1/input/very_large_input.csv"
-                    ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"]);
+                    ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"],batchSize);
                     op = new ScanOperator(scanPredicate);
                 }
                 else if((string)operator1["operatorType"] == "KeywordMatcher")
                 {
-                    KeywordPredicate keywordPredicate = new KeywordPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["keyword"]!=null?operator1["keyword"].ToString():"");
+                    KeywordPredicate keywordPredicate = new KeywordPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["keyword"]!=null?operator1["keyword"].ToString():"",batchSize);
                     op = new KeywordOperator(keywordPredicate);
                 }
                 else if((string)operator1["operatorType"] == "Aggregation")
@@ -68,7 +70,7 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "Comparison")
                 {
-                    FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["compareTo"].ToString(),operator1["comparisonType"].ToString());
+                    FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["compareTo"].ToString(),operator1["comparisonType"].ToString(),batchSize);
                     switch(operator1["attributeType"].ToString())
                     {
                         case "int":
@@ -88,19 +90,19 @@ namespace webapi.Controllers
                 else if((string)operator1["operatorType"] == "CrossRippleJoin")
                 {
                     int inputLimit=operator1["batchingLimit"]==null?1000:int.Parse(operator1["batchingLimit"].ToString());
-                    CrossRippleJoinPredicate crossRippleJoinPredicate=new CrossRippleJoinPredicate(inputLimit);
+                    CrossRippleJoinPredicate crossRippleJoinPredicate=new CrossRippleJoinPredicate(inputLimit,batchSize);
                     op = new CrossRippleJoinOperator(crossRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "HashRippleJoin")
                 {
                     int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
                     int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
-                    HashRippleJoinPredicate hashRippleJoinPredicate=new HashRippleJoinPredicate(innerIndex,outerIndex);
+                    HashRippleJoinPredicate hashRippleJoinPredicate=new HashRippleJoinPredicate(innerIndex,outerIndex,batchSize);
                     op = new HashRippleJoinOperator(hashRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "InsertionSort")
                 {
-                    SortPredicate sortPredicate=new SortPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")));
+                    SortPredicate sortPredicate=new SortPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),batchSize);
                     switch(operator1["attributeType"].ToString())
                     {
                         case "int":
@@ -121,26 +123,26 @@ namespace webapi.Controllers
                 {
                     int groupByIndex=int.Parse(operator1["groupByAttribute"].ToString().Replace("_c",""));
                     int aggregationIndex=int.Parse(operator1["aggregationAttribute"].ToString().Replace("_c",""));
-                    GroupByPredicate groupByPredicate=new GroupByPredicate(groupByIndex,aggregationIndex,operator1["aggregationFunction"].ToString());
+                    GroupByPredicate groupByPredicate=new GroupByPredicate(groupByIndex,aggregationIndex,operator1["aggregationFunction"].ToString(),batchSize);
                     op=new GroupByOperator(groupByPredicate);
                 }
                 else if((string)operator1["operatorType"] == "Projection")
                 {
                     List<int> projectionIndexs=operator1["projectionAttributes"].ToString().Split(",").Select(x=>int.Parse(x.Replace("_c",""))).ToList();
-                    ProjectionPredicate projectionPredicate=new ProjectionPredicate(projectionIndexs);
+                    ProjectionPredicate projectionPredicate=new ProjectionPredicate(projectionIndexs,batchSize);
                     op=new ProjectionOperator(projectionPredicate);
                 }
                 else if((string)operator1["operatorType"] == "HashJoin")
                 {
                     int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
                     int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
-                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(innerIndex,outerIndex);
+                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(innerIndex,outerIndex,batchSize);
                     op = new HashJoinOperator(hashJoinPredicate);
                 }
                 else if((string)operator1["operatorType"]=="SentimentAnalysis")
                 {
                     int predictIndex=int.Parse(operator1["targetAttribute"].ToString().Replace("_c",""));
-                    SentimentAnalysisPredicate sentimentAnalysisPredicate= new SentimentAnalysisPredicate(predictIndex);
+                    SentimentAnalysisPredicate sentimentAnalysisPredicate= new SentimentAnalysisPredicate(predictIndex,batchSize);
                     op=new SentimentAnalysisOperator(sentimentAnalysisPredicate);
                 }
 
