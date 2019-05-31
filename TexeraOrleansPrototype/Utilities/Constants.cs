@@ -18,6 +18,6 @@ namespace TexeraUtilities
         public const bool conditions_on = false;
         public const bool ordered_on = true;
         public const string delivery = "RPC";
-        public static string connectionString = "server=10.138.0.5;uid=orleans-backend;pwd=orleans-0519-2019;database=orleans;SslMode=none";
+        public static string connectionString = "server=10.138.0.63;uid=orleans-backend;pwd=orleans-0519-2019;database=orleans;SslMode=none";
     }
 }
