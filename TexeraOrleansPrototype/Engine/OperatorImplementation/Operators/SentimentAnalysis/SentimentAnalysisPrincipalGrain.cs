@@ -11,7 +11,6 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class SentimentAnalysisPrinicipalGrain : PrincipalGrain, ISentimentAnalysisPrincipalGrain
     {
-        public override int DefaultNumGrainsInOneLayer { get { return 30; } }
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
             return this.GrainFactory.GetGrain<ISentimentAnalysisOperatorGrain>(this.GetPrimaryKey(), extension);
