@@ -47,7 +47,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
             try
             {
-                await nextGrain.ReceivePayloadMessage(message);
+                nextGrain.ReceivePayloadMessage(message).Wait();
             }
             catch(Exception)
             {
@@ -75,6 +75,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             //     Console.WriteLine(sender+" re-send message with sequence num: "+message.Value.SequenceNumber +" to "+receiver+" successed!");
             // }
             // });
+            return Task.CompletedTask;
         }
     }
 }

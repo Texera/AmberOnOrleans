@@ -33,11 +33,11 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public abstract void SendEndMessages(IGrain senderIdentifier);
 
-        protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
+        protected Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
         {
             try
             {
-                await nextGrain.ReceivePayloadMessage(message);
+                nextGrain.ReceivePayloadMessage(message).Wait();
             }
             catch(Exception)
             {
@@ -65,6 +65,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             //         Console.WriteLine(sender+" re-send message with sequence num: "+message.Value.SequenceNumber +" to "+receiver+" successed!");
             //     }
             // });
+            return Task.CompletedTask;
         }
     }
 }
