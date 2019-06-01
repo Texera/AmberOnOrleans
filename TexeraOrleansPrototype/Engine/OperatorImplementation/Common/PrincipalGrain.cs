@@ -216,6 +216,8 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Pause()
         {
+            TimeSpan t = (DateTime.UtcNow - new DateTime(1970, 1, 1));
+            Console.WriteLine(this.GetType()+" receives the pause message at "+ (int)t.TotalSeconds);
             currentPauseFlag++;
             if(currentPauseFlag>=prevPrincipalGrains.Count || isPaused)
             {

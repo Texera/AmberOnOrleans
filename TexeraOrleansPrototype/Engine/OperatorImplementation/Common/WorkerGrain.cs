@@ -276,6 +276,8 @@ namespace Engine.OperatorImplementation.Common
 
         protected virtual void Pause()
         {
+            TimeSpan t = (DateTime.UtcNow - new DateTime(1970, 1, 1));
+            Console.WriteLine(Utils.GetReadableName(self)+" receives the pause message at "+ (int)t.TotalSeconds);
             lock(actionQueue)
             {
                 Console.WriteLine("Paused: "+Utils.GetReadableName(self)+" actionQueue.Count = "+actionQueue.Count);
