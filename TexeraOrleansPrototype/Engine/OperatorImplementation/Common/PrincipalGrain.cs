@@ -21,7 +21,7 @@ namespace Engine.OperatorImplementation.Common
     [WorkerGrainPlacement]
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
-        public virtual int DefaultNumGrainsInOneLayer { get { return 8; } }
+        public virtual int DefaultNumGrainsInOneLayer { get { return 4; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
         protected bool isPaused = false;
@@ -107,10 +107,7 @@ namespace Engine.OperatorImplementation.Common
                 // {
                 //     RequestContext.Set("targetSilo",prevAllocation[i%prevAllocation.Count]);
                 // }
-                if(this.GetType().ToString().Contains("Scan"))
-                    RequestContext.Set("grainIndex",0);
-                else
-                    RequestContext.Set("grainIndex",1);
+                RequestContext.Set("grainIndex",i);
                 SiloAddress addr=await grain.Init(grain,predicate,self);
                 if(!operatorGrains[0].ContainsKey(addr))
                 {
