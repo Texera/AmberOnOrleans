@@ -213,7 +213,7 @@ namespace Engine.OperatorImplementation.Common
             List<TexeraTuple> localList=new List<TexeraTuple>();
             for(;currentIndex<batch.Count;++currentIndex)
             {
-                #if (CONDITIONAL_BREAKPOINT)
+                #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
                 if(breakPointEnabled && localList.Count+breakPointCurrent>=breakPointTarget)
                 {
                     breakPointCurrent+=localList.Count;
@@ -346,6 +346,7 @@ namespace Engine.OperatorImplementation.Common
                 {
                     lock(actionQueue)
                     {
+                        Console.WriteLine(Utils.GetReadableName(self)+" clear actionQueue");
                         actionQueue.Clear();
                     }
                     return;
@@ -373,6 +374,7 @@ namespace Engine.OperatorImplementation.Common
                 },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                 lock(actionQueue)
                 {
+                    Console.WriteLine(Utils.GetReadableName(self)+" normal dequeue ");
                     actionQueue.Dequeue();
                     if(actionQueue.Count>0)
                     {
