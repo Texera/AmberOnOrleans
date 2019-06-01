@@ -21,7 +21,7 @@ namespace Engine.OperatorImplementation.Common
     [WorkerGrainPlacement]
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
-        public virtual int DefaultNumGrainsInOneLayer { get { return 4; } }
+        public virtual int DefaultNumGrainsInOneLayer { get { return 8; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
         protected bool isPaused = false;

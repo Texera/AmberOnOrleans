@@ -39,7 +39,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 await nextGrain.ReceivePayloadMessage(message);
             }
-            catch(Exception)
+            catch(TimeoutException)
             {
                 string sender,receiver;
                 sender=Utils.GetReadableName(message.Value.SenderIdentifer);
