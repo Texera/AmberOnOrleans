@@ -18,7 +18,6 @@ using System.Threading;
 
 namespace Engine.OperatorImplementation.Common
 {
-    [WorkerGrainPlacement]
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
         public virtual int DefaultNumGrainsInOneLayer { get { return 8; } }
