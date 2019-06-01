@@ -48,7 +48,8 @@ namespace Engine.WorkflowImplementation
             List<Task> taskList=new List<Task>();
             foreach(Operator o in AllOperators)
             {
-                taskList.Add(o.Pause());
+                Task task = Task.Run(()=>o.Pause());
+                taskList.Add(task);
             }
             await Task.WhenAll(taskList);
         }

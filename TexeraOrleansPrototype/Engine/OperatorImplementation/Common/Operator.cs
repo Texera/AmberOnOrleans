@@ -89,7 +89,7 @@ namespace Engine.OperatorImplementation.Common
 
         public async Task Pause()
         {
-            PrincipalGrain.Pause();
+            await PrincipalGrain.Pause();
         }
 
         public async Task Resume()
