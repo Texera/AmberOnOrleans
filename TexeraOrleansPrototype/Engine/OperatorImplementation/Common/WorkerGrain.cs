@@ -242,8 +242,9 @@ namespace Engine.OperatorImplementation.Common
         
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
+            Process(message);
             //Console.WriteLine(MakeIdentifier(self) + " received message from "+message.Value.SenderIdentifer+"with seqnum "+message.Value.SequenceNumber);
-            SendPayloadMessageToSelf(message,0);
+            //SendPayloadMessageToSelf(message,0);
             return Task.CompletedTask;
         }
 
