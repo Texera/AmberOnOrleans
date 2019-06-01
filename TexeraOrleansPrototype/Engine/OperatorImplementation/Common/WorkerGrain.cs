@@ -413,6 +413,8 @@ namespace Engine.OperatorImplementation.Common
         }
         public Task ReceiveControlMessage(Immutable<ControlMessage> message)
         {
+            TimeSpan t = (DateTime.UtcNow - new DateTime(1970, 1, 1));
+            Console.WriteLine(Utils.GetReadableName(self)+" received control message at "+(int)t.TotalSeconds);
             List<ControlMessage.ControlMessageType> executeSequence = orderingEnforcer.PreProcess(message);
             if(executeSequence!=null)
             {
