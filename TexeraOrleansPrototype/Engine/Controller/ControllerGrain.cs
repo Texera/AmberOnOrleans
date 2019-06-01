@@ -30,5 +30,16 @@ namespace Engine.Controller
                 await o.LinkWorkerGrains();
             }
         }
+
+
+        public async Task Pause(HashSet<Operator> graph)
+        {
+            List<Task> taskList=new List<Task>();
+            foreach(Operator o in graph)
+            {
+                taskList.Add(o.Pause());
+            }
+            await Task.WhenAll(taskList);
+        }
     }
 }
