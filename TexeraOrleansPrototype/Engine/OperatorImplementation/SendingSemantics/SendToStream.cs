@@ -34,27 +34,27 @@ namespace Engine.OperatorImplementation.SendingSemantics
             throw new NotImplementedException();
         }
 
-        public void SendBatchedMessages(IGrain senderIdentifier)
+        public async Task SendBatchedMessages(IGrain senderIdentifier)
         {
             while(true)
             {
                 PayloadMessage message = MakeBatchedMessage(senderIdentifier,sequenceNumber);
                 if(message==null)break;
                 ++sequenceNumber;
-                stream.OnNextAsync(message.AsImmutable());
+                await stream.OnNextAsync(message.AsImmutable());
             }
         }
 
-        public void SendEndMessages(IGrain senderIdentifier)
+        public async Task SendEndMessages(IGrain senderIdentifier)
         {
             PayloadMessage message = MakeLastMessage(senderIdentifier,sequenceNumber);
             if(message!=null)
             {
                 ++sequenceNumber;
-                stream.OnNextAsync(message.AsImmutable());
+                await stream.OnNextAsync(message.AsImmutable());
             }
             message = new PayloadMessage(senderIdentifier,sequenceNumber++,null,true);
-            stream.OnNextAsync(message.AsImmutable());
+            await stream.OnNextAsync(message.AsImmutable());
         }
 
     }
