@@ -47,7 +47,7 @@ namespace Engine.OperatorImplementation.Common
         protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
         protected bool isFinished=false;
         protected volatile bool taskDidPaused=false;
-        protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
+        //protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
@@ -62,9 +62,9 @@ namespace Engine.OperatorImplementation.Common
             this.principalGrain=principalGrain;
             this.predicate=predicate;
             Console.WriteLine("Init: "+Utils.GetReadableName(self));
-            var streamProvider = GetStreamProvider("SMSProvider");
-            var stream=streamProvider.GetStream<Immutable<ControlMessage>>(principalGrain.GetPrimaryKey(), "Ctrl");
-            controlMessageStreamHandle=await stream.SubscribeAsync(this);
+            //var streamProvider = GetStreamProvider("SMSProvider");
+            //var stream=streamProvider.GetStream<Immutable<ControlMessage>>(principalGrain.GetPrimaryKey(), "Ctrl");
+            //controlMessageStreamHandle=await stream.SubscribeAsync(this);
             return localSiloDetails.SiloAddress;
             
         }
@@ -77,7 +77,7 @@ namespace Engine.OperatorImplementation.Common
             orderingEnforcer=null;
             sendStrategies=null;
             actionQueue=null;
-            controlMessageStreamHandle.UnsubscribeAsync();
+            //controlMessageStreamHandle.UnsubscribeAsync();
             GC.Collect();
             return Task.CompletedTask;
         }
@@ -409,8 +409,7 @@ namespace Engine.OperatorImplementation.Common
             sendStrategies[operatorGuid]=sendStrategy;
             return Task.CompletedTask;
         }
-
-        public Task OnNextAsync(Immutable<ControlMessage> message, StreamSequenceToken token = null)
+        public Task ReceiveControlMessage(Immutable<ControlMessage> message)
         {
             List<ControlMessage.ControlMessageType> executeSequence = orderingEnforcer.PreProcess(message);
             if(executeSequence!=null)
@@ -437,17 +436,8 @@ namespace Engine.OperatorImplementation.Common
             }
             return Task.CompletedTask;
         }
-
-        public Task OnCompletedAsync()
-        {
-            throw new NotImplementedException();
-        }
-
-        public Task OnErrorAsync(Exception ex)
-        {
-            throw new NotImplementedException();
-        }
-#if(GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+        
+#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         public Task SetTargetValue(int targetValue)
         {
             breakPointEnabled=true;

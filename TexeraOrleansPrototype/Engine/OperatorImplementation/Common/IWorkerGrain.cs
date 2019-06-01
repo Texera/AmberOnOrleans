@@ -11,7 +11,7 @@ using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Common
 {
-    public interface IWorkerGrain : IGrainWithGuidCompoundKey,IAsyncObserver<Immutable<ControlMessage>>
+    public interface IWorkerGrain : IGrainWithGuidCompoundKey
     {
 
         #region used by operators that have subsequent operators
@@ -27,7 +27,7 @@ namespace Engine.OperatorImplementation.Common
         Receives and processes the control message completely. This is because the
         control message needs to be acted upon ASAP.
          */
-
+        Task ReceiveControlMessage(Immutable<ControlMessage> message);
         /*
         Just receives the payload message, sends message to itself to process it and returns. The
         method is coded to return ASAP, thus doesn't do any processing.
