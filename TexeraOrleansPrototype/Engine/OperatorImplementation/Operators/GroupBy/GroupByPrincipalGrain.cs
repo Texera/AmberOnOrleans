@@ -22,7 +22,7 @@ namespace Engine.OperatorImplementation.Operators
             //2-layer
             operatorGrains=Enumerable.Range(0, 2).Select(x=>new Dictionary<SiloAddress,List<IWorkerGrain>>()).ToList();
             //last layer
-            for(int i=0;i<DefaultNumGrainsInOneLayer/2;++i)
+            for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
                 IWorkerGrain finalGrain=this.GrainFactory.GetGrain<IGroupByFinalOperatorGrain>(this.GetPrimaryKey(),"final "+i);
                 RequestContext.Set("grainIndex",i);
