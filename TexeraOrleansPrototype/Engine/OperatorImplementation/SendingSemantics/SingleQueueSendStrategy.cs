@@ -43,7 +43,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public abstract void SendEndMessages(IGrain senderIdentifier);
 
-        protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
+        protected Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
         {
             try
             {
