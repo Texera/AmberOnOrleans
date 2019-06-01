@@ -21,7 +21,7 @@ namespace Engine.OperatorImplementation.Common
     [WorkerGrainPlacement]
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
-        public virtual int DefaultNumGrainsInOneLayer { get { return 4; } }
+        public virtual int DefaultNumGrainsInOneLayer { get { return 6; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
         protected bool isPaused = false;
@@ -35,7 +35,7 @@ namespace Engine.OperatorImplementation.Common
         private IControllerGrain controllerGrain;
         private ulong sequenceNumber=0;
         private int currentPauseFlag=0;
-        protected IAsyncObserver<Immutable<ControlMessage>> controlMessageStream;
+        //protected IAsyncObserver<Immutable<ControlMessage>> controlMessageStream;
 
 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         private int breakPointTarget;
@@ -69,8 +69,8 @@ namespace Engine.OperatorImplementation.Common
             this.self=currentOperator.PrincipalGrain;
             this.predicate=currentOperator.Predicate;
             PassExtraParametersByPredicate(ref this.predicate);
-            var provider=GetStreamProvider("SMSProvider");
-            this.controlMessageStream=provider.GetStream<Immutable<ControlMessage>>(self.GetPrimaryKey(),"Ctrl");
+            //var provider=GetStreamProvider("SMSProvider");
+            //this.controlMessageStream=provider.GetStream<Immutable<ControlMessage>>(self.GetPrimaryKey(),"Ctrl");
             await BuildWorkerTopology();
         }
 
@@ -229,7 +229,14 @@ namespace Engine.OperatorImplementation.Common
                 }
                 isPaused = true;
                 Console.WriteLine(this.GetType()+"sending pause to workers...");
-                await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause)));
+                foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
+                {
+                    foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
+                    {
+                        await grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause)));
+                    }
+                }
+                //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause)));
                 Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
                 // foreach(IPrincipalGrain next in nextPrincipalGrains)
@@ -259,7 +266,14 @@ namespace Engine.OperatorImplementation.Common
                 await SendResumeToNextPrincipalGrain(next,0);
             }
             isPaused = false;
-            await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+            foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
+            {
+                foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
+                {
+                    await grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                }
+            }
+            //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
             sequenceNumber++;
         }
 
@@ -274,7 +288,14 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Start()
         {
-            await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start)));
+            foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
+            {
+                foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
+                {
+                    await grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start)));
+                }
+            }
+            //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start)));
             sequenceNumber++;
         }
 
@@ -287,8 +308,14 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Deactivate()
         {
-            List<Task> taskList=new List<Task>();
-            await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Deactivate)));
+            foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
+            {
+                foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
+                {
+                    await grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Deactivate)));
+                }
+            }
+            //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Deactivate)));
             sequenceNumber++;
             DeactivateOnIdle();
         }
