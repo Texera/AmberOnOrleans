@@ -169,11 +169,7 @@ namespace Engine.OperatorImplementation.Common
                 await strategy.SendBatchedMessages(self);
             }
             outputTuples=new List<TexeraTuple>();
-            if(currentEndFlagCount==0)
-            {
-                Console.WriteLine(Utils.GetReadableName(self)+"currentEndFlagCount = 0 but "+"isFinished = "+isFinished+"actionCount = "+actionQueue.Count);
-            }
-            if(!isFinished && currentEndFlagCount==0 && actionQueue.Count==1)
+            if(!isFinished && currentEndFlagCount==0)
             {
                 isFinished=true;
                 Console.WriteLine("Finished: "+Utils.GetReadableName(self)+" ready to send end flag");
@@ -346,7 +342,6 @@ namespace Engine.OperatorImplementation.Common
                 {
                     lock(actionQueue)
                     {
-                        Console.WriteLine(Utils.GetReadableName(self)+" clear actionQueue");
                         actionQueue.Clear();
                     }
                     return;
@@ -374,7 +369,6 @@ namespace Engine.OperatorImplementation.Common
                 },CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                 lock(actionQueue)
                 {
-                    Console.WriteLine(Utils.GetReadableName(self)+" normal dequeue ");
                     actionQueue.Dequeue();
                     if(actionQueue.Count>0)
                     {
