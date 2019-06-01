@@ -359,9 +359,9 @@ namespace Engine.OperatorImplementation.Common
                     taskDidPaused=true;
                     return;
                 }
-                await Task.Factory.StartNew(()=>
+                await Task.Factory.StartNew(async()=>
                 {
-                    MakePayloadMessagesThenSend();
+                    await MakePayloadMessagesThenSend();
                     if(currentEndFlagCount!=0)
                     {
                         StartGenerate(0);
