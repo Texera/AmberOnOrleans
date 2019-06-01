@@ -169,6 +169,10 @@ namespace Engine.OperatorImplementation.Common
                 await strategy.SendBatchedMessages(self);
             }
             outputTuples=new List<TexeraTuple>();
+            if(currentEndFlagCount==0)
+            {
+                Console.WriteLine(Utils.GetReadableName(self)+"currentEndFlagCount = 0 but "+"isFinished = "+isFinished+"actionCount = "+actionQueue.Count);
+            }
             if(!isFinished && currentEndFlagCount==0 && actionQueue.Count==1)
             {
                 isFinished=true;
