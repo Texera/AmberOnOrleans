@@ -229,13 +229,15 @@ namespace Engine.OperatorImplementation.Common
                 }
                 isPaused = true;
                 Console.WriteLine(this.GetType()+"sending pause to workers...");
+                List<Task> taskList=new List<Task>();
                 foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
                 {
                     foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
                     {
-                        await grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause)));
+                        taskList.Add(grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause))));
                     }
                 }
+                await Task.WhenAll(taskList);
                 //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause)));
                 Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
