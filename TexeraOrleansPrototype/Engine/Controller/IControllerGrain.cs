@@ -10,5 +10,6 @@ namespace Engine.Controller
     public interface IControllerGrain : IGrainWithGuidKey
     {
         Task Init(IControllerGrain self,Guid workflowID,HashSet<Operator> graph);
+        Task Pause(HashSet<Operator> graph);
     }
 }
