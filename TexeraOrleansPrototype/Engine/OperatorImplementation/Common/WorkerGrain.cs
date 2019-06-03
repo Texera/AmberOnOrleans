@@ -130,7 +130,7 @@ namespace Engine.OperatorImplementation.Common
                         Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" END: "+message.Value.SequenceNumber);
                     }
                     AfterProcessBatch(message,orleansScheduler);
-                    await Task.Factory.StartNew(async ()=>{await MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    Task.Factory.StartNew(async ()=>{await MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
@@ -359,7 +359,7 @@ namespace Engine.OperatorImplementation.Common
                     taskDidPaused=true;
                     return;
                 }
-                await Task.Factory.StartNew(async()=>
+                Task.Factory.StartNew(async()=>
                 {
                     await MakePayloadMessagesThenSend();
                     if(currentEndFlagCount!=0)
