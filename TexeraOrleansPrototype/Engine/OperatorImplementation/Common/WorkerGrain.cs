@@ -202,7 +202,7 @@ namespace Engine.OperatorImplementation.Common
                         #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
                         if(breakPointEnabled && breakPointCurrent>=breakPointTarget)
                         {
-                            await Task.Factory.StartNew(()=>{principalGrain.ReportCurrentValue(self,breakPointCurrent,version);},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                            await principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
                         }
                         #endif
                         taskDidPaused=true;
@@ -355,7 +355,7 @@ namespace Engine.OperatorImplementation.Common
                 MakePayloadMessagesThenSend();
                 if(currentEndFlagCount!=0)
                 {
-                    await Task.Factory.StartNew(()=>StartGenerate(0),CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    StartGenerate(0);
                 }
                 lock(actionQueue)
                 {
