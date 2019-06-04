@@ -14,7 +14,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected IAsyncStream<Immutable<PayloadMessage>> stream; 
         private ulong sequenceNumber=0;
-        protected TaskScheduler scheduler;
         public SendToStream(IAsyncStream<Immutable<PayloadMessage>> stream,int batchingLimit=100):base(batchingLimit)
         {
             this.stream=stream;
@@ -48,7 +47,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public void RegisterScheduler(TaskScheduler taskScheduler)
         {
-            scheduler=taskScheduler;
         }
 
         public async Task SendEndMessages(IGrain senderIdentifier)

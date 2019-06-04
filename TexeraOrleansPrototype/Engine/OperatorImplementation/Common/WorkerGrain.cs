@@ -355,7 +355,7 @@ namespace Engine.OperatorImplementation.Common
                 MakePayloadMessagesThenSend();
                 if(currentEndFlagCount!=0)
                 {
-                    StartGenerate(0);
+                    await Task.Factory.StartNew(()=>StartGenerate(0),CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
                 }
                 lock(actionQueue)
                 {
