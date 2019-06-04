@@ -14,6 +14,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected List<IWorkerGrain> receivers;
         protected List<ulong> outputSequenceNumbers;
+        protected TaskScheduler scheduler;
         public SingleQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
             this.receivers=new List<IWorkerGrain>();
@@ -32,11 +33,15 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
         }
 
-
         public void RemoveAllReceivers()
         {
             receivers.Clear();
             this.outputSequenceNumbers.Clear();
+        }
+
+        public void RegisterScheduler(TaskScheduler taskScheduler)
+        {
+            scheduler=taskScheduler;
         }
 
         public abstract Task SendBatchedMessages(IGrain senderIdentifier);

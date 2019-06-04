@@ -14,11 +14,17 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected List<IWorkerGrain> receivers;
         protected List<ulong> outputSequenceNumbers;
+        protected TaskScheduler scheduler;
         public MultiQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
             receivers=new List<IWorkerGrain>();
             outputSequenceNumbers=new List<ulong>();
             this.outputSequenceNumbers=Enumerable.Repeat((ulong)0, receivers.Count).ToList();
+        }
+
+        public void RegisterScheduler(TaskScheduler taskScheduler)
+        {
+            scheduler=taskScheduler;
         }
 
         public abstract void RemoveAllReceivers();
