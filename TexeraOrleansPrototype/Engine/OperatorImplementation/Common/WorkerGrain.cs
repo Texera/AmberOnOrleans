@@ -82,76 +82,6 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public Task Process(Immutable<PayloadMessage> message)
-        {
-            if(isPaused)
-            {
-                pausedMessages.Add(message);
-                return Task.CompletedTask;
-            }
-            if(orderingEnforcer.PreProcess(message))
-            {
-                bool isEnd=message.Value.IsEnd;
-                List<TexeraTuple> batch=message.Value.Payload;
-                orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.Value.SenderIdentifer);  
-                var orleansScheduler=TaskScheduler.Current;
-                Action action=()=>
-                {
-                    if(isFinished)
-                    {
-                        Console.WriteLine("ERROR: After finishing its job, "+Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" SEQ NUM: "+message.Value.SequenceNumber);
-                        ulong num=((OrderingGrainWithSequenceNumber)orderingEnforcer).inSequenceNumberMap[message.Value.SenderIdentifer];
-                        Console.WriteLine("Expected SEQ NUM for "+Utils.GetReadableName(message.Value.SenderIdentifer)+" is "+num);
-                    }
-                    BeforeProcessBatch(message,orleansScheduler);
-                    if(batch!=null)
-                    {
-                        ProcessBatch(batch);
-                    }
-                    if(isPaused)
-                    {
-                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-                        if(breakPointEnabled && breakPointCurrent>=breakPointTarget)
-                        {
-                            await Task.Factory.StartNew(()=>{principalGrain.ReportCurrentValue(self,breakPointCurrent,version);},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
-                        }
-                        #endif
-                        taskDidPaused=true;
-                        Console.WriteLine(Utils.GetReadableName(self)+" did paused");
-                        return;
-                    }
-                    batch=null;
-                    currentIndex=0;
-                    if(isEnd)
-                    {
-                        string ext;
-                        inputInfo[message.Value.SenderIdentifer.GetPrimaryKey(out ext)]--;
-                        currentEndFlagCount--;
-                        Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" END: "+message.Value.SequenceNumber);
-                    }
-                    AfterProcessBatch(message,orleansScheduler);
-                    MakePayloadMessagesThenSend();
-                    lock(actionQueue)
-                    {
-                        actionQueue.Dequeue();
-                        if(actionQueue.Count>0)
-                        {
-                            Task.Run(actionQueue.Peek());
-                        }
-                    }
-                };
-                lock(actionQueue)
-                {
-                    actionQueue.Enqueue(action);
-                    if(actionQueue.Count==1)
-                    {
-                        Task.Run(action);
-                    }
-                }
-            }
-            return Task.CompletedTask;
-        }
-
         protected void MakePayloadMessagesThenSend()
         {
             if(isFinished)
@@ -243,24 +173,86 @@ namespace Engine.OperatorImplementation.Common
         
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
-            Process(message);
-            //Console.WriteLine(MakeIdentifier(self) + " received message from "+message.Value.SenderIdentifer+"with seqnum "+message.Value.SequenceNumber);
-            //SendPayloadMessageToSelf(message,0);
+            if(isPaused)
+            {
+                pausedMessages.Add(message);
+                return Task.CompletedTask;
+            }
+            if(orderingEnforcer.PreProcess(message))
+            {
+                bool isEnd=message.Value.IsEnd;
+                List<TexeraTuple> batch=message.Value.Payload;
+                orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.Value.SenderIdentifer);  
+                var orleansScheduler=TaskScheduler.Current;
+                Action action=()=>
+                {
+                    if(isFinished)
+                    {
+                        Console.WriteLine("ERROR: After finishing its job, "+Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" SEQ NUM: "+message.Value.SequenceNumber);
+                        ulong num=((OrderingGrainWithSequenceNumber)orderingEnforcer).inSequenceNumberMap[message.Value.SenderIdentifer];
+                        Console.WriteLine("Expected SEQ NUM for "+Utils.GetReadableName(message.Value.SenderIdentifer)+" is "+num);
+                    }
+                    BeforeProcessBatch(message,orleansScheduler);
+                    if(batch!=null)
+                    {
+                        ProcessBatch(batch);
+                    }
+                    if(isPaused)
+                    {
+                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+                        if(breakPointEnabled && breakPointCurrent>=breakPointTarget)
+                        {
+                            await Task.Factory.StartNew(()=>{principalGrain.ReportCurrentValue(self,breakPointCurrent,version);},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                        }
+                        #endif
+                        taskDidPaused=true;
+                        Console.WriteLine(Utils.GetReadableName(self)+" did paused");
+                        return;
+                    }
+                    batch=null;
+                    currentIndex=0;
+                    if(isEnd)
+                    {
+                        string ext;
+                        inputInfo[message.Value.SenderIdentifer.GetPrimaryKey(out ext)]--;
+                        currentEndFlagCount--;
+                        Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" END: "+message.Value.SequenceNumber);
+                    }
+                    AfterProcessBatch(message,orleansScheduler);
+                    MakePayloadMessagesThenSend();
+                    lock(actionQueue)
+                    {
+                        actionQueue.Dequeue();
+                        if(actionQueue.Count>0)
+                        {
+                            Task.Run(actionQueue.Peek());
+                        }
+                    }
+                };
+                lock(actionQueue)
+                {
+                    actionQueue.Enqueue(action);
+                    if(actionQueue.Count==1)
+                    {
+                        Task.Run(action);
+                    }
+                }
+            }
             return Task.CompletedTask;
         }
 
 
-        private void SendPayloadMessageToSelf(Immutable<PayloadMessage> message, int retryCount)
-        {
-            self.Process(message).ContinueWith((t)=>
-            {  
-                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                {
-                    Console.WriteLine(this.GetType().Name+"("+self+")"+" re-receive message with retry count "+retryCount);
-                    SendPayloadMessageToSelf(message, retryCount + 1); 
-                }
-            });
-        }
+        // private void SendPayloadMessageToSelf(Immutable<PayloadMessage> message, int retryCount)
+        // {
+        //     self.Process(message).ContinueWith((t)=>
+        //     {  
+        //         if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+        //         {
+        //             Console.WriteLine(this.GetType().Name+"("+self+")"+" re-receive message with retry count "+retryCount);
+        //             SendPayloadMessageToSelf(message, retryCount + 1); 
+        //         }
+        //     });
+        // }
 
         protected virtual List<TexeraTuple> MakeFinalOutputTuples()
         {
@@ -308,7 +300,7 @@ namespace Engine.OperatorImplementation.Common
             }
             foreach(Immutable<PayloadMessage> message in pausedMessages)
             {
-                SendPayloadMessageToSelf(message,0);
+                ReceivePayloadMessage(message);
             }
             pausedMessages=new List<Immutable<PayloadMessage>>();
         }
