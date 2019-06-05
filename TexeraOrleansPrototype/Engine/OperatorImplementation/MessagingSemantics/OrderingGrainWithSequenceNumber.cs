@@ -57,7 +57,16 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     {
                         stashedPayloadMessages[sender]=new Dictionary<ulong, Pair<bool, List<TexeraTuple>>>();
                     }
-                    stashedPayloadMessages[sender].Add(sequenceNum, new Pair<bool, List<TexeraTuple>>(message.Value.IsEnd,message.Value.Payload));
+                    try
+                    {
+                        stashedPayloadMessages[sender].Add(sequenceNum, new Pair<bool, List<TexeraTuple>>(message.Value.IsEnd,message.Value.Payload));
+                    }
+                    catch(Exception e)
+                    {
+                        Console.WriteLine("sender: "+sender);
+                        Console.WriteLine(message.Value.Payload.Equals(stashedPayloadMessages[sender][sequenceNum].Second));
+                        throw e;
+                    }
                     break;
                 case MessageStatus.Duplicated:
                     //Console.WriteLine("expected "+inSequenceNumberMap[sender]+" but get "+sequenceNum+" duplicated");
