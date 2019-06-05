@@ -46,7 +46,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 await nextGrain.ReceivePayloadMessage(message);
             }
-            catch(TimeoutException)
+            catch(Exception)
             {
                 if(retryCount<Constants.max_retries)
                 {
