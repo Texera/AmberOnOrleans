@@ -38,11 +38,16 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 List<TexeraTuple> payload=new List<TexeraTuple>();
                 for(int i=0;i<batchingLimit;++i)
                 {
-                    payload.Add(outputRows.Dequeue());
+                    TexeraTuple tuple=outputRows.Dequeue();
+                    if(tuple==null)
+                    {
+                        Console.WriteLine("???? from outputRows.Dequeue");
+                    }
+                    payload.Add(tuple);
                 }
                 if(payload[0]==null)
                 {
-                    Console.WriteLine("???? from dequeue");
+                    Console.WriteLine("???? from MakeBatchedMessage");
                 }
                 outputMessage=new PayloadMessage(senderIdentifier,sequenceNumber,payload,false);
             }
