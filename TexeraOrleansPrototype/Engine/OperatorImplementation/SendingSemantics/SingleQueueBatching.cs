@@ -22,10 +22,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
             foreach(TexeraTuple tuple in output)
             {
-                if(tuple ==null)
-                {
-                    Console.WriteLine("???? from enqueue");
-                }
                 outputRows.Enqueue(tuple);
             }
         }
@@ -33,26 +29,14 @@ namespace Engine.OperatorImplementation.SendingSemantics
         protected PayloadMessage MakeBatchedMessage(IGrain senderIdentifier,ulong sequenceNumber)
         {
             PayloadMessage outputMessage=null;
-            lock(outputRows)
+            if(outputRows.Count>=batchingLimit)
             {
-                if(outputRows.Count>=batchingLimit)
+                List<TexeraTuple> payload=new List<TexeraTuple>();
+                for(int i=0;i<batchingLimit;++i)
                 {
-                    List<TexeraTuple> payload=new List<TexeraTuple>();
-                    for(int i=0;i<batchingLimit;++i)
-                    {
-                        TexeraTuple tuple=outputRows.Dequeue();
-                        if(tuple==null)
-                        {
-                            Console.WriteLine("???? from outputRows.Dequeue");
-                        }
-                        payload.Add(tuple);
-                    }
-                    if(payload[0]==null)
-                    {
-                        Console.WriteLine("???? from MakeBatchedMessage");
-                    }
-                    outputMessage=new PayloadMessage(senderIdentifier,sequenceNumber,payload,false);
+                    payload.Add(outputRows.Dequeue());
                 }
+                outputMessage=new PayloadMessage(senderIdentifier,sequenceNumber,payload,false);
             }
             return outputMessage;
         }

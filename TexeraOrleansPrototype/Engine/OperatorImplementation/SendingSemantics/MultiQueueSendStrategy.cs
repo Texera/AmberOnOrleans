@@ -46,9 +46,8 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 await nextGrain.ReceivePayloadMessage(message);
             }
-            catch(Exception e)
+            catch(TimeoutException e)
             {
-                Console.WriteLine("ERROR!!!!!! ----\n"+e.Message+e.StackTrace);
                 if(retryCount<Constants.max_retries)
                 {
                     string sender,receiver;

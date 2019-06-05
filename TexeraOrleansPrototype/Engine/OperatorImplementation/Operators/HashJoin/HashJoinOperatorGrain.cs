@@ -101,7 +101,7 @@ namespace Engine.OperatorImplementation.Operators
                     }
                     batch=null;
                     currentIndex=0;
-                    await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    await MakePayloadMessagesThenSend();
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();

@@ -55,15 +55,8 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 await nextGrain.ReceivePayloadMessage(message);
             }
-            catch(Exception e)
+            catch(TimeoutException e)
             {
-                Console.WriteLine("Sender in sending strategy: "+message.Value.SenderIdentifer);
-                if(message.Value.Payload != null && message.Value.Payload[0]==null)
-                {
-                    Console.WriteLine("????? from sending strategy");
-                }
-                //Console.WriteLine("send first tuple: [{0}]", string.Join(", ", message.Value.Payload[0].FieldList));
-                Console.WriteLine("ERROR!!!!!! ----\n"+e.Message+e.StackTrace);
                 if(retryCount<Constants.max_retries)
                 {
                     string sender,receiver;
