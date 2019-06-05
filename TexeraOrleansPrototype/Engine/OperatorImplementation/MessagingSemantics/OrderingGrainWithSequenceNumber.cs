@@ -59,6 +59,10 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     }
                     try
                     {
+                        if(message.Value.Payload[0]==null)
+                        {
+                            throw new Exception("????????????");
+                        }
                         stashedPayloadMessages[sender].Add(sequenceNum, new Pair<bool, List<TexeraTuple>>(message.Value.IsEnd,message.Value.Payload));
                     }
                     catch(Exception e)
