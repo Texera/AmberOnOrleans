@@ -33,23 +33,26 @@ namespace Engine.OperatorImplementation.SendingSemantics
         protected PayloadMessage MakeBatchedMessage(IGrain senderIdentifier,ulong sequenceNumber)
         {
             PayloadMessage outputMessage=null;
-            if(outputRows.Count>=batchingLimit)
+            lock(outputRows)
             {
-                List<TexeraTuple> payload=new List<TexeraTuple>();
-                for(int i=0;i<batchingLimit;++i)
+                if(outputRows.Count>=batchingLimit)
                 {
-                    TexeraTuple tuple=outputRows.Dequeue();
-                    if(tuple==null)
+                    List<TexeraTuple> payload=new List<TexeraTuple>();
+                    for(int i=0;i<batchingLimit;++i)
                     {
-                        Console.WriteLine("???? from outputRows.Dequeue");
+                        TexeraTuple tuple=outputRows.Dequeue();
+                        if(tuple==null)
+                        {
+                            Console.WriteLine("???? from outputRows.Dequeue");
+                        }
+                        payload.Add(tuple);
                     }
-                    payload.Add(tuple);
+                    if(payload[0]==null)
+                    {
+                        Console.WriteLine("???? from MakeBatchedMessage");
+                    }
+                    outputMessage=new PayloadMessage(senderIdentifier,sequenceNumber,payload,false);
                 }
-                if(payload[0]==null)
-                {
-                    Console.WriteLine("???? from MakeBatchedMessage");
-                }
-                outputMessage=new PayloadMessage(senderIdentifier,sequenceNumber,payload,false);
             }
             return outputMessage;
         }
