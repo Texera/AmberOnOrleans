@@ -58,7 +58,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             catch(Exception e)
             {
                 Console.WriteLine("Sender in sending strategy: "+message.Value.SenderIdentifer);
-                if(message.Value.Payload[0]==null)
+                if(message.Value.Payload != null && message.Value.Payload[0]==null)
                 {
                     Console.WriteLine("????? from sending strategy");
                 }

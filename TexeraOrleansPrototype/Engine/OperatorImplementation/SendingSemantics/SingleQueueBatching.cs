@@ -40,6 +40,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 {
                     payload.Add(outputRows.Dequeue());
                 }
+                if(payload[0]==null)
+                {
+                    Console.WriteLine("???? from dequeue");
+                }
                 outputMessage=new PayloadMessage(senderIdentifier,sequenceNumber,payload,false);
             }
             return outputMessage;

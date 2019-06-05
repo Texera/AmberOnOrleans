@@ -47,6 +47,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
         private async Task RoundRobinSending(Immutable<PayloadMessage> message)
         {
             outputSequenceNumbers[roundRobinIndex]++;
+            if(message.Value.Payload[0]==null)
+            {
+                Console.WriteLine("????? from RoundRobinSending");
+            }
             await SendMessageTo(receivers[roundRobinIndex],message,0);
             roundRobinIndex = (roundRobinIndex+1)%receivers.Count;
         }
