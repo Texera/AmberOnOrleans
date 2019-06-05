@@ -64,9 +64,9 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     catch(Exception e)
                     {
                         Console.WriteLine("sender: "+sender);
-                        Console.WriteLine("received first tuple: [{0}]", string.Join(", ", message.Value.Payload[0]));
-                        Console.WriteLine("old first tuple: [{0}]", string.Join(", ", stashedPayloadMessages[sender][sequenceNum].Second[0]));
-                        Console.WriteLine(message.Value.Payload[0].Equals(stashedPayloadMessages[sender][sequenceNum].Second[0]));
+                        Console.WriteLine("received first tuple: [{0}]", string.Join(", ", message.Value.Payload[0].FieldList));
+                        Console.WriteLine("old first tuple: [{0}]", string.Join(", ", stashedPayloadMessages[sender][sequenceNum].Second[0].FieldList));
+                        Console.WriteLine(message.Value.Payload[0].FieldList.Equals(stashedPayloadMessages[sender][sequenceNum].Second[0].FieldList));
                         throw e;
                     }
                     break;
