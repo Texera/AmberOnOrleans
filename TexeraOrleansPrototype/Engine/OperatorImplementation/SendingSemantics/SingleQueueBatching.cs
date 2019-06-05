@@ -22,6 +22,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
             foreach(TexeraTuple tuple in output)
             {
+                if(tuple ==null)
+                {
+                    Console.WriteLine("???? from enqueue");
+                }
                 outputRows.Enqueue(tuple);
             }
         }
