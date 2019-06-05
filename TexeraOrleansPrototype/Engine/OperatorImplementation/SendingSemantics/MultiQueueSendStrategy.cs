@@ -40,20 +40,19 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public abstract Task SendEndMessages(IGrain senderIdentifier);
 
-        protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
+        protected Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
         {
-            try
-            {
-                await nextGrain.ReceivePayloadMessage(message);
-            }
-            catch(TimeoutException)
-            {
-                string sender,receiver;
-                sender=Utils.GetReadableName(message.Value.SenderIdentifer);
-                receiver=Utils.GetReadableName(nextGrain);
-                Console.WriteLine(sender+" re-send message with sequence num: "+message.Value.SequenceNumber +" to "+receiver+" with retry count "+retryCount);
-                await SendMessageTo(nextGrain,message, retryCount + 1);
-            }
+            nextGrain.ReceivePayloadMessage(message).ContinueWith((t)=>{
+                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                {
+                    string sender,receiver;
+                    sender=Utils.GetReadableName(message.Value.SenderIdentifer);
+                    receiver=Utils.GetReadableName(nextGrain);
+                    Console.WriteLine(sender+" re-send message with sequence num: "+message.Value.SequenceNumber +" to "+receiver+" with retry count "+retryCount);
+                    SendMessageTo(nextGrain,message, retryCount + 1);
+                }
+            });
+            return Task.CompletedTask;
             // .ContinueWith(async (t)=>
             // {
             //     if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
