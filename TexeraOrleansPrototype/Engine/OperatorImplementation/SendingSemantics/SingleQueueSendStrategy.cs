@@ -58,7 +58,11 @@ namespace Engine.OperatorImplementation.SendingSemantics
             catch(Exception e)
             {
                 Console.WriteLine("Sender in sending strategy: "+message.Value.SenderIdentifer);
-                Console.WriteLine("send first tuple: [{0}]", string.Join(", ", message.Value.Payload[0].FieldList));
+                if(message.Value.Payload[0]==null)
+                {
+                    Console.WriteLine("????? from sending strategy");
+                }
+                //Console.WriteLine("send first tuple: [{0}]", string.Join(", ", message.Value.Payload[0].FieldList));
                 Console.WriteLine("ERROR!!!!!! ----\n"+e.Message+e.StackTrace);
                 if(retryCount<Constants.max_retries)
                 {
