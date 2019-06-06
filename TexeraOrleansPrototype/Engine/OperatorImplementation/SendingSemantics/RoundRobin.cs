@@ -16,7 +16,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
         }
 
-        public override async Task SendBatchedMessages(IGrain senderIdentifier)
+        public override Task SendBatchedMessages(IGrain senderIdentifier)
         {
             while(true)
             {
@@ -25,30 +25,33 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 {
                     break;
                 }
-                await RoundRobinSending(message.AsImmutable());
+                RoundRobinSending(message.AsImmutable());
             }
+            return Task.CompletedTask;
         }
 
-        public override async Task SendEndMessages(IGrain senderIdentifier)
+        public override Task SendEndMessages(IGrain senderIdentifier)
         {
             PayloadMessage message=MakeLastMessage(senderIdentifier,outputSequenceNumbers[roundRobinIndex]);
             if(message!=null)
             {
-                await RoundRobinSending(message.AsImmutable());
+                RoundRobinSending(message.AsImmutable());
             }
             for(int i=0;i<receivers.Count;++i)
             {
                 Console.WriteLine(Utils.GetReadableName(senderIdentifier)+" -> "+ Utils.GetReadableName(receivers[i]) +" END: "+outputSequenceNumbers[i]);
                 message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
-                await SendMessageTo(receivers[i],message.AsImmutable(),0);
+                SendMessageTo(receivers[i],message.AsImmutable(),0);
             }
+            return Task.CompletedTask;
         }
 
-        private async Task RoundRobinSending(Immutable<PayloadMessage> message)
+        private Task RoundRobinSending(Immutable<PayloadMessage> message)
         {
             outputSequenceNumbers[roundRobinIndex]++;
-            await SendMessageTo(receivers[roundRobinIndex],message,0);
+            SendMessageTo(receivers[roundRobinIndex],message,0);
             roundRobinIndex = (roundRobinIndex+1)%receivers.Count;
+            return Task.CompletedTask;
         }
     }
 }
