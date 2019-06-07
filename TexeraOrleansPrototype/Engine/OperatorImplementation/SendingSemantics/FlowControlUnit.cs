@@ -33,23 +33,23 @@ public class FlowControlUnit
             //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
             if (message.Value.SequenceNumber - lastAckSeqNum > windowSize) 
             {
-                if(message.Value.IsEnd)
-                {
-                    Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
-                    Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum+" "+lastSentSeqNum);
-                    string temp="[";
-                    foreach(var i in stashedSeqNum)
-                    {
-                        temp+=i.ToString()+" ";
-                    }
-                    Console.WriteLine(temp+"]");
-                    temp="[";
-                    foreach(var i in ackChecked)
-                    {
-                        temp+="("+i.Item1+","+i.Item2+","+i.Item3+") ";
-                    }
-                    Console.WriteLine(temp+"]");
-                }
+                // if(message.Value.IsEnd)
+                // {
+                //     Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
+                //     Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum+" "+lastSentSeqNum);
+                //     string temp="[";
+                //     foreach(var i in stashedSeqNum)
+                //     {
+                //         temp+=i.ToString()+" ";
+                //     }
+                //     Console.WriteLine(temp+"]");
+                //     temp="[";
+                //     foreach(var i in ackChecked)
+                //     {
+                //         temp+="("+i.Item1+","+i.Item2+","+i.Item3+") ";
+                //     }
+                //     Console.WriteLine(temp+"]");
+                // }
                 toBeSentBuffer.Enqueue(message);
             }
             else 
@@ -73,7 +73,7 @@ public class FlowControlUnit
         {
             if (Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
             {
-                Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
+                //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
                 SendInternal(message,retryCount+1);
             } 
             else if(t.IsCompletedSuccessfully)
@@ -87,7 +87,7 @@ public class FlowControlUnit
                     if (message.Value.SequenceNumber < lastAckSeqNum) 
                     {
                         // ack already received, do nothing
-                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" ??? "+message.Value.SequenceNumber);
+                        //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" ??? "+message.Value.SequenceNumber);
                     }
                     else if (message.Value.SequenceNumber == lastAckSeqNum) 
                     {
@@ -117,7 +117,7 @@ public class FlowControlUnit
             }
             else
             {
-                Console.WriteLine("??????????????????????????????????");
+                //Console.WriteLine("??????????????????????????????????");
             }
         });
     }
