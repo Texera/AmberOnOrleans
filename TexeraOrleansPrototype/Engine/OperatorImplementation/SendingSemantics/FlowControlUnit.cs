@@ -105,7 +105,7 @@ public class FlowControlUnit
             return;
         }
         ulong numMessagesToSend = Math.Min((ulong)toBeSentBuffer.Count,windowSize - (lastSentSeqNum - lastAckSeqNum));
-        if(numMessagesToSend>0)Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
+        //if(numMessagesToSend>0)Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
         for (ulong i=0;i<numMessagesToSend;++i) 
         { 
             SendInternal(toBeSentBuffer.Dequeue(),0);
