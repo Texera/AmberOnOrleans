@@ -83,17 +83,8 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        protected Task MakePayloadMessagesThenSend()
+        protected void MakePayloadMessagesThenSend()
         {
-            if(isFinished)
-            {
-                Console.WriteLine("ERROR: "+Utils.GetReadableName(this)+" want to send payload "+outputTuples.Count+" after finishing its job!");
-            }
-            if(sendStrategies==null)
-            {
-                Console.WriteLine("ERROR: detect a payload with size "+outputTuples.Count);
-                Console.WriteLine("ERROR: "+Utils.GetReadableName(this)+" tries to send message but sendStrategies is null");
-            }
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
@@ -103,14 +94,11 @@ namespace Engine.OperatorImplementation.Common
             if(!isFinished && currentEndFlagCount==0)
             {
                 isFinished=true;
-                Console.WriteLine("Finished: "+Utils.GetReadableName(self)+" ready to send end flag");
                 MakeLastPayloadMessageThenSend();
-                Console.WriteLine("Finished: "+Utils.GetReadableName(self)+" finished sending end flag");
             }
-            return Task.CompletedTask;
         }
 
-        private Task MakeLastPayloadMessageThenSend()
+        private void MakeLastPayloadMessageThenSend()
         {
             List<TexeraTuple> output=MakeFinalOutputTuples();
             if(output!=null)
@@ -124,7 +112,6 @@ namespace Engine.OperatorImplementation.Common
                 strategy.SendEndMessages(self);
             }
             outputTuples= new List<TexeraTuple>();
-            return Task.CompletedTask;
         }
 
 
@@ -188,12 +175,6 @@ namespace Engine.OperatorImplementation.Common
                 var orleansScheduler=TaskScheduler.Current;
                 Action action=()=>
                 {
-                    if(isFinished)
-                    {
-                        Console.WriteLine("ERROR: After finishing its job, "+Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" SEQ NUM: "+message.Value.SequenceNumber);
-                        ulong num=((OrderingGrainWithSequenceNumber)orderingEnforcer).inSequenceNumberMap[message.Value.SenderIdentifer];
-                        Console.WriteLine("Expected SEQ NUM for "+Utils.GetReadableName(message.Value.SenderIdentifer)+" is "+num);
-                    }
                     BeforeProcessBatch(message,orleansScheduler);
                     if(batch!=null)
                     {
@@ -208,7 +189,6 @@ namespace Engine.OperatorImplementation.Common
                         }
                         #endif
                         taskDidPaused=true;
-                        Console.WriteLine(Utils.GetReadableName(self)+" did paused");
                         return;
                     }
                     batch=null;
@@ -260,15 +240,6 @@ namespace Engine.OperatorImplementation.Common
         {
             return null;
         }
-
-
-        // public string ReturnGrainIndentifierString(IWorkerGrain grain)
-        // {
-        //     //string a="Engine.OperatorImplementation.Operators.OrleansCodeGen";
-        //     string extension;
-        //     //grain.GetPrimaryKey(out extension);
-        //     return grain.GetPrimaryKey(out extension).ToString()+" "+extension;
-        // }
 
         protected virtual void Pause()
         {
