@@ -35,6 +35,7 @@ public class FlowControlUnit
             {
                 if(message.Value.IsEnd)
                 {
+                    Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
                     Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum);
                     string temp="[";
                     foreach(var i in stashedSeqNum)
@@ -72,7 +73,7 @@ public class FlowControlUnit
         {
             if (Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
             {
-                Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
+                //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
                 SendInternal(message,retryCount+1);
             } 
             else
