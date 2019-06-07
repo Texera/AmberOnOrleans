@@ -36,7 +36,7 @@ public class FlowControlUnit
                 if(message.Value.IsEnd)
                 {
                     Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
-                    Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum);
+                    Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum+" "+lastSentSeqNum);
                     string temp="[";
                     foreach(var i in stashedSeqNum)
                     {
