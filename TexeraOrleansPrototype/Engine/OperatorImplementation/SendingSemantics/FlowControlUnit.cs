@@ -64,7 +64,7 @@ public class FlowControlUnit
         {
             if (Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
             {
-                Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber);
+                Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
                 SendInternal(message,retryCount+1);
             } 
             else
