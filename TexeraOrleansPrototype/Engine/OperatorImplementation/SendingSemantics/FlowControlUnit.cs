@@ -32,6 +32,10 @@ public class FlowControlUnit
         }
         else 
         {
+            if(message.Value.IsEnd)
+            {
+                Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" END -> "+Utils.GetReadableName(receiver)+" stashed??? current window size = "+windowSize);
+            }
             SendInternal(message,0);
         }
     }
