@@ -31,6 +31,16 @@ public class FlowControlUnit
             //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
             if (message.Value.SequenceNumber - lastAckSeqNum > windowSize) 
             {
+                if(message.Value.IsEnd)
+                {
+                    Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum);
+                    string temp="[";
+                    foreach(var i in stashedSeqNum)
+                    {
+                        temp+=i.ToString()+" ";
+                    }
+                    Console.WriteLine(temp+"]");
+                }
                 toBeSentBuffer.Enqueue(message);
             }
             else 
@@ -84,7 +94,7 @@ public class FlowControlUnit
                                 break;
                             }
                         }
-                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" advanced to "+lastAckSeqNum);
+                        //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" advanced to "+lastAckSeqNum);
                         sendMessagesInBuffer();
                     } 
                     else 
