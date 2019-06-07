@@ -46,11 +46,13 @@ public class FlowControlUnit
         {
             if (Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
             {
+                Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber);
                 SendInternal(message,retryCount+1);
             } 
             else
             {
                 windowSize = t.Result;
+                Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" window size = "+windowSize);
                 // action for successful ack
                 if (message.Value.SequenceNumber <= lastAckSeqNum) 
                 {
