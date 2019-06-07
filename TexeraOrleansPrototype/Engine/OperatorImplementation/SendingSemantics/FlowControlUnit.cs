@@ -33,7 +33,10 @@ public class FlowControlUnit
                 Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum+" "+toBeSentBuffer.Count);
                 Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" END -> "+Utils.GetReadableName(receiver)+" stashed??? current window size = "+windowSize);
             }
-            toBeSentBuffer.Enqueue(message);
+            lock(toBeSentBuffer)
+            {
+                toBeSentBuffer.Enqueue(message);
+            }
         }
         else 
         {
@@ -47,8 +50,6 @@ public class FlowControlUnit
         {
             Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" END -> "+Utils.GetReadableName(receiver));
         }
-
-
 
         if (message.Value.SequenceNumber > lastSentSeqNum) 
         {
@@ -75,23 +76,29 @@ public class FlowControlUnit
                 {
                     lastAckSeqNum++;
                     // advance lastAckSeqNum until a gap in the list 
-                    while(true)
+                    lock(stashedSeqNum)
                     {
-                        if(stashedSeqNum.Contains(lastAckSeqNum))
+                        while(true)
                         {
-                            stashedSeqNum.Remove(lastAckSeqNum);
-                            lastAckSeqNum++;
-                        }
-                        else
-                        {
-                            break;
+                            if(stashedSeqNum.Contains(lastAckSeqNum))
+                            {
+                                stashedSeqNum.Remove(lastAckSeqNum);
+                                lastAckSeqNum++;
+                            }
+                            else
+                            {
+                                break;
+                            }
                         }
                     }
                     sendMessagesInBuffer();
                 } 
                 else 
                 {
-                    stashedSeqNum.Add(message.Value.SequenceNumber);
+                    lock(stashedSeqNum)
+                    {
+                        stashedSeqNum.Add(message.Value.SequenceNumber);
+                    }
                 }
             }
         });
