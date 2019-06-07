@@ -32,10 +32,6 @@ public class FlowControlUnit
         }
         else 
         {
-            if(message.Value.IsEnd)
-            {
-                Console.WriteLine("?????");
-            }
             SendInternal(message,0);
         }
     }
@@ -98,6 +94,7 @@ public class FlowControlUnit
             return;
         }
         ulong numMessagesToSend = windowSize - (lastSentSeqNum - lastAckSeqNum);
+        Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
         for (ulong i=0;i<numMessagesToSend;++i) 
         {
             if (toBeSentBuffer.Count>0) 

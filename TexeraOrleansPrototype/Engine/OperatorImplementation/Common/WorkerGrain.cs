@@ -169,7 +169,7 @@ namespace Engine.OperatorImplementation.Common
                 if(windowLimit>(ulong)actionQueue.Count)
                     return Task.FromResult(windowLimit-(ulong)actionQueue.Count);
                 else
-                    return Task.FromResult((ulong)1);
+                    return Task.FromResult((ulong)10);
             }
             if(orderingEnforcer.PreProcess(message))
             {
@@ -227,7 +227,7 @@ namespace Engine.OperatorImplementation.Common
             if(windowLimit>(ulong)actionQueue.Count)
                 return Task.FromResult(windowLimit-(ulong)actionQueue.Count);
             else
-                return Task.FromResult((ulong)1);
+                return Task.FromResult((ulong)10);
         }
 
 
