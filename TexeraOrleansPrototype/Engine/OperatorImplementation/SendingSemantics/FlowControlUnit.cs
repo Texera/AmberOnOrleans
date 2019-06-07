@@ -31,12 +31,7 @@ public class FlowControlUnit
             //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
             if (message.Value.SequenceNumber - lastAckSeqNum > windowSize) 
             {
-                if(message.Value.IsEnd)
-                {
-                    Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum+" "+toBeSentBuffer.Count);
-                    Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" END -> "+Utils.GetReadableName(receiver)+" stashed??? current window size = "+windowSize);
-                }
-                    toBeSentBuffer.Enqueue(message);
+                toBeSentBuffer.Enqueue(message);
             }
             else 
             {
@@ -47,11 +42,6 @@ public class FlowControlUnit
 
     private void SendInternal(Immutable<PayloadMessage> message,int retryCount)
     {
-        if(message.Value.IsEnd)
-        {
-            Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" END -> "+Utils.GetReadableName(receiver));
-        }
-        
         lock(_object)
         {
             if (message.Value.SequenceNumber > lastSentSeqNum) 
@@ -77,11 +67,10 @@ public class FlowControlUnit
                     if (message.Value.SequenceNumber < lastAckSeqNum) 
                     {
                         // ack already received, do nothing
-                        Console.WriteLine("ERROR??????: "+message.Value.SequenceNumber+" "+lastAckSeqNum);
                     }
                     else if (message.Value.SequenceNumber == lastAckSeqNum) 
                     {
-                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" acked "+message.Value.SequenceNumber);
+                        //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" acked "+message.Value.SequenceNumber);
                         // advance lastAckSeqNum until a gap in the list 
                         while(true)
                         {
@@ -95,7 +84,7 @@ public class FlowControlUnit
                                 break;
                             }
                         }
-                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" advanced to "+lastAckSeqNum);
+                        //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" advanced to "+lastAckSeqNum);
                         sendMessagesInBuffer();
                     } 
                     else 
