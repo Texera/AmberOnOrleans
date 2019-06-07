@@ -165,7 +165,10 @@ namespace Engine.OperatorImplementation.Common
             if(isPaused)
             {
                 pausedMessages.Add(message);
-                return Task.FromResult(windowLimit-(ulong)actionQueue.Count);
+                if(windowLimit>(ulong)actionQueue.Count)
+                    return Task.FromResult(windowLimit-(ulong)actionQueue.Count);
+                else
+                    return Task.FromResult((ulong)1);
             }
             if(orderingEnforcer.PreProcess(message))
             {
@@ -220,7 +223,10 @@ namespace Engine.OperatorImplementation.Common
                     }
                 }
             }
-            return Task.FromResult(windowLimit-(ulong)actionQueue.Count);
+            if(windowLimit>(ulong)actionQueue.Count)
+                return Task.FromResult(windowLimit-(ulong)actionQueue.Count);
+            else
+                return Task.FromResult((ulong)1);
         }
 
 
