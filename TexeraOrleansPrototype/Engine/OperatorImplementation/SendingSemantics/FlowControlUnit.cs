@@ -76,7 +76,7 @@ public class FlowControlUnit
                 Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
                 SendInternal(message,retryCount+1);
             } 
-            else
+            else if(t.IsCompletedSuccessfully)
             {
                 lock(_object)
                 {
@@ -114,6 +114,10 @@ public class FlowControlUnit
                         stashedSeqNum.Add(message.Value.SequenceNumber);
                     }
                 }
+            }
+            else
+            {
+                Console.WriteLine("??????????????????????????????????");
             }
         });
     }
