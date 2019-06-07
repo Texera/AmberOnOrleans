@@ -93,6 +93,7 @@ namespace Engine.OperatorImplementation.Common
             outputTuples=new List<TexeraTuple>();
             if(!isFinished && currentEndFlagCount==0)
             {
+                Console.WriteLine(Utils.GetReadableName(self)+" END!!!!!!!!!");
                 isFinished=true;
                 MakeLastPayloadMessageThenSend();
             }
