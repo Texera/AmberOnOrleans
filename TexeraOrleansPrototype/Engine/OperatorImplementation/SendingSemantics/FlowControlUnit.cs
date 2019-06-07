@@ -73,7 +73,7 @@ public class FlowControlUnit
         {
             if (Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
             {
-                //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
+                Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
                 SendInternal(message,retryCount+1);
             } 
             else
@@ -86,7 +86,7 @@ public class FlowControlUnit
                         Console.WriteLine("Exception on seqnum "+message.Value.SequenceNumber+": "+t.Exception);
                     }
                     windowSize = t.Result;
-                    //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" window size = "+windowSize);
+                    // Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" window size = "+windowSize);
                     // action for successful ack
                     if (message.Value.SequenceNumber < lastAckSeqNum) 
                     {
@@ -109,12 +109,12 @@ public class FlowControlUnit
                                 break;
                             }
                         }
-                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" advanced to "+lastAckSeqNum);
+                        //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" advanced to "+lastAckSeqNum);
                         sendMessagesInBuffer();
                     } 
                     else 
                     {
-                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" stashed "+message.Value.SequenceNumber);
+                        //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" stashed "+message.Value.SequenceNumber);
                         stashedSeqNum.Add(message.Value.SequenceNumber);
                     }
 
