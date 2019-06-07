@@ -104,12 +104,13 @@ public class FlowControlUnit
                                 break;
                             }
                         }
-                        //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" advanced to "+lastAckSeqNum);
+                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" advanced to "+lastAckSeqNum);
                         sendMessagesInBuffer();
                     } 
                     else 
                     {
-                            stashedSeqNum.Add(message.Value.SequenceNumber);
+                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" stashed "+message.Value.SequenceNumber);
+                        stashedSeqNum.Add(message.Value.SequenceNumber);
                     }
                 }
             }
