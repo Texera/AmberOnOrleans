@@ -50,7 +50,7 @@ public class FlowControlUnit
         {
             Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" END -> "+Utils.GetReadableName(receiver));
         }
-
+        
         if (message.Value.SequenceNumber > lastSentSeqNum) 
         {
              lastSentSeqNum = message.Value.SequenceNumber;
@@ -74,10 +74,10 @@ public class FlowControlUnit
                 }
                 else if (message.Value.SequenceNumber == lastAckSeqNum + 1) 
                 {
-                    lastAckSeqNum++;
                     // advance lastAckSeqNum until a gap in the list 
                     lock(stashedSeqNum)
                     {
+                        lastAckSeqNum++;
                         while(true)
                         {
                             if(stashedSeqNum.Contains(lastAckSeqNum))
@@ -107,13 +107,13 @@ public class FlowControlUnit
 
     private void sendMessagesInBuffer() 
     {
-        // window size is reduced, don't send out any
-        if ((lastSentSeqNum - lastAckSeqNum)>=windowSize) 
-        {
-            return;
-        }
         lock(toBeSentBuffer)
         {
+            // window size is reduced, don't send out any
+            if ((lastSentSeqNum - lastAckSeqNum)>=windowSize) 
+            {
+                return;
+            }
             ulong numMessagesToSend = Math.Min((ulong)toBeSentBuffer.Count,windowSize - (lastSentSeqNum - lastAckSeqNum));
             if(numMessagesToSend>0)Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
             for (ulong i=0;i<numMessagesToSend;++i) 
