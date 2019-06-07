@@ -38,6 +38,13 @@ public class FlowControlUnit
 
     private void SendInternal(Immutable<PayloadMessage> message,int retryCount)
     {
+        if(message.Value.IsEnd)
+        {
+            Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" END -> "+Utils.GetReadableName(receiver));
+        }
+
+
+
         if (message.Value.SequenceNumber > lastSentSeqNum) 
         {
              lastSentSeqNum = message.Value.SequenceNumber;
@@ -96,7 +103,7 @@ public class FlowControlUnit
         lock(toBeSentBuffer)
         {
             ulong numMessagesToSend = Math.Min((ulong)toBeSentBuffer.Count,windowSize - (lastSentSeqNum - lastAckSeqNum));
-            Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
+            //Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
             for (ulong i=0;i<numMessagesToSend;++i) 
             { 
                 SendInternal(toBeSentBuffer.Dequeue(),0);
