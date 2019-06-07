@@ -83,7 +83,7 @@ public class FlowControlUnit
                     ackChecked.Add(new Tuple<ulong,ulong,ulong>(message.Value.SequenceNumber,lastAckSeqNum,windowSize));
                     if(!t.IsCompletedSuccessfully)
                     {
-                        Console.WriteLine("Exception: "+t.Exception);
+                        Console.WriteLine("Exception on seqnum "+message.Value.SequenceNumber+": "+t.Exception);
                     }
                     windowSize = t.Result;
                     //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" window size = "+windowSize);
