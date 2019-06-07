@@ -32,6 +32,10 @@ public class FlowControlUnit
         }
         else 
         {
+            if(message.Value.IsEnd)
+            {
+                Console.WriteLine("?????");
+            }
             SendInternal(message,0);
         }
     }
