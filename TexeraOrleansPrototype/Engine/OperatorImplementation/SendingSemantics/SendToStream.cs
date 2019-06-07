@@ -34,7 +34,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             throw new NotImplementedException();
         }
 
-        public async Task SendBatchedMessages(IGrain senderIdentifier)
+        public async void SendBatchedMessages(IGrain senderIdentifier)
         {
             while(true)
             {
@@ -49,7 +49,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
         }
 
-        public async Task SendEndMessages(IGrain senderIdentifier)
+        public async void SendEndMessages(IGrain senderIdentifier)
         {
             PayloadMessage message = MakeLastMessage(senderIdentifier,sequenceNumber);
             if(message!=null)

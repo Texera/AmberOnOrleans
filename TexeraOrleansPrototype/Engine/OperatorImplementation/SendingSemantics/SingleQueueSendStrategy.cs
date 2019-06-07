@@ -13,24 +13,25 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public abstract class SingleQueueSendStrategy: SingleQueueBatching, ISendStrategy
     {
-        protected List<IWorkerGrain> receivers;
+        protected List<FlowControlUnit> receivers;
         protected List<ulong> outputSequenceNumbers;
-        protected TaskScheduler scheduler;
         public SingleQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
-            this.receivers=new List<IWorkerGrain>();
-            this.outputSequenceNumbers=new List<ulong>();
+            this.receivers=new List<FlowControlUnit>();
         }
 
         public void AddReceiver(IWorkerGrain receiver)
         {
-            receivers.Add(receiver);
+            receivers.Add(new FlowControlUnit(receiver));
             this.outputSequenceNumbers.Add(0);
         }
 
         public void AddReceivers(List<IWorkerGrain> receivers)
         {
-            this.receivers.AddRange(receivers);
+            foreach(IWorkerGrain grain in receivers)
+            {
+                this.receivers.Add(new FlowControlUnit(grain));
+            }
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
         }
 
@@ -40,52 +41,9 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.outputSequenceNumbers.Clear();
         }
 
-        public void RegisterScheduler(TaskScheduler taskScheduler)
-        {
-            scheduler=taskScheduler;
-        }
+        public abstract void SendBatchedMessages(IGrain senderIdentifier);
 
-        public abstract Task SendBatchedMessages(IGrain senderIdentifier);
+        public abstract void SendEndMessages(IGrain senderIdentifier);
 
-        public abstract Task SendEndMessages(IGrain senderIdentifier);
-
-        protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
-        {
-            try
-            {
-                await nextGrain.ReceivePayloadMessage(message);
-            }
-            catch(TimeoutException e)
-            {
-                if(retryCount<Constants.max_retries)
-                {
-                    string sender,receiver;
-                    sender=Utils.GetReadableName(message.Value.SenderIdentifer);
-                    receiver=Utils.GetReadableName(nextGrain);
-                    Console.WriteLine(sender+" re-send message with sequence num: "+message.Value.SequenceNumber +" to "+receiver+" with retry count "+retryCount);
-                    await SendMessageTo(nextGrain,message, retryCount + 1);
-                }
-            }
-            // nextGrain.ReceivePayloadMessage(message)
-            // .ContinueWith(async (t)=>
-            // {
-            // if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-            // {
-            //     string sender,receiver;
-            //     sender=Utils.GetReadableName(message.Value.SenderIdentifer);
-            //     receiver=Utils.GetReadableName(nextGrain);
-            //     Console.WriteLine(sender+" re-send message with sequence num: "+message.Value.SequenceNumber +" to "+receiver+" with retry count "+retryCount);
-            //     await SendMessageTo(nextGrain,message, retryCount + 1);
-            // }
-            // else if(retryCount>0)
-            // {
-            //     string sender,receiver;
-            //     sender=Utils.GetReadableName(message.Value.SenderIdentifer);
-            //     receiver=Utils.GetReadableName(nextGrain);
-            //     Console.WriteLine(sender+" re-send message with sequence num: "+message.Value.SequenceNumber +" to "+receiver+" successed!");
-            // }
-            // });
-            //return Task.CompletedTask;
-        }
     }
 }

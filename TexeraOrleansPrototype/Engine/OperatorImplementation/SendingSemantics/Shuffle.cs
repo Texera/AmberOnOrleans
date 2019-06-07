@@ -39,41 +39,41 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public override void AddReceiver(IWorkerGrain receiver)
         {
-            receivers.Add(receiver);
+            receivers.Add(new FlowControlUnit(receiver));
             this.outputSequenceNumbers.Add(0);
             this.outputRows.Add(new Queue<TexeraTuple>());
         }
 
         public override void AddReceivers(List<IWorkerGrain> receivers)
         {
-            this.receivers.AddRange(receivers);
+            foreach(IWorkerGrain grain in receivers)
+            {
+                this.receivers.Add(new FlowControlUnit(grain));
+            }
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
             this.outputRows.AddRange(Enumerable.Range(0,receivers.Count).Select(x=>new Queue<TexeraTuple>()));
         }
 
 
-        public override Task SendBatchedMessages(IGrain senderIdentifier)
+        public override void SendBatchedMessages(IGrain senderIdentifier)
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeBatchedPayloads())
             {
-                SendMessageTo(receivers[pair.First],new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable(),0);
+                receivers[pair.First].Send(new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable());
             }
-            return Task.CompletedTask;
         }
 
-        public override Task SendEndMessages(IGrain senderIdentifier)
+        public override void SendEndMessages(IGrain senderIdentifier)
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeLastPayload())
             {
-                SendMessageTo(receivers[pair.First],new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable(),0);
+                receivers[pair.First].Send(new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable());
             }
             for(int i=0;i<receivers.Count;++i)
             {
-                Console.WriteLine(Utils.GetReadableName(senderIdentifier)+" -> "+ Utils.GetReadableName(receivers[i]) +" END: "+outputSequenceNumbers[i]);
                 PayloadMessage message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
-                SendMessageTo(receivers[i],message.AsImmutable(),0);
+                receivers[i].Send(message.AsImmutable());
             }
-            return Task.CompletedTask;
         }
 
         private int NonNegativeModular(int x, int m) {

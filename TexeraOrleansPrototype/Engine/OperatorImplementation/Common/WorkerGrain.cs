@@ -33,6 +33,7 @@ namespace Engine.OperatorImplementation.Common
     [WorkerGrainPlacement]
     public class WorkerGrain : Grain, IWorkerGrain
     {
+        protected ulong windowLimit = 100;
         protected PredicateBase predicate = null;
         protected volatile bool isPaused = false;
         protected List<Immutable<PayloadMessage>> pausedMessages = new List<Immutable<PayloadMessage>>();
@@ -172,12 +173,12 @@ namespace Engine.OperatorImplementation.Common
         }
 
         
-        public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
+        public Task<ulong> ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
             if(isPaused)
             {
                 pausedMessages.Add(message);
-                return Task.CompletedTask;
+                return Task.FromResult(windowLimit-(ulong)actionQueue.Count);
             }
             if(orderingEnforcer.PreProcess(message))
             {
@@ -239,7 +240,7 @@ namespace Engine.OperatorImplementation.Common
                     }
                 }
             }
-            return Task.CompletedTask;
+            return Task.FromResult(windowLimit-(ulong)actionQueue.Count);
         }
 
 
@@ -400,7 +401,6 @@ namespace Engine.OperatorImplementation.Common
 
         public Task SetSendStrategy(Guid operatorGuid,ISendStrategy sendStrategy)
         {
-            sendStrategy.RegisterScheduler(TaskScheduler.Current);
             sendStrategies[operatorGuid]=sendStrategy;
             return Task.CompletedTask;
         }

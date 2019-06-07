@@ -32,7 +32,7 @@ namespace Engine.OperatorImplementation.Common
         Just receives the payload message, sends message to itself to process it and returns. The
         method is coded to return ASAP, thus doesn't do any processing.
          */
-        Task ReceivePayloadMessage(Immutable<PayloadMessage> message);
+        Task<ulong> ReceivePayloadMessage(Immutable<PayloadMessage> message);
         //Task Process(Immutable<PayloadMessage> message);
         #endregion
 
