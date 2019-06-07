@@ -93,12 +93,12 @@ public class FlowControlUnit
         {
             return;
         }
-        ulong numMessagesToSend = windowSize - (lastSentSeqNum - lastAckSeqNum);
-        Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
-        for (ulong i=0;i<numMessagesToSend;++i) 
+        lock(toBeSentBuffer)
         {
-            if (toBeSentBuffer.Count>0) 
-            {
+            ulong numMessagesToSend = Math.Min((ulong)toBeSentBuffer.Count,windowSize - (lastSentSeqNum - lastAckSeqNum));
+            Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
+            for (ulong i=0;i<numMessagesToSend;++i) 
+            { 
                 SendInternal(toBeSentBuffer.Dequeue(),0);
             }
         }
