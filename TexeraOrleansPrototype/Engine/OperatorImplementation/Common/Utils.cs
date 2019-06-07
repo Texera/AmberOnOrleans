@@ -121,6 +121,12 @@ namespace Engine.OperatorImplementation.Common
         }
 
 
+        public static bool IsTaskFaultedAndStillNeedRetry(Task t, int retryCount)
+        {
+            return t.IsFaulted && retryCount<Constants.max_retries;
+        }
+
+
         public static string GetOperatorTypeFromGrainClass(string grainClass)
         {
             foreach(string op in OperatorTypes)

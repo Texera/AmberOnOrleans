@@ -71,7 +71,7 @@ public class FlowControlUnit
 
         receiver.ReceivePayloadMessage(message).ContinueWith((t) => 
         {
-            if (Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+            if (Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
             {
                 Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
                 SendInternal(message,retryCount+1);
@@ -81,6 +81,7 @@ public class FlowControlUnit
                 lock(_object)
                 {
                     ackChecked.Add(new Tuple<ulong,ulong,ulong>(message.Value.SequenceNumber,lastAckSeqNum,windowSize));
+                    windowSize=t.Result;
                     // Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" window size = "+windowSize);
                     // action for successful ack
                     if (message.Value.SequenceNumber < lastAckSeqNum) 
@@ -112,11 +113,6 @@ public class FlowControlUnit
                         //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" stashed "+message.Value.SequenceNumber);
                         stashedSeqNum.Add(message.Value.SequenceNumber);
                     }
-                    if(!t.IsCompletedSuccessfully)
-                    {
-                        Console.WriteLine("Exception on seqnum "+message.Value.SequenceNumber+": "+t.Exception);
-                    }
-                    windowSize = t.Result;
                 }
             }
         });
