@@ -33,7 +33,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             if(sequenceNum < currentSequenceNumber)
             {
                 // de-dup messages
-                Console.WriteLine("Received duplicated message from "+Utils.GetReadableName(sender)+" with seqnum = "+sequenceNum);
+                //Console.WriteLine("Received duplicated message from "+Utils.GetReadableName(sender)+" with seqnum = "+sequenceNum);
                 return MessageStatus.Duplicated;
             }
             if (sequenceNum != currentSequenceNumber)
@@ -58,7 +58,10 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     {
                         stashedPayloadMessages[sender]=new Dictionary<ulong, Pair<bool, List<TexeraTuple>>>();
                     }
-                    stashedPayloadMessages[sender].Add(sequenceNum, new Pair<bool, List<TexeraTuple>>(message.Value.IsEnd,message.Value.Payload));
+                    if(!stashedPayloadMessages[sender].ContainsKey(sequenceNum))
+                    {
+                        stashedPayloadMessages[sender].Add(sequenceNum, new Pair<bool, List<TexeraTuple>>(message.Value.IsEnd,message.Value.Payload));
+                    }
                     break;
                 case MessageStatus.Duplicated:
                     //Console.WriteLine("expected "+inSequenceNumberMap[sender]+" but get "+sequenceNum+" duplicated");
