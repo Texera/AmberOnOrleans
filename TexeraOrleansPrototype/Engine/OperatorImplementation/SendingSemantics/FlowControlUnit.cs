@@ -75,6 +75,8 @@ public class FlowControlUnit
                 }
                 else if (message.Value.SequenceNumber == lastAckSeqNum) 
                 {
+                    if(message.Value.SequenceNumber<20)
+                    Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" acked "+message.Value.SequenceNumber);
                     // advance lastAckSeqNum until a gap in the list 
                     lock(stashedSeqNum)
                     {
