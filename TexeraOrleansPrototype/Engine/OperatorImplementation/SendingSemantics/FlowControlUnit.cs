@@ -81,11 +81,6 @@ public class FlowControlUnit
                 lock(_object)
                 {
                     ackChecked.Add(new Tuple<ulong,ulong,ulong>(message.Value.SequenceNumber,lastAckSeqNum,windowSize));
-                    if(!t.IsCompletedSuccessfully)
-                    {
-                        Console.WriteLine("Exception on seqnum "+message.Value.SequenceNumber+": "+t.Exception);
-                    }
-                    windowSize = t.Result;
                     // Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" window size = "+windowSize);
                     // action for successful ack
                     if (message.Value.SequenceNumber < lastAckSeqNum) 
@@ -117,7 +112,11 @@ public class FlowControlUnit
                         //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" stashed "+message.Value.SequenceNumber);
                         stashedSeqNum.Add(message.Value.SequenceNumber);
                     }
-
+                    if(!t.IsCompletedSuccessfully)
+                    {
+                        Console.WriteLine("Exception on seqnum "+message.Value.SequenceNumber+": "+t.Exception);
+                    }
+                    windowSize = t.Result;
                 }
             }
         });
