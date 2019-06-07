@@ -19,7 +19,7 @@ public class FlowControlUnit
     HashSet<ulong> stashedSeqNum=new HashSet<ulong>();
     Queue<Immutable<PayloadMessage>> toBeSentBuffer=new Queue<Immutable<PayloadMessage>>();
 
-    HashSet<Tuple<ulong,ulong>> ackChecked=new HashSet<Tuple<ulong, ulong>>();
+    HashSet<Tuple<ulong,ulong,ulong>> ackChecked=new HashSet<Tuple<ulong, ulong,ulong>>();
 
     public FlowControlUnit(IWorkerGrain receiver)
     {
@@ -46,7 +46,7 @@ public class FlowControlUnit
                     temp="[";
                     foreach(var i in ackChecked)
                     {
-                        temp+="("+i.Item1+","+i.Item2+") ";
+                        temp+="("+i.Item1+","+i.Item2+","+i.Item3+") ";
                     }
                     Console.WriteLine(temp+"]");
                 }
@@ -80,8 +80,8 @@ public class FlowControlUnit
             {
                 lock(_object)
                 {
-                    ackChecked.Add(new Tuple<ulong,ulong>(message.Value.SequenceNumber,lastAckSeqNum));
                     windowSize = t.Result;
+                    ackChecked.Add(new Tuple<ulong,ulong,ulong>(message.Value.SequenceNumber,lastAckSeqNum,windowSize));
                     //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" window size = "+windowSize);
                     // action for successful ack
                     if (message.Value.SequenceNumber < lastAckSeqNum) 
@@ -113,6 +113,7 @@ public class FlowControlUnit
                         Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" stashed "+message.Value.SequenceNumber);
                         stashedSeqNum.Add(message.Value.SequenceNumber);
                     }
+
                 }
             }
         });
