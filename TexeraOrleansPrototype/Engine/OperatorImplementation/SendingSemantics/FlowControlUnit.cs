@@ -71,6 +71,7 @@ public class FlowControlUnit
                 if (message.Value.SequenceNumber <= lastAckSeqNum) 
                 {
                     // ack already received, do nothing
+                    Console.WriteLine("ERROR??????: "+message.Value.SequenceNumber+" "+lastAckSeqNum);
                 }
                 else if (message.Value.SequenceNumber == lastAckSeqNum + 1) 
                 {
