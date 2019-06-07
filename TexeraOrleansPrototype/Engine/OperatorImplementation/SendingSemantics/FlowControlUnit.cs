@@ -126,11 +126,19 @@ public class FlowControlUnit
     private void sendMessagesInBuffer() 
     {
         // window size is reduced, don't send out any
-        if ((lastSentSeqNum - lastAckSeqNum)>=windowSize) 
+        if (lastAckSeqNum<lastSentSeqNum && (lastSentSeqNum - lastAckSeqNum)>=windowSize) 
         {
             return;
         }
-        ulong numMessagesToSend = Math.Min((ulong)toBeSentBuffer.Count,windowSize - (lastSentSeqNum - lastAckSeqNum));
+        ulong numMessagesToSend;
+        if(lastSentSeqNum<lastAckSeqNum)
+        {
+            numMessagesToSend = windowSize;
+        }
+        else
+        {
+            numMessagesToSend = Math.Min((ulong)toBeSentBuffer.Count,windowSize - (lastSentSeqNum - lastAckSeqNum));
+        }
         //if(numMessagesToSend>0)Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
         for (ulong i=0;i<numMessagesToSend;++i) 
         { 
