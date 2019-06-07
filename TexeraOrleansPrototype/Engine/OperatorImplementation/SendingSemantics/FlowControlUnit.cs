@@ -84,7 +84,7 @@ public class FlowControlUnit
                                 break;
                             }
                         }
-                        //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" advanced to "+lastAckSeqNum);
+                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" advanced to "+lastAckSeqNum);
                         sendMessagesInBuffer();
                     } 
                     else 
