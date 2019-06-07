@@ -33,7 +33,7 @@ namespace Engine.OperatorImplementation.Common
     [WorkerGrainPlacement]
     public class WorkerGrain : Grain, IWorkerGrain
     {
-        protected ulong windowLimit = 10;
+        protected ulong windowLimit = 1000;
         protected PredicateBase predicate = null;
         protected volatile bool isPaused = false;
         protected List<Immutable<PayloadMessage>> pausedMessages = new List<Immutable<PayloadMessage>>();
