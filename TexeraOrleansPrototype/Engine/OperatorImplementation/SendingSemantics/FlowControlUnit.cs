@@ -80,11 +80,12 @@ public class FlowControlUnit
             {
                 lock(_object)
                 {
-                    if(t.IsCompletedSuccessfully)
-                    {
-                        windowSize = t.Result;
-                    }
                     ackChecked.Add(new Tuple<ulong,ulong,ulong>(message.Value.SequenceNumber,lastAckSeqNum,windowSize));
+                    if(!t.IsCompletedSuccessfully)
+                    {
+                        Console.WriteLine("Exception: "+t.Status);
+                    }
+                    windowSize = t.Result;
                     //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" window size = "+windowSize);
                     // action for successful ack
                     if (message.Value.SequenceNumber < lastAckSeqNum) 
