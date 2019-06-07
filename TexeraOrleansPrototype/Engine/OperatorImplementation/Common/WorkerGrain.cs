@@ -163,6 +163,7 @@ namespace Engine.OperatorImplementation.Common
         
         public Task<ulong> ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
+            Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+"with seqnum = "+message.Value.SequenceNumber);
             if(isPaused)
             {
                 pausedMessages.Add(message);
