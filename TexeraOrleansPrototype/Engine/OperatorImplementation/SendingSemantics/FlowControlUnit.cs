@@ -68,17 +68,16 @@ public class FlowControlUnit
                 windowSize = t.Result;
                 //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" window size = "+windowSize);
                 // action for successful ack
-                if (message.Value.SequenceNumber <= lastAckSeqNum) 
+                if (message.Value.SequenceNumber < lastAckSeqNum) 
                 {
                     // ack already received, do nothing
                     Console.WriteLine("ERROR??????: "+message.Value.SequenceNumber+" "+lastAckSeqNum);
                 }
-                else if (message.Value.SequenceNumber == lastAckSeqNum + 1) 
+                else if (message.Value.SequenceNumber == lastAckSeqNum) 
                 {
                     // advance lastAckSeqNum until a gap in the list 
                     lock(stashedSeqNum)
                     {
-                        lastAckSeqNum++;
                         while(true)
                         {
                             if(stashedSeqNum.Contains(lastAckSeqNum))
