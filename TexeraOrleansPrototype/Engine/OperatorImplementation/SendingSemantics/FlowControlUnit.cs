@@ -30,7 +30,7 @@ public class FlowControlUnit
         {
             if(message.Value.IsEnd)
             {
-                Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum);
+                Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum+" "+toBeSentBuffer.Count);
                 Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" END -> "+Utils.GetReadableName(receiver)+" stashed??? current window size = "+windowSize);
             }
             toBeSentBuffer.Enqueue(message);
