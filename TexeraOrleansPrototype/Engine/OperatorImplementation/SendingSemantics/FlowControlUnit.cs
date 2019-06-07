@@ -19,6 +19,8 @@ public class FlowControlUnit
     HashSet<ulong> stashedSeqNum=new HashSet<ulong>();
     Queue<Immutable<PayloadMessage>> toBeSentBuffer=new Queue<Immutable<PayloadMessage>>();
 
+    HashSet<ulong> ackChecked=new HashSet<ulong>();
+
     public FlowControlUnit(IWorkerGrain receiver)
     {
         this.receiver=receiver;
@@ -36,6 +38,12 @@ public class FlowControlUnit
                     Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum);
                     string temp="[";
                     foreach(var i in stashedSeqNum)
+                    {
+                        temp+=i.ToString()+" ";
+                    }
+                    Console.WriteLine(temp+"]");
+                    temp="[";
+                    foreach(var i in ackChecked)
                     {
                         temp+=i.ToString()+" ";
                     }
@@ -71,13 +79,14 @@ public class FlowControlUnit
             {
                 lock(_object)
                 {
-                    Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" acked "+message.Value.SequenceNumber);
+                    ackChecked.Add(message.Value.SequenceNumber);
                     windowSize = t.Result;
                     //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" window size = "+windowSize);
                     // action for successful ack
                     if (message.Value.SequenceNumber < lastAckSeqNum) 
                     {
                         // ack already received, do nothing
+                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" ??? "+message.Value.SequenceNumber);
                     }
                     else if (message.Value.SequenceNumber == lastAckSeqNum) 
                     {
