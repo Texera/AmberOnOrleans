@@ -101,7 +101,7 @@ namespace Engine.OperatorImplementation.Operators
                     }
                     batch=null;
                     currentIndex=0;
-                    await MakePayloadMessagesThenSend();
+                    MakePayloadMessagesThenSend();
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
