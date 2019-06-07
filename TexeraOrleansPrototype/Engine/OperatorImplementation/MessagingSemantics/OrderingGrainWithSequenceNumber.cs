@@ -33,6 +33,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             if(sequenceNum < currentSequenceNumber)
             {
                 // de-dup messages
+                Console.WriteLine("Received duplicated message from "+Utils.GetReadableName(sender)+" with seqnum = "+sequenceNum);
                 return MessageStatus.Duplicated;
             }
             if (sequenceNum != currentSequenceNumber)
