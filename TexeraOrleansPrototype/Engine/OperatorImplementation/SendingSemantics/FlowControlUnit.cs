@@ -30,6 +30,7 @@ public class FlowControlUnit
         {
             if(message.Value.IsEnd)
             {
+                Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum);
                 Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" END -> "+Utils.GetReadableName(receiver)+" stashed??? current window size = "+windowSize);
             }
             toBeSentBuffer.Enqueue(message);
@@ -107,7 +108,7 @@ public class FlowControlUnit
         lock(toBeSentBuffer)
         {
             ulong numMessagesToSend = Math.Min((ulong)toBeSentBuffer.Count,windowSize - (lastSentSeqNum - lastAckSeqNum));
-            //Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
+            if(numMessagesToSend>0)Console.WriteLine("send "+numMessagesToSend+" messages from the buffer");
             for (ulong i=0;i<numMessagesToSend;++i) 
             { 
                 SendInternal(toBeSentBuffer.Dequeue(),0);
