@@ -25,7 +25,7 @@ public class FlowControlUnit
 
     public void Send(Immutable<PayloadMessage> message) 
     {
-        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
+        //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
         if (message.Value.SequenceNumber - lastAckSeqNum > windowSize) 
         {
             toBeSentBuffer.Enqueue(message);
