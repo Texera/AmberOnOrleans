@@ -80,9 +80,9 @@ public class FlowControlUnit
                     {
                         while(true)
                         {
-                            lastAckSeqNum++;
-                            if(stashedSeqNum.Contains(lastAckSeqNum))
+                            if(stashedSeqNum.Contains(lastAckSeqNum+1))
                             {
+                                lastAckSeqNum++;
                                 stashedSeqNum.Remove(lastAckSeqNum);
                             }
                             else
