@@ -28,14 +28,14 @@ public class FlowControlUnit
         //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
         if (message.Value.SequenceNumber - lastAckSeqNum > windowSize) 
         {
-            toBeSentBuffer.Enqueue(message);
-        }
-        else 
-        {
             if(message.Value.IsEnd)
             {
                 Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" END -> "+Utils.GetReadableName(receiver)+" stashed??? current window size = "+windowSize);
             }
+            toBeSentBuffer.Enqueue(message);
+        }
+        else 
+        {
             SendInternal(message,0);
         }
     }
