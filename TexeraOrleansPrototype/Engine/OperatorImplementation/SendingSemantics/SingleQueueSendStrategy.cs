@@ -18,6 +18,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         public SingleQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
             this.receivers=new List<FlowControlUnit>();
+            this.outputSequenceNumbers=new List<ulong>();
         }
 
         public void AddReceiver(IWorkerGrain receiver)

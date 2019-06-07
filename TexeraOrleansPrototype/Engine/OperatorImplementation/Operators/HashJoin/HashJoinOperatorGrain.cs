@@ -86,7 +86,7 @@ namespace Engine.OperatorImplementation.Operators
             if(inputInfo[innerTableGuid]==0 && otherTable!=null)
             {
                 var batch=otherTable;
-                Action action=async ()=>
+                Action action=()=>
                 {
                     isCurrentInnerTable=false;
                     isInnerTableFinished=true;
