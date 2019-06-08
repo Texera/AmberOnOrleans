@@ -13,25 +13,38 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public abstract class SingleQueueSendStrategy: SingleQueueBatching, ISendStrategy
     {
-        protected List<FlowControlUnit> receivers;
+        protected List<SendingUnit> receivers;
         protected List<ulong> outputSequenceNumbers;
         public SingleQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
-            this.receivers=new List<FlowControlUnit>();
+            this.receivers=new List<SendingUnit>();
             this.outputSequenceNumbers=new List<ulong>();
         }
 
-        public void AddReceiver(IWorkerGrain receiver)
+        public void AddReceiver(IWorkerGrain receiver,bool localSending)
         {
-            receivers.Add(new FlowControlUnit(receiver));
+            if(localSending)
+                receivers.Add(new SendingUnit(receiver));
+            else
+                receivers.Add(new FlowControlUnit(receiver));
             this.outputSequenceNumbers.Add(0);
         }
 
-        public void AddReceivers(List<IWorkerGrain> receivers)
+        public void AddReceivers(List<IWorkerGrain> receivers, bool localSending)
         {
-            foreach(IWorkerGrain grain in receivers)
+            if(localSending)
             {
-                this.receivers.Add(new FlowControlUnit(grain));
+                foreach(IWorkerGrain grain in receivers)
+                {
+                    this.receivers.Add(new SendingUnit(grain));
+                }
+            }
+            else
+            {
+                foreach(IWorkerGrain grain in receivers)
+                {
+                    this.receivers.Add(new FlowControlUnit(grain));
+                }
             }
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
         }

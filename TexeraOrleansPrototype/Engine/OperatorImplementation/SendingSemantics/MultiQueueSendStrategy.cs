@@ -27,9 +27,9 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public abstract void Enqueue(IEnumerable<TexeraTuple> output);
 
-        public abstract void AddReceiver(IWorkerGrain receiver);
+        public abstract void AddReceiver(IWorkerGrain receiver, bool localSending);
 
-        public abstract void AddReceivers(List<IWorkerGrain> receivers);
+        public abstract void AddReceivers(List<IWorkerGrain> receivers, bool localSending);
 
         public abstract void SendBatchedMessages(IGrain senderIdentifier);
 

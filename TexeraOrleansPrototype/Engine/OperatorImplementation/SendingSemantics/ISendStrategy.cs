@@ -13,8 +13,8 @@ namespace Engine.OperatorImplementation.SendingSemantics
         void Enqueue(IEnumerable<TexeraTuple> output);
         void SendBatchedMessages(IGrain senderIdentifier);
         void SendEndMessages(IGrain senderIdentifier);
-        void AddReceiver(IWorkerGrain receiver);
-        void AddReceivers(List<IWorkerGrain> receivers);
+        void AddReceiver(IWorkerGrain receiver,bool localSending=false);
+        void AddReceivers(List<IWorkerGrain> receivers,bool localSending=false);
         void RemoveAllReceivers();
     }
 }

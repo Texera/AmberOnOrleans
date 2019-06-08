@@ -19,12 +19,12 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.stream=stream;
         }
 
-        public void AddReceiver(IWorkerGrain receiver)
+        public void AddReceiver(IWorkerGrain receiver, bool localSending)
         {
             throw new NotImplementedException();
         }
 
-        public void AddReceivers(List<IWorkerGrain> receivers)
+        public void AddReceivers(List<IWorkerGrain> receivers, bool localSending)
         {
             throw new NotImplementedException();
         }
@@ -43,10 +43,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 ++sequenceNumber;
                 await stream.OnNextAsync(message.AsImmutable());
             }
-        }
-
-        public void RegisterScheduler(TaskScheduler taskScheduler)
-        {
         }
 
         public async void SendEndMessages(IGrain senderIdentifier)

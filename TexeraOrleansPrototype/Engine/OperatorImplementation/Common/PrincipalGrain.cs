@@ -153,7 +153,7 @@ namespace Engine.OperatorImplementation.Common
                             {
                                 await grain.AddInputInformation(new Pair<Guid,int>(operatorID,pair.Value.Count));
                             }
-                            strategy.AddReceivers(receivers);
+                            strategy.AddReceivers(receivers,true);
                             foreach(IWorkerGrain grain in pair.Value)
                             {
                                 await grain.SetSendStrategy(nextOperatorID,strategy);

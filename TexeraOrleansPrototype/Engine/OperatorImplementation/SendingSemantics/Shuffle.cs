@@ -37,14 +37,14 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
         }
 
-        public override void AddReceiver(IWorkerGrain receiver)
+        public override void AddReceiver(IWorkerGrain receiver, bool localSending)
         {
             receivers.Add(new FlowControlUnit(receiver));
             this.outputSequenceNumbers.Add(0);
             this.outputRows.Add(new Queue<TexeraTuple>());
         }
 
-        public override void AddReceivers(List<IWorkerGrain> receivers)
+        public override void AddReceivers(List<IWorkerGrain> receivers, bool localSending)
         {
             foreach(IWorkerGrain grain in receivers)
             {
