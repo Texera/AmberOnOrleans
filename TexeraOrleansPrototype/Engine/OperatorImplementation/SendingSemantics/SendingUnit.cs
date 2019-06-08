@@ -22,7 +22,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public virtual void Send(Immutable<PayloadMessage> message)
         {
-            Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
+            //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
             receiver.ReceivePayloadMessage(message);
         }
     }
