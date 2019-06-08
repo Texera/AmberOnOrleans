@@ -56,6 +56,10 @@ public class FlowControlUnit
 
     private void SendInternal(Immutable<PayloadMessage> message,int retryCount)
     {
+        lock(messagesOnTheWay)
+        {
+            messagesOnTheWay.Add(message.Value.SequenceNumber);
+        }
         receiver.ReceivePayloadMessage(message).ContinueWith((t) => 
         {
             if (Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
@@ -65,6 +69,10 @@ public class FlowControlUnit
             } 
             else if(t.IsCompletedSuccessfully)
             {
+                lock(messagesOnTheWay)
+                {
+                    messagesOnTheWay.Remove(message.Value.SequenceNumber);
+                }
                 lock(toBeSentBuffer)
                 {
                     SendInternal(toBeSentBuffer.Dequeue(),0);
