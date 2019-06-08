@@ -12,7 +12,7 @@ using TexeraUtilities;
 public class FlowControlUnit
 {
     IWorkerGrain receiver;
-    int windowSize = 50;
+    int windowSize = 100;
     HashSet<ulong> messagesOnTheWay=new HashSet<ulong>();
     Queue<Immutable<PayloadMessage>> toBeSentBuffer=new Queue<Immutable<PayloadMessage>>();
 
