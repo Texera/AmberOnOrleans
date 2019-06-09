@@ -150,6 +150,14 @@ namespace Engine.OperatorImplementation.Common
         
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
+            self.Process(message);
+            return Task.CompletedTask;
+        }
+
+
+
+        public Task Process(Immutable<PayloadMessage> message)
+        {
             if(isPaused)
             {
                 pausedMessages.Add(message);
@@ -213,18 +221,17 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-
-        // private void SendPayloadMessageToSelf(Immutable<PayloadMessage> message, int retryCount)
-        // {
-        //     self.Process(message).ContinueWith((t)=>
-        //     {  
-        //         if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-        //         {
-        //             Console.WriteLine(this.GetType().Name+"("+self+")"+" re-receive message with retry count "+retryCount);
-        //             SendPayloadMessageToSelf(message, retryCount + 1); 
-        //         }
-        //     });
-        // }
+        private void SendPayloadMessageToSelf(Immutable<PayloadMessage> message, int retryCount)
+        {
+            self.Process(message).ContinueWith((t)=>
+            {  
+                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+                {
+                    Console.WriteLine(this.GetType().Name+"("+self+")"+" re-receive message with retry count "+retryCount);
+                    SendPayloadMessageToSelf(message, retryCount + 1); 
+                }
+            });
+        }
 
         protected virtual List<TexeraTuple> MakeFinalOutputTuples()
         {
