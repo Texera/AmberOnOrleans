@@ -13,7 +13,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public class FlowControlUnit: SendingUnit
     {
-        int windowSize = 2;
+        int windowSize = 1;
         HashSet<ulong> messagesOnTheWay=new HashSet<ulong>();
         Queue<Immutable<PayloadMessage>> toBeSentBuffer=new Queue<Immutable<PayloadMessage>>();
 
