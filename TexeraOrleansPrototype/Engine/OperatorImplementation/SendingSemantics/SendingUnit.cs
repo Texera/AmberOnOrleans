@@ -23,7 +23,19 @@ namespace Engine.OperatorImplementation.SendingSemantics
         public virtual void Send(Immutable<PayloadMessage> message)
         {
             //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
-            receiver.ReceivePayloadMessage(message);
+            SendInternal(message,0);
+        }
+
+
+        private void SendInternal(Immutable<PayloadMessage> message,int retryCount)
+        {
+            receiver.ReceivePayloadMessage(message).ContinueWith((t)=>
+            {
+                if(Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
+                {
+                    SendInternal(message,retryCount+1);
+                }
+            });
         }
     }
 }
