@@ -38,7 +38,7 @@ namespace Engine.OperatorImplementation.Operators
             }
         }
 
-        protected async override Task GenerateTuples()
+        protected async override Task GenerateTuples(List<TexeraTuple> outputList)
         {
             if(restarted)
             {
@@ -62,7 +62,7 @@ namespace Engine.OperatorImplementation.Operators
                 TexeraTuple tuple=await ReadTuple();
                 if(tuple!=null)
                 {
-                    outputTuples.Add(tuple);
+                    outputList.Add(tuple);
                     i++;
                 }
                 if(reader.IsEOF())

@@ -16,7 +16,7 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class HashJoinOperatorGrain : WorkerGrain, IHashJoinOperatorGrain
     {
-        Dictionary<String,List<TexeraTuple>> hashTable=new Dictionary<string, List<TexeraTuple>>();
+        Dictionary<String,List<string[]>> hashTable=new Dictionary<string, List<string[]>>();
         List<TexeraTuple> otherTable=new List<TexeraTuple>();
         int innerTableIndex=-1;
         int outerTableIndex=-1;
@@ -49,15 +49,15 @@ namespace Engine.OperatorImplementation.Operators
             isInnerTableFinished=(inputInfo[innerTableGuid]==0);
         }
 
-        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
+        protected override void ProcessTuple(in TexeraTuple tuple,List<TexeraTuple> output)
         {
             if(isCurrentInnerTable)
             {
                 string source=tuple.FieldList[innerTableIndex];
                 if(!hashTable.ContainsKey(source))
-                    hashTable[source]=new List<TexeraTuple>{tuple};
+                    hashTable[source]=new List<string[]>{tuple.FieldList.RemoveAt(innerTableIndex)};
                 else
-                    hashTable[source].Add(tuple);
+                    hashTable[source].Add(tuple.FieldList.RemoveAt(innerTableIndex));
             }
             else
             {
@@ -68,13 +68,11 @@ namespace Engine.OperatorImplementation.Operators
                 else
                 {
                     string field=tuple.FieldList[outerTableIndex];
-                    List<string> fields=tuple.FieldList.ToList();
-                    fields.RemoveAt(outerTableIndex);
                     if(hashTable.ContainsKey(field))
                     {
-                        foreach(TexeraTuple t in hashTable[field])
+                        foreach(string[] f in hashTable[field])
                         {  
-                            output.Add(new TexeraTuple(t.FieldList.Concat(fields).ToArray()));
+                            output.Add(new TexeraTuple(f.Concat(tuple.FieldList).ToArray()));
                         }
                     }
                 }
@@ -90,18 +88,20 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     isCurrentInnerTable=false;
                     isInnerTableFinished=true;
+                    List<TexeraTuple> outputList=new List<TexeraTuple>();
                     if(batch!=null)
                     {
-                        ProcessBatch(batch);
+                        ProcessBatch(batch,outputList);
                     }
                     if(isPaused)
                     {
+                        MakePayloadMessagesThenSend(outputList);
                         taskDidPaused=true;
                         return;
                     }
                     batch=null;
                     currentIndex=0;
-                    MakePayloadMessagesThenSend();
+                    MakePayloadMessagesThenSend(outputList);
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();

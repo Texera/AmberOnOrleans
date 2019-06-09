@@ -44,7 +44,6 @@ namespace Engine.OperatorImplementation.Common
         protected Queue<Action> actionQueue=new Queue<Action>();
         protected int currentIndex=0;
         protected int currentEndFlagCount=0;
-        protected List<TexeraTuple> outputTuples=new List<TexeraTuple>();
         protected bool isFinished=false;
         protected volatile bool taskDidPaused=false;
         //protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
@@ -82,7 +81,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        protected void MakePayloadMessagesThenSend()
+        protected void MakePayloadMessagesThenSend(List<TexeraTuple> outputTuples)
         {
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
@@ -103,15 +102,13 @@ namespace Engine.OperatorImplementation.Common
             List<TexeraTuple> output=MakeFinalOutputTuples();
             if(output!=null)
             {
-                outputTuples.AddRange(output);
+                foreach(ISendStrategy strategy in sendStrategies.Values)
+                {
+                    strategy.Enqueue(output);
+                    strategy.SendBatchedMessages(self);
+                    strategy.SendEndMessages(self);
+                }
             }
-            foreach(ISendStrategy strategy in sendStrategies.Values)
-            {
-                strategy.Enqueue(outputTuples);
-                strategy.SendBatchedMessages(self);
-                strategy.SendEndMessages(self);
-            }
-            outputTuples= new List<TexeraTuple>();
         }
 
 
@@ -124,37 +121,26 @@ namespace Engine.OperatorImplementation.Common
         {
 
         }
-        protected void ProcessBatch(List<TexeraTuple> batch)
+        protected void ProcessBatch(List<TexeraTuple> batch,List<TexeraTuple> outputList)
         {
-            List<TexeraTuple> localList=new List<TexeraTuple>();
             for(;currentIndex<batch.Count;++currentIndex)
             {
                 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-                if(breakPointEnabled && localList.Count+breakPointCurrent>=breakPointTarget)
+                if(breakPointEnabled && outputList.Count+breakPointCurrent>=breakPointTarget)
                 {
-                    breakPointCurrent+=localList.Count;
+                    breakPointCurrent+=outputList.Count;
                     Pause();
                 }
                 #endif
                 if(isPaused)
                 {
-                    lock(outputTuples)
-                    {
-                        outputTuples.AddRange(localList);
-                        localList=null;
-                    }
                     return;
                 }
-                ProcessTuple(batch[currentIndex],localList);
-            }
-            lock(outputTuples)
-            {
-                outputTuples.AddRange(localList);
-                localList=null;
+                ProcessTuple(batch[currentIndex],outputList);
             }
         }
 
-        protected virtual void ProcessTuple(TexeraTuple tuple, List<TexeraTuple> output)
+        protected virtual void ProcessTuple(in TexeraTuple tuple, List<TexeraTuple> output)
         {
 
         }
@@ -176,9 +162,10 @@ namespace Engine.OperatorImplementation.Common
                 Action action=()=>
                 {
                     BeforeProcessBatch(message,orleansScheduler);
+                    List<TexeraTuple> outputList=new List<TexeraTuple>();
                     if(batch!=null)
                     {
-                        ProcessBatch(batch);
+                        ProcessBatch(batch,outputList);
                     }
                     if(isPaused)
                     {
@@ -188,6 +175,7 @@ namespace Engine.OperatorImplementation.Common
                             await principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
                         }
                         #endif
+                        MakePayloadMessagesThenSend(outputList);
                         taskDidPaused=true;
                         return;
                     }
@@ -201,7 +189,7 @@ namespace Engine.OperatorImplementation.Common
                         Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" END: "+message.Value.SequenceNumber);
                     }
                     AfterProcessBatch(message,orleansScheduler);
-                    MakePayloadMessagesThenSend();
+                    MakePayloadMessagesThenSend(outputList);
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
@@ -318,14 +306,15 @@ namespace Engine.OperatorImplementation.Common
                     taskDidPaused=true;
                     return;
                 }
-                await GenerateTuples();
+                List<TexeraTuple> outputList=new List<TexeraTuple>();
+                await GenerateTuples(outputList);
                 if(isPaused)
                 {
                     Console.WriteLine(Utils.GetReadableName(self)+" Paused after generating tuples");
                     taskDidPaused=true;
                     return;
                 }
-                MakePayloadMessagesThenSend();
+                MakePayloadMessagesThenSend(outputList);
                 if(currentEndFlagCount!=0)
                 {
                     StartGenerate(0);
@@ -353,7 +342,7 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        protected async virtual Task GenerateTuples()
+        protected async virtual Task GenerateTuples(List<TexeraTuple> outputList)
         {
             
         }

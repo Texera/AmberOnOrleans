@@ -47,7 +47,7 @@ namespace Engine.OperatorImplementation.Operators
                 return (T)ParseInfo.Invoke(null, new[] { value });
         }
 
-        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
+        protected override void ProcessTuple(in TexeraTuple tuple,List<TexeraTuple> output)
         {
             T value=Parse(tuple.FieldList[sortIndex]);
             int index = sortedValues.BinarySearch(value);

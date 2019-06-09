@@ -30,7 +30,7 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
+        protected override void ProcessTuple(in TexeraTuple tuple,List<TexeraTuple> output)
         {
             var result=SentimentAnalyzer.Sentiments.Predict(tuple.FieldList[predictIndex]);
             output.Add(new TexeraTuple(new string[]{tuple.FieldList[predictIndex],$"{(result.Prediction?"positive":"negative")}(Prob:{result.Probability},Score:{result.Score})"}));
