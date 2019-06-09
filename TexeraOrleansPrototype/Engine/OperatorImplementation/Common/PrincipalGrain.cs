@@ -289,13 +289,15 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Start()
         {
+            List<Task> taskList=new List<Task>();
             foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
             {
                 foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
                 {
-                    await grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start)));
+                    taskList.Add(grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start))));
                 }
             }
+            await Task.WhenAll(taskList);
             //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start)));
             sequenceNumber++;
         }
