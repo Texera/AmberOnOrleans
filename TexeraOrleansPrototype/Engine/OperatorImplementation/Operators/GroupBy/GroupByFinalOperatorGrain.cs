@@ -17,7 +17,7 @@ namespace Engine.OperatorImplementation.Operators
     {
         Dictionary<string,double> results=new Dictionary<string, double>();
         Dictionary<string,int> counter=new Dictionary<string, int>();
-        string aggregationFunc;
+        GroupByPredicate.AggregationType aggregationFunc;
 
         public override Task OnDeactivateAsync()
         {
@@ -30,14 +30,14 @@ namespace Engine.OperatorImplementation.Operators
         public override async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             SiloAddress addr=await base.Init(self,predicate,principalGrain);
-            aggregationFunc=((GroupByPredicate)predicate).AggregationFunction;
+            aggregationFunc=((GroupByPredicate)predicate).Aggregation;
             return addr;
         }
 
         protected override void ProcessTuple(in TexeraTuple tuple, List<TexeraTuple> output)
         {
             string field=tuple.FieldList[0];
-            if(aggregationFunc.Equals("count"))
+            if(aggregationFunc==GroupByPredicate.AggregationType.Count)
             {
                 if(counter.ContainsKey(field))
                     counter[field]+=int.Parse(tuple.FieldList[1]);
@@ -51,17 +51,17 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     switch(aggregationFunc)
                     {
-                        case "max":
+                        case GroupByPredicate.AggregationType.Max:
                             results[field]=Math.Max(results[field],value);
                             break;
-                        case "min":
+                        case GroupByPredicate.AggregationType.Min:
                             results[field]=Math.Min(results[field],value);
                             break;
-                        case "avg":
+                        case GroupByPredicate.AggregationType.Average:
                             results[field]+=value;
                             counter[field]+=int.Parse(tuple.FieldList[2]);
                             break;
-                        case "sum":
+                        case GroupByPredicate.AggregationType.Sum:
                             results[field]+=value;
                             break;
                     }
@@ -81,19 +81,19 @@ namespace Engine.OperatorImplementation.Operators
             {
                 switch(aggregationFunc)
                 {
-                    case "max":
+                    case GroupByPredicate.AggregationType.Max:
                         result.Add(new TexeraTuple(new string[]{pair.Key,results[pair.Key].ToString()}));
                         break;
-                    case "min":
+                    case GroupByPredicate.AggregationType.Min:
                         result.Add(new TexeraTuple(new string[]{pair.Key,results[pair.Key].ToString()}));
                         break;
-                    case "avg":
+                    case GroupByPredicate.AggregationType.Average:
                         result.Add(new TexeraTuple(new string[]{pair.Key,(results[pair.Key]/pair.Value).ToString()}));
                         break;
-                    case "sum":
+                    case GroupByPredicate.AggregationType.Sum:
                         result.Add(new TexeraTuple(new string[]{pair.Key,results[pair.Key].ToString()}));
                         break;
-                    case "count":
+                    case GroupByPredicate.AggregationType.Count:
                         result.Add(new TexeraTuple(new string[]{pair.Key,pair.Value.ToString()}));
                         break;
                 }
