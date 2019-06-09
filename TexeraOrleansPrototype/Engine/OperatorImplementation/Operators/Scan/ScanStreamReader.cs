@@ -8,7 +8,7 @@ using Engine.OperatorImplementation.Common;
 
 class ScanStreamReader
 {
-    public const int buffer_size = 4096;
+    public const int buffer_size = 1024*64;
     private enum FileType{unknown,csv,pdf,txt,tbl};
     private FileType file_type;
     private string file_path;
