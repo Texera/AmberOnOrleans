@@ -88,7 +88,6 @@ namespace Engine.OperatorImplementation.Common
                 strategy.Enqueue(outputTuples);
                 strategy.SendBatchedMessages(self);
             }
-            outputTuples=new List<TexeraTuple>();
             if(!isFinished && currentEndFlagCount==0)
             {
                 Console.WriteLine(Utils.GetReadableName(self)+" END!!!!!!!!!");
@@ -106,8 +105,11 @@ namespace Engine.OperatorImplementation.Common
                 {
                     strategy.Enqueue(output);
                     strategy.SendBatchedMessages(self);
-                    strategy.SendEndMessages(self);
                 }
+            }
+            foreach(ISendStrategy strategy in sendStrategies.Values)
+            {
+                strategy.SendEndMessages(self);
             }
         }
 
