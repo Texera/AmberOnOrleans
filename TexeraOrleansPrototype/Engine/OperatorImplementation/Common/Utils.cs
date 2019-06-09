@@ -53,6 +53,14 @@ namespace Engine.OperatorImplementation.Common
 
             return dest;
         }
+
+        public static T[] FastConcat<T>(this T[] source1, T[] source2)
+        {
+            T[] result = new T[source1.Length + source2.Length];
+            Array.Copy(source1, result, source1.Length);
+            Array.Copy(source2, 0, result, source1.Length, source2.Length);
+            return result;
+        }
     }
 
 
