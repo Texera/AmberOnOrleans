@@ -40,7 +40,7 @@ namespace Engine.OperatorImplementation.Operators
             }            
             Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[0].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
-            ISendStrategy strategy=new Shuffle(serializer.SerializeText(exp));
+            ISendStrategy strategy=new Shuffle(serializer.SerializeText(exp),predicate.BatchingLimit);
             //first layer
             strategy.AddReceivers(operatorGrains[1].Values.SelectMany(x=>x).ToList());
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)

@@ -31,7 +31,7 @@ namespace Engine.OperatorImplementation.Operators
                 joinFieldIndex=((HashJoinPredicate)predicate).OuterTableIndex;
             Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
-            return Task.FromResult(new Shuffle(serializer.SerializeText(exp)) as ISendStrategy);
+            return Task.FromResult(new Shuffle(serializer.SerializeText(exp),predicate.BatchingLimit) as ISendStrategy);
         }
     }
 }
