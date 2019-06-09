@@ -165,6 +165,7 @@ namespace Engine.OperatorImplementation.Common
                     List<TexeraTuple> outputList=new List<TexeraTuple>();
                     if(batch!=null)
                     {
+                        Console.WriteLine(Utils.GetReadableName(self)+" processing");
                         ProcessBatch(batch,outputList);
                     }
                     if(isPaused)
