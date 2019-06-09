@@ -20,7 +20,7 @@ namespace webapi.Controllers
     {
         private static IClusterClient client;
 
-        private const int batchSize=2000;
+        private const int batchSize=1000;
 
         [HttpPost]
         [Route("api/queryplan/execute")]

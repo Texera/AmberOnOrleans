@@ -219,7 +219,7 @@ namespace Engine.OperatorImplementation.Common
             TimeSpan t = (DateTime.UtcNow - new DateTime(1970, 1, 1));
             Console.WriteLine(this.GetType()+" receives the pause message at "+ (int)t.TotalSeconds);
             currentPauseFlag++;
-            // if(currentPauseFlag>=prevPrincipalGrains.Count || isPaused)
+            if(currentPauseFlag>=prevPrincipalGrains.Count || isPaused)
             {
                 currentPauseFlag=0;
                 if(isPaused)
@@ -240,10 +240,10 @@ namespace Engine.OperatorImplementation.Common
                 //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause)));
                 Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
-                // foreach(IPrincipalGrain next in nextPrincipalGrains)
-                // {
-                //     await SendPauseToNextPrincipalGrain(next,0);
-                // }
+                foreach(IPrincipalGrain next in nextPrincipalGrains)
+                {
+                    await SendPauseToNextPrincipalGrain(next,0);
+                }
             }
         }
 
