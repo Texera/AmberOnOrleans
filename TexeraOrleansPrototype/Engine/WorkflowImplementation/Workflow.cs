@@ -4,6 +4,8 @@ using Engine.Controller;
 using Orleans;
 using System.Threading.Tasks;
 using System;
+using Orleans.Runtime;
+using TexeraUtilities;
 
 namespace Engine.WorkflowImplementation
 {
@@ -40,6 +42,7 @@ namespace Engine.WorkflowImplementation
             {
                 o.SetPrincipalGrain(factory);
             }
+            RequestContext.Set("targetSilo",Constants.clientIPAddress);
             await workflowControllerGrain.Init(workflowControllerGrain,WorkflowID,AllOperators);
         }
 

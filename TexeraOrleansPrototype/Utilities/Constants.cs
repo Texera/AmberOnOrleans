@@ -10,14 +10,9 @@ namespace TexeraUtilities
 {
     static public class Constants
     {
-        public const string OperatorAssemblyPathPrefix = "Engine.OperatorImplementation.Operators";
-        public const string ControllerAssemblyPathPrefix = "Engine.Controller";
-        public const int batchSize = 1000;
-        public const int num_scan = 10;
+        public const string clientIPAddress="10.138.0.5";
         public const int max_retries = 60;
-        public const bool conditions_on = false;
-        public const bool ordered_on = true;
-        public const string delivery = "RPC";
-        public static string connectionString = "server=10.138.0.5;uid=orleans-backend;pwd=orleans-0519-2019;database=orleans;SslMode=none";
+        public const int batchSize = 400;
+        public static string connectionString = "server="+clientIPAddress+";uid=orleans-backend;pwd=orleans-0519-2019;database=orleans;SslMode=none";
     }
 }

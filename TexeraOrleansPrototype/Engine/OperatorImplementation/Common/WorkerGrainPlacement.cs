@@ -32,22 +32,22 @@ namespace Engine.OperatorImplementation.Common
             {
                 foreach(SiloAddress silo in silos)
                 {
-                    if(silo.Equals(targetSilo))
+                    if(silo.Endpoint.Address.ToString().Equals(targetSilo))
                     {
                         return Task.FromResult(silo);
                     }
                 }
             }
-            foreach(SiloAddress silo in silos)
-            {
-                Console.WriteLine("Silo Address: "+silo.Endpoint.Address+" IsClient = "+silo.IsClient);
-                Console.WriteLine("String repr: "+silo.ToString());
-            }
-            Console.WriteLine("---------------------------------------");
+            // foreach(SiloAddress silo in silos)
+            // {
+            //     Console.WriteLine("Silo Address: "+silo.Endpoint.Address+" IsClient = "+silo.IsClient);
+            //     Console.WriteLine("String repr: "+silo.ToString());
+            // }
+            // Console.WriteLine("---------------------------------------");
             var excludeSilo=RequestContext.Get("excludeSilo");
             if(excludeSilo!=null)
             {
-                silos=silos.Where(x=>!x.Equals(excludeSilo)).ToArray();
+                silos=silos.Where(x=>!x.Endpoint.Address.ToString().Equals(excludeSilo)).ToArray();
             }
             object index = RequestContext.Get("grainIndex");
             if(index==null)

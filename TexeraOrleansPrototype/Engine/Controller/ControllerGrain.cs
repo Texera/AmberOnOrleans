@@ -7,6 +7,7 @@ using Engine.OperatorImplementation.Operators;
 using Engine.OperatorImplementation.Common;
 using Engine.WorkflowImplementation;
 using Orleans.Runtime;
+using TexeraUtilities;
 
 namespace Engine.Controller
 {
@@ -20,6 +21,7 @@ namespace Engine.Controller
             WorkflowID=workflowID;
             foreach(Operator o in graph)
             {
+                RequestContext.Set("targetSilo",Constants.clientIPAddress);
                 await o.PrincipalGrain.Init(self,workflowID,o);
             }
             foreach(Operator o in graph)
