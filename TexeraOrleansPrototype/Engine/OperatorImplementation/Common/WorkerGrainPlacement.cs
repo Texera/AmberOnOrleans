@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Net;
 using System.Threading.Tasks;
 using Orleans.Placement;
 using Orleans.Runtime;
@@ -36,6 +37,17 @@ namespace Engine.OperatorImplementation.Common
                         return Task.FromResult(silo);
                     }
                 }
+            }
+            foreach(SiloAddress silo in silos)
+            {
+                Console.WriteLine("Silo Address: "+silo.Endpoint.Address+" IsClient = "+silo.IsClient);
+                Console.WriteLine("String repr: "+silo.ToString());
+            }
+            Console.WriteLine("---------------------------------------");
+            var excludeSilo=RequestContext.Get("excludeSilo");
+            if(excludeSilo!=null)
+            {
+                silos=silos.Where(x=>!x.Equals(excludeSilo)).ToArray();
             }
             object index = RequestContext.Get("grainIndex");
             if(index==null)
