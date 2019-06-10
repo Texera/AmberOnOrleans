@@ -30,6 +30,7 @@ namespace Engine.OperatorImplementation.Common
             var targetSilo=RequestContext.Get("targetSilo");
             if(targetSilo!=null)
             {
+                Console.WriteLine("targetSilo: "+targetSilo);
                 foreach(SiloAddress silo in silos)
                 {
                     if(silo.Endpoint.Address.ToString().Equals(targetSilo))
@@ -41,6 +42,7 @@ namespace Engine.OperatorImplementation.Common
             var excludeSilo=RequestContext.Get("excludeSilo");
             if(excludeSilo!=null)
             {
+                Console.WriteLine("excludeSilo: "+excludeSilo);
                 silos=silos.Where(x=>!x.Endpoint.Address.ToString().Equals(excludeSilo)).ToArray();
             }
             foreach(SiloAddress silo in silos)
