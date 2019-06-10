@@ -26,8 +26,8 @@ namespace Engine.OperatorImplementation.Common
     {
         public Task<SiloAddress> OnAddActivation(PlacementStrategy strategy, PlacementTarget target, IPlacementContext context)
         {
-            var targetSilo=RequestContext.Get("targetSilo");
             var silos = context.GetCompatibleSilos(target).OrderBy(x=>x).ToArray();
+            var targetSilo=RequestContext.Get("targetSilo");
             if(targetSilo!=null)
             {
                 foreach(SiloAddress silo in silos)
@@ -38,17 +38,17 @@ namespace Engine.OperatorImplementation.Common
                     }
                 }
             }
-            // foreach(SiloAddress silo in silos)
-            // {
-            //     Console.WriteLine("Silo Address: "+silo.Endpoint.Address+" IsClient = "+silo.IsClient);
-            //     Console.WriteLine("String repr: "+silo.ToString());
-            // }
-            // Console.WriteLine("---------------------------------------");
             var excludeSilo=RequestContext.Get("excludeSilo");
             if(excludeSilo!=null)
             {
                 silos=silos.Where(x=>!x.Endpoint.Address.ToString().Equals(excludeSilo)).ToArray();
             }
+            foreach(SiloAddress silo in silos)
+            {
+                Console.WriteLine("Silo Address: "+silo.Endpoint.Address+" IsClient = "+silo.IsClient);
+                Console.WriteLine("String repr: "+silo.ToString());
+            }
+            Console.WriteLine("---------------------------------------");
             object index = RequestContext.Get("grainIndex");
             if(index==null)
             {
