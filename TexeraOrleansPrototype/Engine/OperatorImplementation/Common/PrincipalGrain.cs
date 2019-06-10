@@ -20,7 +20,7 @@ namespace Engine.OperatorImplementation.Common
 {
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
-        public virtual int DefaultNumGrainsInOneLayer { get { return 1; } }
+        public virtual int DefaultNumGrainsInOneLayer { get { return Constants.DefaultNumGrainsInOneLayer; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
         protected bool isPaused = false;
@@ -107,7 +107,7 @@ namespace Engine.OperatorImplementation.Common
                 //     RequestContext.Set("targetSilo",prevAllocation[i%prevAllocation.Count]);
                 // }
                 RequestContext.Clear();
-                RequestContext.Set("excludeSilo",Constants.clientIPAddress);
+                RequestContext.Set("excludeSilo",Constants.ClientIPAddress);
                 RequestContext.Set("grainIndex",i);
                 SiloAddress addr=await grain.Init(grain,predicate,self);
                 if(!operatorGrains[0].ContainsKey(addr))

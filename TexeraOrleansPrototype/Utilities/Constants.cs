@@ -10,9 +10,10 @@ namespace TexeraUtilities
 {
     static public class Constants
     {
-        public const string clientIPAddress="10.138.0.5";
-        public const int max_retries = 60;
-        public const int batchSize = 400;
-        public static string connectionString = "server="+clientIPAddress+";uid=orleans-backend;pwd=orleans-0519-2019;database=orleans;SslMode=none";
+        public const string ClientIPAddress="10.138.15.198";
+        public const int MaxRetries = 60;
+        public const int BatchSize = 400;
+        public const int DefaultNumGrainsInOneLayer=20;
+        public static string ConnectionString = "server="+ClientIPAddress+";uid=orleans-backend;pwd=orleans-0519-2019;database=orleans;SslMode=none";
     }
 }

@@ -142,13 +142,13 @@ namespace Engine.OperatorImplementation.Common
 
         public static bool IsTaskTimedOutAndStillNeedRetry(Task t, int retryCount)
         {
-            return IsTaskTimedOut(t) && retryCount<Constants.max_retries;
+            return IsTaskTimedOut(t) && retryCount<Constants.MaxRetries;
         }
 
 
         public static bool IsTaskFaultedAndStillNeedRetry(Task t, int retryCount)
         {
-            return t.IsFaulted && retryCount<Constants.max_retries;
+            return t.IsFaulted && retryCount<Constants.MaxRetries;
         }
 
 

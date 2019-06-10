@@ -21,7 +21,7 @@ namespace Engine.Controller
             WorkflowID=workflowID;
             foreach(Operator o in graph)
             {
-                RequestContext.Set("targetSilo",Constants.clientIPAddress);
+                RequestContext.Set("targetSilo",Constants.ClientIPAddress);
                 await o.PrincipalGrain.Init(self,workflowID,o);
             }
             foreach(Operator o in graph)

@@ -42,7 +42,7 @@ namespace Engine.WorkflowImplementation
             {
                 o.SetPrincipalGrain(factory);
             }
-            RequestContext.Set("targetSilo",Constants.clientIPAddress);
+            RequestContext.Set("targetSilo",Constants.ClientIPAddress);
             await workflowControllerGrain.Init(workflowControllerGrain,WorkflowID,AllOperators);
         }
 
