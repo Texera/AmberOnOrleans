@@ -150,7 +150,7 @@ namespace Engine.OperatorImplementation.Common
         
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
-            self.Process(message);
+            Process(message);
             return Task.CompletedTask;
         }
 
