@@ -11,6 +11,7 @@ using TexeraUtilities;
 
 namespace Engine.Controller
 {
+    [WorkerGrainPlacement]
     public class ControllerGrain : Grain, IControllerGrain
     {
         public Guid WorkflowID;
