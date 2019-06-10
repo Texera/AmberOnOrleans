@@ -25,6 +25,8 @@ namespace Engine.OperatorImplementation.Operators
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
                 IWorkerGrain finalGrain=this.GrainFactory.GetGrain<IGroupByFinalOperatorGrain>(this.GetPrimaryKey(),"final "+i);
+                RequestContext.Clear();
+                RequestContext.Set("excludeSilo",Constants.ClientIPAddress);
                 RequestContext.Set("grainIndex",i);
                 SiloAddress finalAddr=await finalGrain.Init(finalGrain,predicate,self);
                 if(!operatorGrains[1].ContainsKey(finalAddr))
@@ -46,6 +48,8 @@ namespace Engine.OperatorImplementation.Operators
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
                 IWorkerGrain grain=this.GrainFactory.GetGrain<IGroupByOperatorGrain>(this.GetPrimaryKey(),i.ToString());
+                RequestContext.Clear();
+                RequestContext.Set("excludeSilo",Constants.ClientIPAddress);
                 RequestContext.Set("grainIndex",i);
                 SiloAddress addr=await grain.Init(grain,predicate,self);
                 await grain.SetSendStrategy(this.GetPrimaryKey(),strategy);
