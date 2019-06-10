@@ -106,6 +106,7 @@ namespace Engine.OperatorImplementation.Common
                 // {
                 //     RequestContext.Set("targetSilo",prevAllocation[i%prevAllocation.Count]);
                 // }
+                RequestContext.Clear();
                 RequestContext.Set("excludeSilo",Constants.clientIPAddress);
                 RequestContext.Set("grainIndex",i);
                 SiloAddress addr=await grain.Init(grain,predicate,self);
