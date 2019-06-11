@@ -263,7 +263,7 @@ namespace Engine.OperatorImplementation.Common
         {
             lock(actionQueue)
             {
-                 Console.WriteLine("Resumed: "+Utils.GetReadableName(self) +" taskDidPaused = "+taskDidPaused +" actionQueue.Count = "+actionQueue.Count);
+                Console.WriteLine("Resumed: "+Utils.GetReadableName(self) +" taskDidPaused = "+taskDidPaused +" actionQueue.Count = "+actionQueue.Count);
             }
             isPaused=false;
             if(isFinished)
@@ -276,16 +276,13 @@ namespace Engine.OperatorImplementation.Common
                 {
                     new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
                 }
-                else if(actionQueue.Count==0)
+                Task.Run(()=>
                 {
-                    Task.Run(()=>
+                    foreach(ISendStrategy strategy in sendStrategies.Values)
                     {
-                        foreach(ISendStrategy strategy in sendStrategies.Values)
-                        {
-                            strategy.Resume();
-                        }
-                    });
-                }
+                        strategy.Resume();
+                    }
+                });
             }
         }
 
