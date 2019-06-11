@@ -14,6 +14,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
     public class FlowControlUnit: SendingUnit
     {
         int windowSize = 2;
+        bool isPaused=false;
         HashSet<ulong> messagesOnTheWay=new HashSet<ulong>();
         Queue<Immutable<PayloadMessage>> toBeSentBuffer=new Queue<Immutable<PayloadMessage>>();
 
@@ -24,7 +25,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         public override void Send(Immutable<PayloadMessage> message) 
         {
             //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
-            if (messagesOnTheWay.Count > windowSize) 
+            if (isPaused || messagesOnTheWay.Count > windowSize) 
             {
                 // if(message.Value.IsEnd)
                 // {
@@ -51,6 +52,27 @@ namespace Engine.OperatorImplementation.SendingSemantics
             else 
             {
                 SendInternal(message,0);
+            }
+        }
+
+        public override void Pause()
+        {
+            isPaused=true;
+        }
+
+        public override void Resume()
+        {
+            isPaused=false;
+            int numToBeSent=windowSize-toBeSentBuffer.Count;
+            lock(toBeSentBuffer)
+            {
+                for(int i=0;i<numToBeSent;++i)
+                {
+                    if(toBeSentBuffer.Count>0)
+                        SendInternal(toBeSentBuffer.Dequeue(),0);
+                    else
+                        break;
+                }
             }
         }
 

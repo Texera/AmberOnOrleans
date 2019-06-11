@@ -21,6 +21,22 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.outputSequenceNumbers=new List<ulong>();
         }
 
+        public void Pause()
+        {
+            foreach(SendingUnit unit in receivers)
+            {
+                unit.Pause();
+            }
+        }
+
+        public void Resume()
+        {
+            foreach(SendingUnit unit in receivers)
+            {
+                unit.Resume();
+            }
+        }
+
         public void AddReceiver(IWorkerGrain receiver,bool localSending)
         {
             if(localSending)

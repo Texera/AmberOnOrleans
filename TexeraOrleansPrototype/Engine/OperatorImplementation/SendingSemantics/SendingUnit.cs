@@ -15,6 +15,16 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected IWorkerGrain receiver;
 
+        public virtual void Pause()
+        {
+
+        }
+
+        public virtual void Resume()
+        {
+            
+        }
+
         public SendingUnit(IWorkerGrain receiver)
         {
             this.receiver=receiver;

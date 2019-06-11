@@ -253,6 +253,10 @@ namespace Engine.OperatorImplementation.Common
             }
             taskDidPaused=false;
             isPaused=true;
+            foreach(ISendStrategy strategy in sendStrategies.Values)
+            {
+                strategy.Pause();
+            }
         }
 
         protected virtual void Resume()
@@ -265,6 +269,10 @@ namespace Engine.OperatorImplementation.Common
             if(isFinished)
             {
                 return;
+            }
+            foreach(ISendStrategy strategy in sendStrategies.Values)
+            {
+                strategy.Resume();
             }
             lock(actionQueue)
             {

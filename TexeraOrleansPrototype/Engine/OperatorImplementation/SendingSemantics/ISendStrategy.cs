@@ -16,5 +16,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         void AddReceiver(IWorkerGrain receiver,bool localSending=false);
         void AddReceivers(List<IWorkerGrain> receivers,bool localSending=false);
         void RemoveAllReceivers();
+        void Pause();
+        void Resume();
     }
 }

@@ -23,6 +23,21 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.outputSequenceNumbers=Enumerable.Repeat((ulong)0, receivers.Count).ToList();
         }
 
+        public void Pause()
+        {
+            foreach(SendingUnit unit in receivers)
+            {
+                unit.Pause();
+            }
+        }
+
+        public void Resume()
+        {
+            foreach(SendingUnit unit in receivers)
+            {
+                unit.Resume();
+            }
+        }
         public abstract void RemoveAllReceivers();
 
         public abstract void Enqueue(IEnumerable<TexeraTuple> output);
