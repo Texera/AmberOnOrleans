@@ -164,10 +164,6 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(isPaused)
                 {
-                    foreach(ISendStrategy strategy in sendStrategies.Values)
-                    {
-                        strategy.Pause();
-                    }
                     return;
                 }
                 if(messageChecked || orderingEnforcer.PreProcess(message))
@@ -193,10 +189,6 @@ namespace Engine.OperatorImplementation.Common
                             await principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
                         }
                         #endif
-                        foreach(ISendStrategy strategy in sendStrategies.Values)
-                        {
-                            strategy.Pause();
-                        }
                         MakePayloadMessagesThenSend(outputList);
                         taskDidPaused=true;
                         return;
@@ -258,6 +250,10 @@ namespace Engine.OperatorImplementation.Common
             lock(actionQueue)
             {
                 Console.WriteLine("Paused: "+Utils.GetReadableName(self)+" actionQueue.Count = "+actionQueue.Count);
+            }
+            foreach(ISendStrategy strategy in sendStrategies.Values)
+            {
+                strategy.Pause();
             }
             taskDidPaused=false;
             isPaused=true;
