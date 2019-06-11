@@ -263,7 +263,7 @@ namespace Engine.OperatorImplementation.Common
         {
             lock(actionQueue)
             {
-                Console.WriteLine("Resumed: "+Utils.GetReadableName(self) +" taskDidPaused = "+taskDidPaused +" actionQueue.Count = "+actionQueue.Count);
+                Console.WriteLine("Resumed: "+Utils.GetReadableName(self) +" taskDidPaused = "+taskDidPaused +" actionQueue.Count = "+actionQueue.Count+" isFinished = "+isFinished);
             }
             isPaused=false;
             if(isFinished)
