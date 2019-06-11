@@ -96,6 +96,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
                             {
                                 windowSize=WindowSizeLimit;
                             }
+                            Console.WriteLine("windowSize = "+windowSize);
                         }
                         else
                         {
