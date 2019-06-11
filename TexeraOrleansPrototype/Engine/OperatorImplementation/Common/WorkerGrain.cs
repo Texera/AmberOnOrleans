@@ -276,7 +276,7 @@ namespace Engine.OperatorImplementation.Common
                 {
                     new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
                 }
-                Task.Run(()=>
+                Task.Delay(500).ContinueWith((t)=>
                 {
                     foreach(ISendStrategy strategy in sendStrategies.Values)
                     {
