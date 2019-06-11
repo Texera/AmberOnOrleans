@@ -69,7 +69,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 {
                     //critical:
                     windowSize=1;
-                    Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
+                    Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount+" windowsize = "+windowSize);
                     SendInternal(message,retryCount+1);
                 } 
                 else if(t.IsCompletedSuccessfully)
