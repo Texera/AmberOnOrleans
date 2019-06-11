@@ -82,6 +82,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 messagesOnTheWay.Add(message.Value.SequenceNumber);
             }
+            Console.WriteLine("sending");
             receiver.ReceivePayloadMessage(message).ContinueWith((t) => 
             {
                 if (Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
