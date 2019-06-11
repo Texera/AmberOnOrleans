@@ -13,9 +13,11 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public class FlowControlUnit: SendingUnit
     {
+        static readonly TimeSpan okTime=new TimeSpan(0,0,0,500); 
+        int ssthreshold = 8;
         int windowSize = 2;
         bool isPaused=false;
-        HashSet<ulong> messagesOnTheWay=new HashSet<ulong>();
+        Dictionary<ulong,DateTime> messagesOnTheWay=new Dictionary<ulong, DateTime>();
         Queue<Immutable<PayloadMessage>> toBeSentBuffer=new Queue<Immutable<PayloadMessage>>();
 
         public FlowControlUnit(IWorkerGrain receiver):base(receiver)
@@ -24,34 +26,13 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public override void Send(Immutable<PayloadMessage> message) 
         {
-            //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
-            if (isPaused || messagesOnTheWay.Count > windowSize) 
+            lock(toBeSentBuffer)
             {
-                // if(message.Value.IsEnd)
-                // {
-                //     Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
-                //     Console.WriteLine(message.Value.SequenceNumber+" "+lastAckSeqNum+" "+lastSentSeqNum);
-                //     string temp="[";
-                //     foreach(var i in stashedSeqNum)
-                //     {
-                //         temp+=i.ToString()+" ";
-                //     }
-                //     Console.WriteLine(temp+"]");
-                //     temp="[";
-                //     foreach(var i in ackChecked)
-                //     {
-                //         temp+="("+i.Item1+","+i.Item2+","+i.Item3+") ";
-                //     }
-                //     Console.WriteLine(temp+"]");
-                // }
-                lock(toBeSentBuffer)
+                toBeSentBuffer.Enqueue(message);
+                if (!isPaused && messagesOnTheWay.Count < windowSize) 
                 {
-                    toBeSentBuffer.Enqueue(message);
+                    SendInternal(toBeSentBuffer.Dequeue(),0);
                 }
-            }
-            else 
-            {
-                SendInternal(message,0);
             }
         }
 
@@ -80,12 +61,14 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
             lock(messagesOnTheWay)
             {
-                messagesOnTheWay.Add(message.Value.SequenceNumber);
+                messagesOnTheWay.Add(message.Value.SequenceNumber,DateTime.UtcNow);
             }
             receiver.ReceivePayloadMessage(message).ContinueWith((t) => 
             {
                 if (Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
                 {
+                    //critical:
+                    windowSize=1;
                     Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount);
                     SendInternal(message,retryCount+1);
                 } 
@@ -93,11 +76,37 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 {
                     lock(messagesOnTheWay)
                     {
+                        if(DateTime.UtcNow.Subtract(messagesOnTheWay[message.Value.SequenceNumber])<okTime)
+                        {
+                            //ack time is good
+                            if (windowSize < ssthreshold) 
+                            {
+                                windowSize = windowSize * 2;
+                                if (windowSize > ssthreshold) 
+                                {
+                                    windowSize = ssthreshold;
+                                }
+                            }
+                            else 
+                            {
+                                windowSize = windowSize + 1;
+                            }
+                        }
+                        else
+                        {
+                            //ack time is too long
+                            ssthreshold/=2;
+                            windowSize=ssthreshold;
+                            if(windowSize<2)
+                            {
+                                windowSize=1;
+                            }
+                        }
                         messagesOnTheWay.Remove(message.Value.SequenceNumber);
                     }
                     lock(toBeSentBuffer)
                     {
-                        if(!isPaused)
+                        if(!isPaused && toBeSentBuffer.Count<windowSize)
                         {
                             SendInternal(toBeSentBuffer.Dequeue(),0);
                         }
