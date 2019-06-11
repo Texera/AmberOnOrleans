@@ -13,7 +13,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public class FlowControlUnit: SendingUnit
     {
-        static readonly TimeSpan okTime=new TimeSpan(0,0,0,500); 
+        static readonly TimeSpan okTime=new TimeSpan(0,0,0,800); 
         int ssthreshold = 8;
         int windowSize = 2;
         bool isPaused=false;
@@ -61,15 +61,15 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
             lock(messagesOnTheWay)
             {
-                messagesOnTheWay.Add(message.Value.SequenceNumber,DateTime.UtcNow);
+                messagesOnTheWay[message.Value.SequenceNumber]=DateTime.UtcNow;
             }
             receiver.ReceivePayloadMessage(message).ContinueWith((t) => 
             {
                 if (Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
                 {
                     //critical:
-                    windowSize=1;
                     Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount+" windowsize = "+windowSize);
+                    windowSize=1;
                     SendInternal(message,retryCount+1);
                 } 
                 else if(t.IsCompletedSuccessfully)
