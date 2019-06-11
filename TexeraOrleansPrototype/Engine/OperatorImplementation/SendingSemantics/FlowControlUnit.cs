@@ -104,16 +104,16 @@ namespace Engine.OperatorImplementation.SendingSemantics
                             windowSize=ssthreshold;
                             if(windowSize<2)
                             {
-                                windowSize=1;
+                                windowSize=2;
                             }
                         }
                         messagesOnTheWay.Remove(message.Value.SequenceNumber);
-                    }
-                    lock(toBeSentBuffer)
-                    {
-                        if(!isPaused && toBeSentBuffer.Count<windowSize)
+                        lock(toBeSentBuffer)
                         {
-                            SendInternal(toBeSentBuffer.Dequeue(),0);
+                            if(!isPaused && messagesOnTheWay.Count<windowSize && toBeSentBuffer.Count>0)
+                            {
+                                SendInternal(toBeSentBuffer.Dequeue(),0);
+                            }
                         }
                     }
                 }
