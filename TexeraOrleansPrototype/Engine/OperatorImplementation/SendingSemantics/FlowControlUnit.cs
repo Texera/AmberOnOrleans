@@ -97,7 +97,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
                     }
                     lock(toBeSentBuffer)
                     {
-                        SendInternal(toBeSentBuffer.Dequeue(),0);
+                        if(!isPaused)
+                        {
+                            SendInternal(toBeSentBuffer.Dequeue(),0);
+                        }
                     }
                 }
                 else
