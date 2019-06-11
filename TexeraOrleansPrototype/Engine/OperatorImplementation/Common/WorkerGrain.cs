@@ -164,6 +164,10 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(isPaused)
                 {
+                    foreach(ISendStrategy strategy in sendStrategies.Values)
+                    {
+                        strategy.Pause();
+                    }
                     return;
                 }
                 if(messageChecked || orderingEnforcer.PreProcess(message))
@@ -189,6 +193,10 @@ namespace Engine.OperatorImplementation.Common
                             await principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
                         }
                         #endif
+                        foreach(ISendStrategy strategy in sendStrategies.Values)
+                        {
+                            strategy.Pause();
+                        }
                         MakePayloadMessagesThenSend(outputList);
                         taskDidPaused=true;
                         return;
@@ -253,10 +261,6 @@ namespace Engine.OperatorImplementation.Common
             }
             taskDidPaused=false;
             isPaused=true;
-            foreach(ISendStrategy strategy in sendStrategies.Values)
-            {
-                strategy.Pause();
-            }
         }
 
         protected virtual void Resume()
@@ -270,15 +274,21 @@ namespace Engine.OperatorImplementation.Common
             {
                 return;
             }
-            foreach(ISendStrategy strategy in sendStrategies.Values)
-            {
-                strategy.Resume();
-            }
             lock(actionQueue)
             {
                 if(actionQueue.Count>0 && taskDidPaused)
                 {
                     new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+                }
+                else if(actionQueue.Count==0)
+                {
+                    Task.Run(()=>
+                    {
+                        foreach(ISendStrategy strategy in sendStrategies.Values)
+                        {
+                            strategy.Resume();
+                        }
+                    });
                 }
             }
         }

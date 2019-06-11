@@ -63,9 +63,9 @@ namespace Engine.OperatorImplementation.SendingSemantics
         public override void Resume()
         {
             isPaused=false;
-            int numToBeSent=windowSize-toBeSentBuffer.Count;
             lock(toBeSentBuffer)
             {
+                int numToBeSent=windowSize-toBeSentBuffer.Count;
                 for(int i=0;i<numToBeSent;++i)
                 {
                     if(toBeSentBuffer.Count>0)
