@@ -164,6 +164,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(isPaused)
                 {
+                    taskDidPaused=true;
                     return;
                 }
                 if(messageChecked || orderingEnforcer.PreProcess(message))
