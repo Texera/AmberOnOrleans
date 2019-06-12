@@ -82,7 +82,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 if (Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
                 {
                     //critical:
-                    Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" resend "+message.Value.SequenceNumber+" with retry "+retryCount+" windowsize = "+windowSize);
+                    Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+"with seqnum = "+message.Value.SequenceNumber+" failed! \n ERROR: "+t.Exception.Message);
                     windowSize=1;
                     SendInternal(message,retryCount+1);
                 } 
