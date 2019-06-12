@@ -14,7 +14,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
     public class FlowControlUnit: SendingUnit
     {
         static readonly TimeSpan okTime=new TimeSpan(0,0,0,5); 
-        //static readonly int WindowSizeLimit=64;
+        static readonly int WindowSizeLimit=16;
         int ssthreshold = 8;
         int windowSize = 2;
         bool isPaused=false;
@@ -109,10 +109,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
                         {
                             windowSize = windowSize + 1;
                         }
-                        // if(windowSize>WindowSizeLimit)
-                        // {
-                        //     windowSize=WindowSizeLimit;
-                        // }
+                        if(windowSize>WindowSizeLimit)
+                        {
+                            windowSize=WindowSizeLimit;
+                        }
                     }
                     else
                     {
