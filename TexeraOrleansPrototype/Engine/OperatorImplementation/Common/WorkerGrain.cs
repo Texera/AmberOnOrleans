@@ -283,13 +283,6 @@ namespace Engine.OperatorImplementation.Common
             {
                 return;
             }
-            lock(actionQueue)
-            {
-                if(actionQueue.Count>0 && taskDidPaused)
-                {
-                    Task.Run(actionQueue.Peek());
-                }
-            }
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.SetPauseFlag(false);
@@ -308,6 +301,13 @@ namespace Engine.OperatorImplementation.Common
                             }
                         });
                     });
+                }
+            }
+            lock(actionQueue)
+            {
+                if(actionQueue.Count>0 && taskDidPaused)
+                {
+                    Task.Run(actionQueue.Peek());
                 }
             }
         }
