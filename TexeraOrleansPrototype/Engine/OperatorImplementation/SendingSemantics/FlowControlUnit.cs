@@ -76,6 +76,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 messagesOnTheWay[message.Value.SequenceNumber]=DateTime.UtcNow;
             }
+            Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" windowSize = "+windowSize);
             receiver.ReceivePayloadMessage(message).ContinueWith((t) => 
             {
                 if (Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
@@ -112,7 +113,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
                         {
                             windowSize=WindowSizeLimit;
                         }
-                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" windowSize = "+windowSize);
                     }
                     else
                     {
