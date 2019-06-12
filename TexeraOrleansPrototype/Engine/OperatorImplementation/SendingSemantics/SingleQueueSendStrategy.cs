@@ -72,6 +72,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public void RemoveAllReceivers()
         {
+            localSender=0;
             receivers.Clear();
             this.outputSequenceNumbers.Clear();
         }

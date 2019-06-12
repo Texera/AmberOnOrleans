@@ -103,6 +103,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             receivers.Clear();
             this.outputSequenceNumbers.Clear();
             this.outputRows.Clear();
+            localSender=0;
         }
 
         public override string ToString()
