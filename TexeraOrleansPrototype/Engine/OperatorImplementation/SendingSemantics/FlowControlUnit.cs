@@ -14,8 +14,8 @@ namespace Engine.OperatorImplementation.SendingSemantics
     public class FlowControlUnit: SendingUnit
     {
         static readonly TimeSpan okTime=new TimeSpan(0,0,0,5); 
-        static readonly int WindowSizeLimit=10;
-        int ssthreshold = 8;
+        static readonly int WindowSizeLimit=8;
+        int ssthreshold = 4;
         int windowSize = 2;
         bool isPaused=false;
         Dictionary<ulong,DateTime> messagesOnTheWay=new Dictionary<ulong, DateTime>();
