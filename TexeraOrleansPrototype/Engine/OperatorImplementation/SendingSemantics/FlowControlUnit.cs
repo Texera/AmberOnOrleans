@@ -13,7 +13,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public class FlowControlUnit: SendingUnit
     {
-        static readonly TimeSpan okTime=new TimeSpan(0,0,0,100); 
+        static readonly TimeSpan okTime=new TimeSpan(0,0,0,10); 
         static readonly int WindowSizeLimit=64;
         int ssthreshold = 8;
         int windowSize = 2;
