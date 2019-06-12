@@ -46,6 +46,7 @@ namespace Engine.OperatorImplementation.Common
         protected bool messageChecked=false;
         protected int currentEndFlagCount=0;
         protected bool isFinished=false;
+        protected List<TexeraTuple> savedBatch=null;
         protected volatile bool taskDidPaused=false;
         //protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
@@ -170,10 +171,19 @@ namespace Engine.OperatorImplementation.Common
                 if(messageChecked || orderingEnforcer.PreProcess(message))
                 {
                     bool isEnd=message.Value.IsEnd;
-                    List<TexeraTuple> batch=message.Value.Payload;
+                    List<TexeraTuple> batch;
+                    if(savedBatch!=null)
+                    {
+                        batch=savedBatch;
+                    }
+                    else
+                    {
+                        batch=message.Value.Payload;
+                    }
                     if(!messageChecked)
                     {
                         orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.Value.SenderIdentifer);
+                        savedBatch=batch;
                         messageChecked=true;
                     }  
                     BeforeProcessBatch(message,orleansScheduler);
@@ -190,11 +200,12 @@ namespace Engine.OperatorImplementation.Common
                             await principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
                         }
                         #endif
-                        MakePayloadMessagesThenSend(outputList);
+                        // MakePayloadMessagesThenSend(outputList);
                         taskDidPaused=true;
                         return;
                     }
                     batch=null;
+                    savedBatch=null;
                     currentIndex=0;
                     messageChecked=false;
                     if(isEnd)
@@ -254,7 +265,7 @@ namespace Engine.OperatorImplementation.Common
             }
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
-                strategy.Pause();
+                strategy.SetPauseFlag(true);
             }
             taskDidPaused=false;
             isPaused=true;
@@ -275,15 +286,28 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(actionQueue.Count>0 && taskDidPaused)
                 {
-                    new Task(actionQueue.Peek()).Start(TaskScheduler.Default);
+                    Task.Run(actionQueue.Peek());
                 }
-                Task.Delay(500).ContinueWith((t)=>
+            }
+            foreach(ISendStrategy strategy in sendStrategies.Values)
+            {
+                strategy.SetPauseFlag(false);
+            }
+            lock(actionQueue)
+            {
+                if(actionQueue.Count==0)
                 {
-                    foreach(ISendStrategy strategy in sendStrategies.Values)
+                    Task.Delay(500).ContinueWith((t)=>
                     {
-                        strategy.Resume();
-                    }
-                });
+                        Task.Run(()=>
+                        {
+                            foreach(ISendStrategy strategy in sendStrategies.Values)
+                            {
+                                strategy.ResumeSending();
+                            }
+                        });
+                    });
+                }
             }
         }
 

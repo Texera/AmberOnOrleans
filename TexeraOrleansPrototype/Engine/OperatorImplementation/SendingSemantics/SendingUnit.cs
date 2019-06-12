@@ -15,14 +15,14 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected IWorkerGrain receiver;
 
-        public virtual void Pause()
+        public virtual void SetPauseFlag(bool flag)
         {
 
         }
 
-        public virtual void Resume()
+        public virtual void ResumeSending()
         {
-            
+
         }
 
         public SendingUnit(IWorkerGrain receiver)

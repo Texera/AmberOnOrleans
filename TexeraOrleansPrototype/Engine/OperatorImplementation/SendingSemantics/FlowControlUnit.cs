@@ -27,36 +27,48 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public override void Send(Immutable<PayloadMessage> message) 
         {
-            lock(toBeSentBuffer)
+            PayloadMessage dequeuedMessage=null;
+            lock(toBeSentBuffer) lock(messagesOnTheWay)
             {
                 toBeSentBuffer.Enqueue(message);
                 if (!isPaused && messagesOnTheWay.Count < windowSize) 
                 {
-                    SendInternal(toBeSentBuffer.Dequeue(),0);
+                    dequeuedMessage=toBeSentBuffer.Dequeue().Value;
                 }
+            }
+            if(dequeuedMessage!=null)
+            {
+                SendInternal(dequeuedMessage.AsImmutable(),0);
             }
         }
 
-        public override void Pause()
+        public override void SetPauseFlag(bool flag)
         {
-            isPaused=true;
+            isPaused=flag;
         }
 
-        public override void Resume()
+        public override void ResumeSending()
         {
-            isPaused=false;
+            List<PayloadMessage> messagesToSend=new List<PayloadMessage>();
             lock(toBeSentBuffer) lock(messagesOnTheWay)
             {
                 int numToBeSent=windowSize-messagesOnTheWay.Count;
                 for(int i=0;i<numToBeSent;++i)
                 {
                     if(toBeSentBuffer.Count>0)
-                        SendInternal(toBeSentBuffer.Dequeue(),0);
+                        messagesToSend.Add(toBeSentBuffer.Dequeue().Value);
                     else
                         break;
                 }
             }
+            foreach(PayloadMessage message in messagesToSend)
+            {
+                SendInternal(message.AsImmutable(),0);
+            }
         }
+
+
+        
 
         private void SendInternal(Immutable<PayloadMessage> message,int retryCount)
         {
@@ -73,54 +85,57 @@ namespace Engine.OperatorImplementation.SendingSemantics
                     windowSize=1;
                     SendInternal(message,retryCount+1);
                 } 
-                else if(t.IsCompletedSuccessfully)
-                {
-                    lock(messagesOnTheWay)
-                    {
-                        if(DateTime.UtcNow.Subtract(messagesOnTheWay[message.Value.SequenceNumber])<okTime)
-                        {
-                            //ack time is good
-                            if (windowSize < ssthreshold) 
-                            {
-                                windowSize = windowSize * 2;
-                                if (windowSize > ssthreshold) 
-                                {
-                                    windowSize = ssthreshold;
-                                }
-                            }
-                            else 
-                            {
-                                windowSize = windowSize + 1;
-                            }
-                            if(windowSize>WindowSizeLimit)
-                            {
-                                windowSize=WindowSizeLimit;
-                            }
-                            Console.WriteLine("windowSize = "+windowSize);
-                        }
-                        else
-                        {
-                            //ack time is too long
-                            ssthreshold/=2;
-                            windowSize=ssthreshold;
-                            if(windowSize<2)
-                            {
-                                windowSize=2;
-                            }
-                        }
-                        messagesOnTheWay.Remove(message.Value.SequenceNumber);
-                        lock(toBeSentBuffer)
-                        {
-                            if(!isPaused && messagesOnTheWay.Count<windowSize && toBeSentBuffer.Count>0)
-                            {
-                                SendInternal(toBeSentBuffer.Dequeue(),0);
-                            }
-                        }
-                    }
-                }
                 else
                 {
-                    //Console.WriteLine("??????????????????????????????????");
+                    DateTime sentTime;
+                    lock(messagesOnTheWay)
+                    {
+                        sentTime=messagesOnTheWay[message.Value.SequenceNumber];
+                        messagesOnTheWay.Remove(message.Value.SequenceNumber);
+                    }
+                    if(DateTime.UtcNow.Subtract(sentTime)<okTime)
+                    {
+                        //ack time is good
+                        if (windowSize < ssthreshold) 
+                        {
+                            windowSize = windowSize * 2;
+                            if (windowSize > ssthreshold) 
+                            {
+                                windowSize = ssthreshold;
+                            }
+                        }
+                        else 
+                        {
+                            windowSize = windowSize + 1;
+                        }
+                        if(windowSize>WindowSizeLimit)
+                        {
+                            windowSize=WindowSizeLimit;
+                        }
+                        Console.WriteLine("windowSize = "+windowSize);
+                    }
+                    else
+                    {
+                        //ack time is too long
+                        ssthreshold/=2;
+                        windowSize=ssthreshold;
+                        if(windowSize<2)
+                        {
+                            windowSize=2;
+                        }
+                    }
+                    PayloadMessage dequeuedMessage=null;
+                    lock(toBeSentBuffer) lock(messagesOnTheWay)
+                    {
+                        if(!isPaused && messagesOnTheWay.Count<windowSize && toBeSentBuffer.Count>0)
+                        {
+                            dequeuedMessage=toBeSentBuffer.Dequeue().Value;
+                        }
+                    }
+                    if(dequeuedMessage!=null)
+                    {
+                        SendInternal(dequeuedMessage.AsImmutable(),0);
+                    }
                 }
             });
         }

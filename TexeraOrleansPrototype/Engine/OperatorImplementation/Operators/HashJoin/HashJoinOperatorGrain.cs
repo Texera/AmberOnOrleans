@@ -95,7 +95,7 @@ namespace Engine.OperatorImplementation.Operators
                     }
                     if(isPaused)
                     {
-                        MakePayloadMessagesThenSend(outputList);
+                        // MakePayloadMessagesThenSend(outputList);
                         taskDidPaused=true;
                         return;
                     }
@@ -114,10 +114,10 @@ namespace Engine.OperatorImplementation.Operators
                 lock(actionQueue)
                 {
                     actionQueue.Enqueue(action);
-                    if(actionQueue.Count==1)
-                    {
-                        Task.Run(action);
-                    }
+                    // if(actionQueue.Count==1)
+                    // {
+                    //     Task.Run(action);
+                    // }
                 }
                 otherTable=null;
             }
