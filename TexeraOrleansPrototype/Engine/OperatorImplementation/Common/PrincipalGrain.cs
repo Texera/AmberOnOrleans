@@ -148,12 +148,13 @@ namespace Engine.OperatorImplementation.Common
                             {
                                 receivers=nextInputGrains.Values.SelectMany(x=>x).ToList();
                             }
+                            strategy.AddReceivers(receivers,true);
+                            strategy.AddReceivers(isolated);
                             receivers.AddRange(isolated);
                             foreach(IWorkerGrain grain in receivers)
                             {
                                 await grain.AddInputInformation(new Pair<Guid,int>(operatorID,pair.Value.Count));
                             }
-                            strategy.AddReceivers(receivers,true);
                             foreach(IWorkerGrain grain in pair.Value)
                             {
                                 await grain.SetSendStrategy(nextOperatorID,strategy);
