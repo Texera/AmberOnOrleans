@@ -43,10 +43,10 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             return MessageStatus.Vaild;
         }
 
-        public bool PreProcess(Immutable<PayloadMessage> message)
+        public bool PreProcess(PayloadMessage message)
         {
-            IGrain sender=message.Value.SenderIdentifer;
-            ulong sequenceNum=message.Value.SequenceNumber;
+            IGrain sender=message.SenderIdentifer;
+            ulong sequenceNum=message.SequenceNumber;
             switch(CheckMessage(sender,sequenceNum))
             {
                 case MessageStatus.Vaild:
@@ -60,7 +60,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     }
                     if(!stashedPayloadMessages[sender].ContainsKey(sequenceNum))
                     {
-                        stashedPayloadMessages[sender].Add(sequenceNum, new Pair<bool, List<TexeraTuple>>(message.Value.IsEnd,message.Value.Payload));
+                        stashedPayloadMessages[sender].Add(sequenceNum, new Pair<bool, List<TexeraTuple>>(message.IsEnd,message.Payload));
                     }
                     break;
                 case MessageStatus.Duplicated:

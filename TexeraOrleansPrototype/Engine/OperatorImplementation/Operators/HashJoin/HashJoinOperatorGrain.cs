@@ -42,10 +42,10 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message)
+        protected override void BeforeProcessBatch(PayloadMessage message)
         {
             string ext;
-            isCurrentInnerTable=innerTableGuid.Equals(message.Value.SenderIdentifer.GetPrimaryKey(out ext));
+            isCurrentInnerTable=innerTableGuid.Equals(message.SenderIdentifer.GetPrimaryKey(out ext));
             isInnerTableFinished=(inputInfo[innerTableGuid]==0);
         }
 
@@ -79,7 +79,7 @@ namespace Engine.OperatorImplementation.Operators
             }
         }
 
-        protected override void AfterProcessBatch(Immutable<PayloadMessage> message)
+        protected override void AfterProcessBatch(PayloadMessage message)
         {
             if(inputInfo[innerTableGuid]==0 && otherTable!=null)
             {

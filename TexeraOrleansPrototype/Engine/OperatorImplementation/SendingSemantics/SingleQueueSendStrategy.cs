@@ -15,6 +15,8 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected List<SendingUnit> receivers;
         protected List<ulong> outputSequenceNumbers;
+
+        protected int localSender=0;
         public SingleQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
             this.receivers=new List<SendingUnit>();
@@ -39,7 +41,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
         public void AddReceiver(IWorkerGrain receiver,bool localSending)
         {
             if(localSending)
+            {
+                localSender+=1;
                 receivers.Add(new SendingUnit(receiver));
+            }
             else
                 receivers.Add(new FlowControlUnit(receiver));
             this.outputSequenceNumbers.Add(0);

@@ -116,12 +116,12 @@ namespace Engine.OperatorImplementation.Common
         }
 
 
-        protected virtual void BeforeProcessBatch(Immutable<PayloadMessage> message)
+        protected virtual void BeforeProcessBatch(PayloadMessage message)
         {
 
         }
 
-        protected virtual void AfterProcessBatch(Immutable<PayloadMessage> message)
+        protected virtual void AfterProcessBatch(PayloadMessage message)
         {
 
         }
@@ -152,13 +152,19 @@ namespace Engine.OperatorImplementation.Common
         
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
+            Process(message.Value);
+            return Task.CompletedTask;
+        }
+
+        public Task ReceivePayloadMessage(PayloadMessage message)
+        {
             Process(message);
             return Task.CompletedTask;
         }
 
 
 
-        public Task Process(Immutable<PayloadMessage> message)
+        public void Process(PayloadMessage message)
         {
             Action action=()=>
             {
@@ -169,7 +175,7 @@ namespace Engine.OperatorImplementation.Common
                 }
                 if(messageChecked || orderingEnforcer.PreProcess(message))
                 {
-                    bool isEnd=message.Value.IsEnd;
+                    bool isEnd=message.IsEnd;
                     List<TexeraTuple> batch;
                     if(savedBatch!=null)
                     {
@@ -177,11 +183,11 @@ namespace Engine.OperatorImplementation.Common
                     }
                     else
                     {
-                        batch=message.Value.Payload;
+                        batch=message.Payload;
                     }
                     if(!messageChecked)
                     {
-                        orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.Value.SenderIdentifer);
+                        orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.SenderIdentifer);
                         savedBatch=batch;
                         messageChecked=true;
                     }  
@@ -211,9 +217,9 @@ namespace Engine.OperatorImplementation.Common
                     if(isEnd)
                     {
                         string ext;
-                        inputInfo[message.Value.SenderIdentifer.GetPrimaryKey(out ext)]--;
+                        inputInfo[message.SenderIdentifer.GetPrimaryKey(out ext)]--;
                         currentEndFlagCount--;
-                        Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" END: "+message.Value.SequenceNumber);
+                        Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.SenderIdentifer)+" END: "+message.SequenceNumber);
                     }
                     AfterProcessBatch(message);
                     MakePayloadMessagesThenSend(outputList);
@@ -235,7 +241,7 @@ namespace Engine.OperatorImplementation.Common
                     Task.Run(action);
                 }
             }
-            return Task.CompletedTask;
+            //return Task.CompletedTask;
         }
 
         // private void SendPayloadMessageToSelf(Immutable<PayloadMessage> message, int retryCount)
@@ -322,7 +328,6 @@ namespace Engine.OperatorImplementation.Common
 
         public Task AddInputInformation(Pair<Guid,int> inputInfo)
         {
-            Console.WriteLine("Linking: "+Utils.GetReadableName(self)+" will receive "+inputInfo.Second+" end flags from "+inputInfo.First.ToString().Substring(0,8));
             currentEndFlagCount+=inputInfo.Second;
             if(this.inputInfo.ContainsKey(inputInfo.First))
             {
@@ -408,6 +413,7 @@ namespace Engine.OperatorImplementation.Common
 
         public Task SetSendStrategy(Guid operatorGuid,ISendStrategy sendStrategy)
         {
+            Console.WriteLine("Linking: "+Utils.GetReadableName(self)+sendStrategy);
             sendStrategies[operatorGuid]=sendStrategy;
             return Task.CompletedTask;
         }

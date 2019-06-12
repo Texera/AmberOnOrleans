@@ -14,18 +14,18 @@ namespace Engine.OperatorImplementation.SendingSemantics
     public class FlowControlUnit: SendingUnit
     {
         static readonly TimeSpan okTime=new TimeSpan(0,0,0,5); 
-        static readonly int WindowSizeLimit=4;
+        static readonly int WindowSizeLimit=16;
         int ssthreshold = 4;
         int windowSize = 2;
         bool isPaused=false;
         Dictionary<ulong,DateTime> messagesOnTheWay=new Dictionary<ulong, DateTime>();
-        Queue<Immutable<PayloadMessage>> toBeSentBuffer=new Queue<Immutable<PayloadMessage>>();
+        Queue<PayloadMessage> toBeSentBuffer=new Queue<PayloadMessage>();
 
         public FlowControlUnit(IWorkerGrain receiver):base(receiver)
         {
         }
 
-        public override void Send(Immutable<PayloadMessage> message) 
+        public override void Send(PayloadMessage message) 
         {
             PayloadMessage dequeuedMessage=null;
             lock(toBeSentBuffer) lock(messagesOnTheWay)
@@ -33,12 +33,12 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 toBeSentBuffer.Enqueue(message);
                 if (!isPaused && messagesOnTheWay.Count < windowSize) 
                 {
-                    dequeuedMessage=toBeSentBuffer.Dequeue().Value;
+                    dequeuedMessage=toBeSentBuffer.Dequeue();
                 }
             }
             if(dequeuedMessage!=null)
             {
-                SendInternal(dequeuedMessage.AsImmutable(),0);
+                SendInternal(dequeuedMessage,0);
             }
         }
 
@@ -56,33 +56,33 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 for(int i=0;i<numToBeSent;++i)
                 {
                     if(toBeSentBuffer.Count>0)
-                        messagesToSend.Add(toBeSentBuffer.Dequeue().Value);
+                        messagesToSend.Add(toBeSentBuffer.Dequeue());
                     else
                         break;
                 }
             }
             foreach(PayloadMessage message in messagesToSend)
             {
-                SendInternal(message.AsImmutable(),0);
+                SendInternal(message,0);
             }
         }
 
 
         
 
-        private void SendInternal(Immutable<PayloadMessage> message,int retryCount)
+        private void SendInternal(PayloadMessage message,int retryCount)
         {
             lock(messagesOnTheWay)
             {
-                messagesOnTheWay[message.Value.SequenceNumber]=DateTime.UtcNow;
+                messagesOnTheWay[message.SequenceNumber]=DateTime.UtcNow;
             }
-            //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" windowSize = "+windowSize);
+            //Console.WriteLine(Utils.GetReadableName(message.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" windowSize = "+windowSize);
             receiver.ReceivePayloadMessage(message).ContinueWith((t) => 
             {
                 if (Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
                 {
                     //critical:
-                    Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+"with seqnum = "+message.Value.SequenceNumber+" failed! \n ERROR: "+t.Exception.Message);
+                    Console.WriteLine(Utils.GetReadableName(message.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+"with seqnum = "+message.SequenceNumber+" failed! \n ERROR: "+t.Exception.Message);
                     windowSize=1;
                     SendInternal(message,retryCount+1);
                 } 
@@ -91,8 +91,8 @@ namespace Engine.OperatorImplementation.SendingSemantics
                     DateTime sentTime;
                     lock(messagesOnTheWay)
                     {
-                        sentTime=messagesOnTheWay[message.Value.SequenceNumber];
-                        messagesOnTheWay.Remove(message.Value.SequenceNumber);
+                        sentTime=messagesOnTheWay[message.SequenceNumber];
+                        messagesOnTheWay.Remove(message.SequenceNumber);
                     }
                     if(DateTime.UtcNow.Subtract(sentTime)<okTime)
                     {
@@ -129,12 +129,12 @@ namespace Engine.OperatorImplementation.SendingSemantics
                     {
                         if(!isPaused && messagesOnTheWay.Count<windowSize && toBeSentBuffer.Count>0)
                         {
-                            dequeuedMessage=toBeSentBuffer.Dequeue().Value;
+                            dequeuedMessage=toBeSentBuffer.Dequeue();
                         }
                     }
                     if(dequeuedMessage!=null)
                     {
-                        SendInternal(dequeuedMessage.AsImmutable(),0);
+                        SendInternal(dequeuedMessage,0);
                     }
                 }
             });

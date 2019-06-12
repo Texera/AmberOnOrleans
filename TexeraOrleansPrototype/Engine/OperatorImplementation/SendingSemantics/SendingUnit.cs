@@ -30,10 +30,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.receiver=receiver;
         }
 
-        public virtual void Send(Immutable<PayloadMessage> message)
+        public virtual void Send(PayloadMessage message)
         {
             //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
-            SendInternal(message,0);
+            SendInternal(message.AsImmutable(),0);
         }
 
 

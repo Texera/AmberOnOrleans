@@ -169,10 +169,24 @@ namespace Engine.OperatorImplementation.Common
                         {
                             await grain.AddInputInformation(new Pair<Guid,int>(operatorID,senders.Count));
                         }
-                        strategy.AddReceivers(receivers);
-                        foreach(IWorkerGrain grain in senders)
+                        foreach(var pair in outputGrains)
                         {
-                            await grain.SetSendStrategy(nextOperatorID,strategy);
+                            foreach(var receiver_pair in nextInputGrains)
+                            {
+                                if(receiver_pair.Key.Equals(pair.Key))
+                                {
+                                    strategy.AddReceivers(receiver_pair.Value,true);
+                                }
+                                else
+                                {
+                                    strategy.AddReceivers(receiver_pair.Value);
+                                }
+                            }
+                            foreach(IWorkerGrain grain in pair.Value)
+                            {
+                                await grain.SetSendStrategy(nextOperatorID,strategy);
+                            }
+                            strategy.RemoveAllReceivers();
                         }
                     }
                 }

@@ -44,10 +44,10 @@ namespace Engine.OperatorImplementation.Operators
             return addr;
         }
 
-        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message)
+        protected override void BeforeProcessBatch(PayloadMessage message)
         {
             string ext;
-            if(innerTableGuid.Equals(message.Value.SenderIdentifer.GetPrimaryKey(out ext)))
+            if(innerTableGuid.Equals(message.SenderIdentifer.GetPrimaryKey(out ext)))
             {
                 joinFieldIndex=innerTableIndex;
                 joinedTuples=outerJoinedTuples;

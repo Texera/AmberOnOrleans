@@ -13,12 +13,12 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public abstract class MultiQueueSendStrategy: MultiQueueBatching, ISendStrategy
     {
-        protected List<FlowControlUnit> receivers;
+        protected List<SendingUnit> receivers;
         protected List<ulong> outputSequenceNumbers;
         protected TaskScheduler scheduler;
         public MultiQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
-            receivers=new List<FlowControlUnit>();
+            receivers=new List<SendingUnit>();
             outputSequenceNumbers=new List<ulong>();
             this.outputSequenceNumbers=Enumerable.Repeat((ulong)0, receivers.Count).ToList();
         }

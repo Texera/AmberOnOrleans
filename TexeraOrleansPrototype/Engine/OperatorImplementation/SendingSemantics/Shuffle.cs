@@ -17,6 +17,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         private string selectorExpression;
         private Func<TexeraTuple,int> selector=null;
+        int localSender=0;
         public Shuffle(string jsonLambdaFunction, int batchingLimit=1000):base(batchingLimit)
         {
             this.selectorExpression=jsonLambdaFunction;
@@ -39,7 +40,13 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public override void AddReceiver(IWorkerGrain receiver, bool localSending)
         {
-            receivers.Add(new FlowControlUnit(receiver));
+            if(localSending)
+            {
+                localSender+=1;
+                receivers.Add(new SendingUnit(receiver));
+            }
+            else
+                receivers.Add(new FlowControlUnit(receiver));
             this.outputSequenceNumbers.Add(0);
             this.outputRows.Add(new Queue<TexeraTuple>());
         }
@@ -59,7 +66,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeBatchedPayloads())
             {
-                receivers[pair.First].Send(new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable());
+                receivers[pair.First].Send(new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false));
             }
         }
 
@@ -67,12 +74,12 @@ namespace Engine.OperatorImplementation.SendingSemantics
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeLastPayload())
             {
-                receivers[pair.First].Send(new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable());
+                receivers[pair.First].Send(new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false));
             }
             for(int i=0;i<receivers.Count;++i)
             {
                 PayloadMessage message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
-                receivers[i].Send(message.AsImmutable());
+                receivers[i].Send(message);
             }
         }
 
@@ -85,6 +92,11 @@ namespace Engine.OperatorImplementation.SendingSemantics
             receivers.Clear();
             this.outputSequenceNumbers.Clear();
             this.outputRows.Clear();
+        }
+
+        public override string ToString()
+        {
+            return "Shuffle: local = "+localSender+" non-local = "+(receivers.Count-localSender);
         }
     }
 }
