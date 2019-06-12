@@ -42,7 +42,7 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message)
         {
             string ext;
             isCurrentInnerTable=innerTableGuid.Equals(message.Value.SenderIdentifer.GetPrimaryKey(out ext));
@@ -79,7 +79,7 @@ namespace Engine.OperatorImplementation.Operators
             }
         }
 
-        protected override void AfterProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        protected override void AfterProcessBatch(Immutable<PayloadMessage> message)
         {
             if(inputInfo[innerTableGuid]==0 && otherTable!=null)
             {

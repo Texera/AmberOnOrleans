@@ -25,7 +25,7 @@ namespace Engine.OperatorImplementation.Operators
         protected override void Start()
         {
             base.Start();
-            StartGenerate(0);
+            Generate();
         }
 
         protected override void Resume()
@@ -34,7 +34,7 @@ namespace Engine.OperatorImplementation.Operators
             base.Resume();
             if(!isFinished)
             {
-                StartGenerate(0);
+                Generate();
             }
         }
 

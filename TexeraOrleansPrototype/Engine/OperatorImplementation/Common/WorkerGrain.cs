@@ -116,12 +116,12 @@ namespace Engine.OperatorImplementation.Common
         }
 
 
-        protected virtual void BeforeProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        protected virtual void BeforeProcessBatch(Immutable<PayloadMessage> message)
         {
 
         }
 
-        protected virtual void AfterProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        protected virtual void AfterProcessBatch(Immutable<PayloadMessage> message)
         {
 
         }
@@ -160,7 +160,6 @@ namespace Engine.OperatorImplementation.Common
 
         public Task Process(Immutable<PayloadMessage> message)
         {
-            var orleansScheduler=TaskScheduler.Current;
             Action action=()=>
             {
                 if(isPaused)
@@ -186,7 +185,7 @@ namespace Engine.OperatorImplementation.Common
                         savedBatch=batch;
                         messageChecked=true;
                     }  
-                    BeforeProcessBatch(message,orleansScheduler);
+                    BeforeProcessBatch(message);
                     List<TexeraTuple> outputList=new List<TexeraTuple>();
                     if(batch!=null)
                     {
@@ -216,7 +215,7 @@ namespace Engine.OperatorImplementation.Common
                         currentEndFlagCount--;
                         Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.Value.SenderIdentifer)+" END: "+message.Value.SequenceNumber);
                     }
-                    AfterProcessBatch(message,orleansScheduler);
+                    AfterProcessBatch(message);
                     MakePayloadMessagesThenSend(outputList);
                 }
                 lock(actionQueue)
@@ -336,9 +335,8 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public Task Generate()
+        public void Generate()
         {
-            var orleansScheduler=TaskScheduler.Current;
             Action action=async ()=>
             {
                 if(isFinished)
@@ -367,7 +365,7 @@ namespace Engine.OperatorImplementation.Common
                 MakePayloadMessagesThenSend(outputList);
                 if(currentEndFlagCount!=0)
                 {
-                    StartGenerate(0);
+                    Generate();
                 }
                 lock(actionQueue)
                 {
@@ -389,7 +387,6 @@ namespace Engine.OperatorImplementation.Common
                     }
                 }
             }
-            return Task.CompletedTask;
         }
 
         protected virtual Task GenerateTuples(List<TexeraTuple> outputList)
@@ -397,17 +394,17 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        protected void StartGenerate(int retryCount)
-        {
-            self.Generate().ContinueWith((t)=>
-            {
-                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                {
-                    Console.WriteLine(this.GetType().Name+"("+self+")"+" re-receive message with retry count "+retryCount);
-                    StartGenerate(retryCount+1);
-                }
-            });
-        }
+        // protected void StartGenerate(int retryCount)
+        // {
+        //     self.Generate().ContinueWith((t)=>
+        //     {
+        //         if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
+        //         {
+        //             Console.WriteLine(this.GetType().Name+"("+self+")"+" re-receive message with retry count "+retryCount);
+        //             StartGenerate(retryCount+1);
+        //         }
+        //     });
+        // }
 
         public Task SetSendStrategy(Guid operatorGuid,ISendStrategy sendStrategy)
         {

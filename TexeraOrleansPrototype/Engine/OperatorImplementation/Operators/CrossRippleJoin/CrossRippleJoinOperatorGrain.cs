@@ -44,7 +44,7 @@ namespace Engine.OperatorImplementation.Operators
             return addr;
         }
 
-        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message)
         {
             string ext;
             if(innerTableGuid.Equals(message.Value.SenderIdentifer.GetPrimaryKey(out ext)))

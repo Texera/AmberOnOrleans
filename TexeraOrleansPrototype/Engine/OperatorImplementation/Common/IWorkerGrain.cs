@@ -37,7 +37,7 @@ namespace Engine.OperatorImplementation.Common
         #endregion
 
         #region Used by source operators
-        Task Generate();
+        // Task Generate();
         #endregion
 
 
