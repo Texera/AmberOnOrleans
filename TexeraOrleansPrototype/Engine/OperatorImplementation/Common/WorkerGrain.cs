@@ -283,15 +283,18 @@ namespace Engine.OperatorImplementation.Common
             {
                 return;
             }
-            foreach(ISendStrategy strategy in sendStrategies.Values)
+            Task.Delay(100).ContinueWith((t)=>
             {
-                strategy.SetPauseFlag(false);
-            }
+                foreach(ISendStrategy strategy in sendStrategies.Values)
+                {
+                    strategy.SetPauseFlag(false);
+                }
+            });
             lock(actionQueue)
             {
                 if(actionQueue.Count==0)
                 {
-                    Task.Delay(500).ContinueWith((t)=>
+                    Task.Delay(100).ContinueWith((t)=>
                     {
                         Task.Run(()=>
                         {
