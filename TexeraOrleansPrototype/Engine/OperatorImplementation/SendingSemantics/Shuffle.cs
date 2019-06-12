@@ -53,9 +53,20 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public override void AddReceivers(List<IWorkerGrain> receivers, bool localSending)
         {
-            foreach(IWorkerGrain grain in receivers)
+            if(localSending)
             {
-                this.receivers.Add(new FlowControlUnit(grain));
+                foreach(IWorkerGrain grain in receivers)
+                {
+                    localSender+=1;
+                    this.receivers.Add(new SendingUnit(grain));
+                }
+            }
+            else
+            {
+                foreach(IWorkerGrain grain in receivers)
+                {
+                    this.receivers.Add(new FlowControlUnit(grain));
+                }
             }
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
             this.outputRows.AddRange(Enumerable.Range(0,receivers.Count).Select(x=>new Queue<TexeraTuple>()));

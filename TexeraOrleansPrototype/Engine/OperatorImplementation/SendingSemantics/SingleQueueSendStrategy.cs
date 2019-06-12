@@ -56,6 +56,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 foreach(IWorkerGrain grain in receivers)
                 {
+                    localSender+=1;
                     this.receivers.Add(new SendingUnit(grain));
                 }
             }

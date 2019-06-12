@@ -413,7 +413,7 @@ namespace Engine.OperatorImplementation.Common
 
         public Task SetSendStrategy(Guid operatorGuid,ISendStrategy sendStrategy)
         {
-            Console.WriteLine("Linking: "+Utils.GetReadableName(self)+sendStrategy);
+            Console.WriteLine("Linking: "+Utils.GetReadableName(self)+" "+sendStrategy);
             sendStrategies[operatorGuid]=sendStrategy;
             return Task.CompletedTask;
         }
