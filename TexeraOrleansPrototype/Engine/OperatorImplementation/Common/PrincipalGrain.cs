@@ -143,12 +143,13 @@ namespace Engine.OperatorImplementation.Common
                             if(nextInputGrains.ContainsKey(pair.Key))
                             {
                                 receivers=nextInputGrains[pair.Key];
+                                strategy.AddReceivers(receivers,true);
                             }
                             else
                             {
                                 receivers=nextInputGrains.Values.SelectMany(x=>x).ToList();
+                                strategy.AddReceivers(receivers);
                             }
-                            strategy.AddReceivers(receivers,true);
                             strategy.AddReceivers(isolated);
                             receivers.AddRange(isolated);
                             foreach(IWorkerGrain grain in receivers)
