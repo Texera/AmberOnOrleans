@@ -112,7 +112,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
                         {
                             windowSize=WindowSizeLimit;
                         }
-                        Console.WriteLine("windowSize = "+windowSize);
+                        Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" windowSize = "+windowSize);
                     }
                     else
                     {
