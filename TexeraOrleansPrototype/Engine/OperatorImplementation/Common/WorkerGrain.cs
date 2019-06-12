@@ -200,7 +200,8 @@ namespace Engine.OperatorImplementation.Common
                             await principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
                         }
                         #endif
-                        // MakePayloadMessagesThenSend(outputList);
+                        //if we not do so, the outputlist will be lost.
+                        MakePayloadMessagesThenSend(outputList);
                         taskDidPaused=true;
                         return;
                     }
@@ -356,6 +357,7 @@ namespace Engine.OperatorImplementation.Common
                 if(isPaused)
                 {
                     Console.WriteLine(Utils.GetReadableName(self)+" Paused after generating tuples");
+                    MakePayloadMessagesThenSend(outputList);
                     taskDidPaused=true;
                     return;
                 }

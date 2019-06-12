@@ -53,6 +53,10 @@ namespace Engine.OperatorImplementation.Operators
             int i=0;
             while(i<GenerateLimit)
             {
+                if(isPaused)
+                {
+                    return;
+                }
                 if(start>end)
                 {
                     Console.WriteLine(Common.Utils.GetReadableName(self)+" set currentEndFlagCount=0 actionQueue.Count="+actionQueue.Count);

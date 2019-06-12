@@ -71,7 +71,7 @@ namespace SiloHost
                     services.AddSingletonKeyedService<Type, IPlacementDirector, WorkerGrainPlacementDirector>(typeof(WorkerGrainPlacement));
                 })
                 .ConfigureEndpoints(siloPort: 11111, gatewayPort: 30000)
-                .ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Warning).AddConsole())
+                .ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Critical).AddConsole())
                 .Configure<SiloMessagingOptions>(options => { options.ResponseTimeout = new TimeSpan(0,0,45); });
 
             var host = siloBuilder.Build();

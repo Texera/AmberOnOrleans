@@ -95,7 +95,8 @@ namespace Engine.OperatorImplementation.Operators
                     }
                     if(isPaused)
                     {
-                        // MakePayloadMessagesThenSend(outputList);
+                        //if we don't do so, the outputlist will be lost.
+                        MakePayloadMessagesThenSend(outputList);
                         taskDidPaused=true;
                         return;
                     }
