@@ -90,7 +90,7 @@ class ScanStreamReader
                 buffer_start=0;
                 try
                 {
-                    buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);
+                    await Task.Delay(50);//buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);
                 }
                 catch(Exception e)
                 {
@@ -98,6 +98,7 @@ class ScanStreamReader
                     throw e;
                 }
             }
+            return new Tuple<string,ulong>("1,1,3,4,5,6,7,8,9",40);
             if(buffer_end==0)break;
             int i;
             int charbuf_length;
