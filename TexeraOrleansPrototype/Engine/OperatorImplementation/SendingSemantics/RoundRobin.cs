@@ -25,7 +25,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 {
                     break;
                 }
-                RoundRobinSending(message.AsImmutable());
+                RoundRobinSending(message);
             }
         }
 
@@ -34,20 +34,25 @@ namespace Engine.OperatorImplementation.SendingSemantics
             PayloadMessage message=MakeLastMessage(senderIdentifier,outputSequenceNumbers[roundRobinIndex]);
             if(message!=null)
             {
-                RoundRobinSending(message.AsImmutable());
+                RoundRobinSending(message);
             }
             for(int i=0;i<receivers.Count;++i)
             {
                 message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
-                receivers[i].Send(message.AsImmutable());
+                receivers[i].Send(message);
             }
         }
 
-        private void RoundRobinSending(Immutable<PayloadMessage> message)
+        private void RoundRobinSending(PayloadMessage message)
         {
             outputSequenceNumbers[roundRobinIndex]++;
             receivers[roundRobinIndex].Send(message);
             roundRobinIndex = (roundRobinIndex+1)%receivers.Count;
+        }
+
+        public override string ToString()
+        {
+            return "RoundRobin: local = "+localSender+" non-local = "+(receivers.Count-localSender);
         }
     }
 }

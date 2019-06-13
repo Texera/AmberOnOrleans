@@ -15,15 +15,25 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected IWorkerGrain receiver;
 
+        public virtual void SetPauseFlag(bool flag)
+        {
+
+        }
+
+        public virtual void ResumeSending()
+        {
+
+        }
+
         public SendingUnit(IWorkerGrain receiver)
         {
             this.receiver=receiver;
         }
 
-        public virtual void Send(Immutable<PayloadMessage> message)
+        public virtual void Send(PayloadMessage message)
         {
             //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
-            SendInternal(message,0);
+            SendInternal(message.AsImmutable(),0);
         }
 
 

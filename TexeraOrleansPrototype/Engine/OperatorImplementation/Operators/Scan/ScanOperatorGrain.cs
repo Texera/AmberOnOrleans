@@ -25,7 +25,7 @@ namespace Engine.OperatorImplementation.Operators
         protected override void Start()
         {
             base.Start();
-            StartGenerate(0);
+            Generate();
         }
 
         protected override void Resume()
@@ -34,7 +34,7 @@ namespace Engine.OperatorImplementation.Operators
             base.Resume();
             if(!isFinished)
             {
-                StartGenerate(0);
+                Generate();
             }
         }
 
@@ -53,6 +53,10 @@ namespace Engine.OperatorImplementation.Operators
             int i=0;
             while(i<GenerateLimit)
             {
+                if(isPaused)
+                {
+                    return;
+                }
                 if(start>end)
                 {
                     Console.WriteLine(Common.Utils.GetReadableName(self)+" set currentEndFlagCount=0 actionQueue.Count="+actionQueue.Count);

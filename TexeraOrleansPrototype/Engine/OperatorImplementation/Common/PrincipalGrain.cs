@@ -146,17 +146,19 @@ namespace Engine.OperatorImplementation.Common
                             if(nextInputGrains.ContainsKey(pair.Key))
                             {
                                 receivers=nextInputGrains[pair.Key];
+                                strategy.AddReceivers(receivers,true);
                             }
                             else
                             {
                                 receivers=nextInputGrains.Values.SelectMany(x=>x).ToList();
+                                strategy.AddReceivers(receivers);
                             }
+                            strategy.AddReceivers(isolated);
                             receivers.AddRange(isolated);
                             foreach(IWorkerGrain grain in receivers)
                             {
                                 await grain.AddInputInformation(new Pair<Guid,int>(operatorID,pair.Value.Count));
                             }
-                            strategy.AddReceivers(receivers,true);
                             foreach(IWorkerGrain grain in pair.Value)
                             {
                                 await grain.SetSendStrategy(nextOperatorID,strategy);
@@ -172,10 +174,24 @@ namespace Engine.OperatorImplementation.Common
                         {
                             await grain.AddInputInformation(new Pair<Guid,int>(operatorID,senders.Count));
                         }
-                        strategy.AddReceivers(receivers);
-                        foreach(IWorkerGrain grain in senders)
+                        foreach(var pair in outputGrains)
                         {
-                            await grain.SetSendStrategy(nextOperatorID,strategy);
+                            foreach(var receiver_pair in nextInputGrains)
+                            {
+                                if(receiver_pair.Key.Equals(pair.Key))
+                                {
+                                    strategy.AddReceivers(receiver_pair.Value,true);
+                                }
+                                else
+                                {
+                                    strategy.AddReceivers(receiver_pair.Value);
+                                }
+                            }
+                            foreach(IWorkerGrain grain in pair.Value)
+                            {
+                                await grain.SetSendStrategy(nextOperatorID,strategy);
+                            }
+                            strategy.RemoveAllReceivers();
                         }
                     }
                 }
@@ -222,7 +238,7 @@ namespace Engine.OperatorImplementation.Common
             TimeSpan t = (DateTime.UtcNow - new DateTime(1970, 1, 1));
             Console.WriteLine(this.GetType()+" receives the pause message at "+ (int)t.TotalSeconds);
             currentPauseFlag++;
-            if(currentPauseFlag>=prevPrincipalGrains.Count || isPaused)
+            // if(currentPauseFlag>=prevPrincipalGrains.Count || isPaused)
             {
                 currentPauseFlag=0;
                 if(isPaused)
@@ -243,10 +259,10 @@ namespace Engine.OperatorImplementation.Common
                 //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause)));
                 Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
-                foreach(IPrincipalGrain next in nextPrincipalGrains)
-                {
-                    await SendPauseToNextPrincipalGrain(next,0);
-                }
+                // foreach(IPrincipalGrain next in nextPrincipalGrains)
+                // {
+                //     await SendPauseToNextPrincipalGrain(next,0);
+                // }
             }
         }
 

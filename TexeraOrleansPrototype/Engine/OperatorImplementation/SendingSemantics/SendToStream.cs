@@ -57,5 +57,15 @@ namespace Engine.OperatorImplementation.SendingSemantics
             await stream.OnNextAsync(message.AsImmutable());
         }
 
+        public void SetPauseFlag(bool pause)
+        {
+
+        }
+
+        public void ResumeSending()
+        {
+            
+        }
+
     }
 }

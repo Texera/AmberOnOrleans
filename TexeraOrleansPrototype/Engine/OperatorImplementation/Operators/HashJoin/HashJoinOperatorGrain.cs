@@ -42,10 +42,10 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        protected override void BeforeProcessBatch(PayloadMessage message)
         {
             string ext;
-            isCurrentInnerTable=innerTableGuid.Equals(message.Value.SenderIdentifer.GetPrimaryKey(out ext));
+            isCurrentInnerTable=innerTableGuid.Equals(message.SenderIdentifer.GetPrimaryKey(out ext));
             isInnerTableFinished=(inputInfo[innerTableGuid]==0);
         }
 
@@ -79,7 +79,7 @@ namespace Engine.OperatorImplementation.Operators
             }
         }
 
-        protected override void AfterProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        protected override void AfterProcessBatch(PayloadMessage message)
         {
             if(inputInfo[innerTableGuid]==0 && otherTable!=null)
             {
@@ -95,6 +95,7 @@ namespace Engine.OperatorImplementation.Operators
                     }
                     if(isPaused)
                     {
+                        //if we don't do so, the outputlist will be lost.
                         MakePayloadMessagesThenSend(outputList);
                         taskDidPaused=true;
                         return;
@@ -114,10 +115,10 @@ namespace Engine.OperatorImplementation.Operators
                 lock(actionQueue)
                 {
                     actionQueue.Enqueue(action);
-                    if(actionQueue.Count==1)
-                    {
-                        Task.Run(action);
-                    }
+                    // if(actionQueue.Count==1)
+                    // {
+                    //     Task.Run(action);
+                    // }
                 }
                 otherTable=null;
             }

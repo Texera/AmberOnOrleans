@@ -15,16 +15,36 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         protected List<SendingUnit> receivers;
         protected List<ulong> outputSequenceNumbers;
+
+        protected int localSender=0;
         public SingleQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
             this.receivers=new List<SendingUnit>();
             this.outputSequenceNumbers=new List<ulong>();
         }
 
+        public void SetPauseFlag(bool flag)
+        {
+            foreach(SendingUnit unit in receivers)
+            {
+                unit.SetPauseFlag(flag);
+            }
+        }
+
+        public void ResumeSending()
+        {
+            foreach(SendingUnit unit in receivers)
+            {
+                unit.ResumeSending();
+            }
+        }
         public void AddReceiver(IWorkerGrain receiver,bool localSending)
         {
             if(localSending)
+            {
+                localSender+=1;
                 receivers.Add(new SendingUnit(receiver));
+            }
             else
                 receivers.Add(new FlowControlUnit(receiver));
             this.outputSequenceNumbers.Add(0);
@@ -36,6 +56,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 foreach(IWorkerGrain grain in receivers)
                 {
+                    localSender+=1;
                     this.receivers.Add(new SendingUnit(grain));
                 }
             }
@@ -51,6 +72,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public void RemoveAllReceivers()
         {
+            localSender=0;
             receivers.Clear();
             this.outputSequenceNumbers.Clear();
         }

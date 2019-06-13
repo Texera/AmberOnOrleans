@@ -21,7 +21,6 @@ namespace Engine.OperatorImplementation.Operators
         List<TexeraTuple> sortedTuples=new List<TexeraTuple>();
         List<T> sortedValues=new List<T>();
         int sortIndex;
-        int counter=0;
 
         public override Task OnDeactivateAsync()
         {

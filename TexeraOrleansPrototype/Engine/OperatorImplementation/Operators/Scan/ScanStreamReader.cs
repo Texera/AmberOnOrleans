@@ -8,7 +8,7 @@ using Engine.OperatorImplementation.Common;
 
 class ScanStreamReader
 {
-    public const int buffer_size = 1024;
+    public const int buffer_size = 4*1024;
     private enum FileType{unknown,csv,pdf,txt,tbl};
     private FileType file_type;
     private string file_path;
@@ -98,6 +98,8 @@ class ScanStreamReader
                     throw e;
                 }
             }
+            buffer_end=-1;
+            return new Tuple<string,ulong>("1|1|2|3|4|5|6",4096);
             if(buffer_end==0)break;
             int i;
             int charbuf_length;
