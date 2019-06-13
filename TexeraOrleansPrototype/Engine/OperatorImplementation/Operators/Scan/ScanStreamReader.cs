@@ -90,7 +90,6 @@ class ScanStreamReader
                 buffer_start=0;
                 try
                 {
-                    //await Task.Delay(1);
                     buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);
                 }
                 catch(Exception e)
@@ -99,7 +98,8 @@ class ScanStreamReader
                     throw e;
                 }
             }
-            //buffer_end=-1;
+            buffer_end=-1;
+            return new Tuple<string,ulong>("1|1|2|3|4|5|6",4096);
             if(buffer_end==0)break;
             int i;
             int charbuf_length;
@@ -109,19 +109,18 @@ class ScanStreamReader
                 {
                     int length=i-buffer_start+1;
                     ByteCount+=(ulong)(length);
-                    //charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
-                    //sb.Append(charbuf,0,charbuf_length);
+                    charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
+                    sb.Append(charbuf,0,charbuf_length);
                     buffer_start=i+1;
-                    return new Tuple<string,ulong>("1|1|3|4|5|6|7|8|9",ByteCount);
+                    return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
                 }
             }
             ByteCount+=(ulong)(buffer_end-buffer_start);
-            //charbuf_length=decoder.GetChars(buffer,buffer_start,buffer_end-buffer_start,charbuf,0);
-            //sb.Append(charbuf,0,charbuf_length);
+            charbuf_length=decoder.GetChars(buffer,buffer_start,buffer_end-buffer_start,charbuf,0);
+            sb.Append(charbuf,0,charbuf_length);
             buffer_start=buffer_end;
         }
-        //return new Tuple<string,ulong>("1|1|3|4|5|6|7|8|9",1024);
-        return new Tuple<string,ulong>("1|1|3|4|5|6|7|8|9",ByteCount);
+        return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
     }
     public void Close()
     {
