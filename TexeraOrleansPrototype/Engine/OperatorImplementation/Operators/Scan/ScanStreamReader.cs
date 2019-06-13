@@ -90,7 +90,7 @@ class ScanStreamReader
                 buffer_start=0;
                 try
                 {
-                    await Task.Delay(50);//buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);
+                    await Task.Delay(1);//buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);
                 }
                 catch(Exception e)
                 {
