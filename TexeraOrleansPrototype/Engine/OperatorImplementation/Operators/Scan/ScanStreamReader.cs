@@ -98,8 +98,6 @@ class ScanStreamReader
                     throw e;
                 }
             }
-            buffer_end=-1;
-            return new Tuple<string,ulong>("1|1|2|3|4|5|6",4096);
             if(buffer_end==0)break;
             int i;
             int charbuf_length;
