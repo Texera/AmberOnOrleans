@@ -80,49 +80,49 @@ class ScanStreamReader
     public async Task<Tuple<string,ulong>> ReadLine()
     {
         if(file==null)throw new Exception("ReadLine: File Not Exists");
-        ulong ByteCount=0;
-        StringBuilder sb=new StringBuilder();
-        char[] charbuf=new char[buffer_size];
-        while(true)
-        {
-            if(buffer_start>=buffer_end)
-            {
-                buffer_start=0;
-                try
-                {
-                    //buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);
-                    string line=await file.ReadLineAsync();
-                    ByteCount=(ulong)line.Length+1;
-                    buffer_end=-1;
-                    return new Tuple<string,ulong>(line,ByteCount);
-                }
-                catch(Exception e)
-                {
-                    buffer_end=0;
-                    throw e;
-                }
-            }
-            if(buffer_end==0)break;
-            int i;
-            int charbuf_length;
-            for(i=buffer_start;i<buffer_end;++i)
-            {
-                if(buffer[i]=='\n')
-                {
-                    int length=i-buffer_start+1;
-                    ByteCount+=(ulong)(length);
-                    charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
-                    sb.Append(charbuf,0,charbuf_length);
-                    buffer_start=i+1;
-                    return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
-                }
-            }
-            ByteCount+=(ulong)(buffer_end-buffer_start);
-            charbuf_length=decoder.GetChars(buffer,buffer_start,buffer_end-buffer_start,charbuf,0);
-            sb.Append(charbuf,0,charbuf_length);
-            buffer_start=buffer_end;
-        }
-        return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
+        string line=await file.ReadLineAsync();
+        ulong ByteCount=(ulong)line.Length+1;
+        return new Tuple<string,ulong>(line,ByteCount);
+        // ulong ByteCount=0;
+        // StringBuilder sb=new StringBuilder();
+        // char[] charbuf=new char[buffer_size];
+        // while(true)
+        // {
+        //     if(buffer_start>=buffer_end)
+        //     {
+        //         buffer_start=0;
+        //         try
+        //         {
+        //             //buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);
+                    
+        //         }
+        //         catch(Exception e)
+        //         {
+        //             buffer_end=0;
+        //             throw e;
+        //         }
+        //     }
+        //     if(buffer_end==0)break;
+        //     int i;
+        //     int charbuf_length;
+        //     for(i=buffer_start;i<buffer_end;++i)
+        //     {
+        //         if(buffer[i]=='\n')
+        //         {
+        //             int length=i-buffer_start+1;
+        //             ByteCount+=(ulong)(length);
+        //             charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
+        //             sb.Append(charbuf,0,charbuf_length);
+        //             buffer_start=i+1;
+        //             return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
+        //         }
+        //     }
+        //     ByteCount+=(ulong)(buffer_end-buffer_start);
+        //     charbuf_length=decoder.GetChars(buffer,buffer_start,buffer_end-buffer_start,charbuf,0);
+        //     sb.Append(charbuf,0,charbuf_length);
+        //     buffer_start=buffer_end;
+        // }
+        // return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
     }
     public void Close()
     {
@@ -135,7 +135,8 @@ class ScanStreamReader
 
     public bool IsEOF()
     {
-        return buffer_end==0;
+        // return buffer_end==0;
+        return file.EndOfStream;
     }
 
 }
