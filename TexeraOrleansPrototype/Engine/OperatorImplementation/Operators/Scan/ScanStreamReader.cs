@@ -99,7 +99,7 @@ class ScanStreamReader
                     throw e;
                 }
             }
-            buffer_end=-1;
+            //buffer_end=-1;
             if(buffer_end==0)break;
             int i;
             int charbuf_length;
