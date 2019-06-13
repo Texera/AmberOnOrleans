@@ -93,6 +93,7 @@ class ScanStreamReader
                     //buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);
                     string line=await file.ReadLineAsync();
                     ByteCount=(ulong)line.Length+1;
+                    buffer_end=-1;
                     return new Tuple<string,ulong>(line,ByteCount);
                 }
                 catch(Exception e)
