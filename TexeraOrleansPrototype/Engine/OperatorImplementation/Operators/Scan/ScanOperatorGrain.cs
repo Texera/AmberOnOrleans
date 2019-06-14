@@ -52,7 +52,6 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     outputList.Add(tuple);
                 }
-                addingToListTime+=DateTime.UtcNow-start2;
                 if(isPaused)
                 {
                     return outputList;
@@ -64,6 +63,7 @@ namespace Engine.OperatorImplementation.Operators
                     currentEndFlagCount=0;
                     return outputList;
                 }
+                addingToListTime+=DateTime.UtcNow-start2;
             }
             generateTime+=DateTime.UtcNow-start1;
             return outputList;
