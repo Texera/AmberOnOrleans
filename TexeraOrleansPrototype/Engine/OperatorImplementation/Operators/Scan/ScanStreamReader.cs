@@ -121,7 +121,7 @@ class ScanStreamReader
                     buffer_start=i+1;
                     forloop+=DateTime.UtcNow-start;
                     readline+=DateTime.UtcNow-start2;
-                    return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
+                    return new Tuple<string,ulong>(sb.TrimEnd().ToString(),ByteCount);
                 }
             }
             ByteCount+=(ulong)(buffer_end-buffer_start);
@@ -131,7 +131,7 @@ class ScanStreamReader
         }
         forloop+=DateTime.UtcNow-start;
         readline+=DateTime.UtcNow-start2;
-        return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
+        return new Tuple<string,ulong>(sb.TrimEnd().ToString(),ByteCount);
     }
     public void Close()
     {
