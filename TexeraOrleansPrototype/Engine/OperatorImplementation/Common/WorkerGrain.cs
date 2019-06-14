@@ -48,6 +48,9 @@ namespace Engine.OperatorImplementation.Common
         protected bool isFinished=false;
         protected List<TexeraTuple> savedBatch=null;
         protected volatile bool taskDidPaused=false;
+        protected TimeSpan processTime=new TimeSpan(0,0,0);
+        protected TimeSpan sendingTime=new TimeSpan(0,0,0);
+        protected TimeSpan preprocessTime=new TimeSpan(0,0,0);
         //protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
@@ -92,7 +95,8 @@ namespace Engine.OperatorImplementation.Common
             }
             if(!isFinished && currentEndFlagCount==0)
             {
-                Console.WriteLine(Utils.GetReadableName(self)+" END!!!!!!!!!");
+                Console.WriteLine(Utils.GetReadableName(self)+" END!");
+                Console.WriteLine(Utils.GetReadableName(self)+" Preprocess Time: "+preprocessTime+" Process Time: "+processTime+" Sending Time: "+sendingTime);
                 isFinished=true;
                 MakeLastPayloadMessageThenSend();
             }
@@ -173,6 +177,7 @@ namespace Engine.OperatorImplementation.Common
                     taskDidPaused=true;
                     return;
                 }
+                DateTime start=DateTime.UtcNow;
                 if(messageChecked || orderingEnforcer.PreProcess(message))
                 {
                     bool isEnd=message.IsEnd;
@@ -191,6 +196,8 @@ namespace Engine.OperatorImplementation.Common
                         savedBatch=batch;
                         messageChecked=true;
                     }  
+                    preprocessTime+=DateTime.UtcNow-start;
+                    start=DateTime.UtcNow;
                     BeforeProcessBatch(message);
                     List<TexeraTuple> outputList=new List<TexeraTuple>();
                     if(batch!=null)
@@ -222,7 +229,10 @@ namespace Engine.OperatorImplementation.Common
                         Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.SenderIdentifer)+" END: "+message.SequenceNumber);
                     }
                     AfterProcessBatch(message);
+                    processTime+=DateTime.UtcNow-start;
+                    start=DateTime.UtcNow;
                     MakePayloadMessagesThenSend(outputList);
+                    sendingTime+=DateTime.UtcNow-start;
                 }
                 lock(actionQueue)
                 {
@@ -345,8 +355,12 @@ namespace Engine.OperatorImplementation.Common
         {
             while(true)
             {
+                DateTime start=DateTime.UtcNow;
                 List<TexeraTuple> outputList=await GenerateTuples();
+                processTime+=DateTime.UtcNow-start;
+                start=DateTime.UtcNow;
                 MakePayloadMessagesThenSend(outputList);
+                sendingTime+=DateTime.UtcNow-start;
                 if(isPaused || isFinished)
                 {
                     break;

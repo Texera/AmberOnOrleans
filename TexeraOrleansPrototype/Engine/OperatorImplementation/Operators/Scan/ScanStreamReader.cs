@@ -144,10 +144,10 @@ class ScanStreamReader
         // return file.EndOfStream;
     }
 
-    public void PrintTimeUsage()
+    public void PrintTimeUsage(string grain)
     {
-        Console.WriteLine("Time for reading from HDFS: "+reading);
-        Console.WriteLine("Time for for-loop: "+forloop);
+        Console.WriteLine(grain+" Reading from HDFS to buffer Time: "+reading);
+        Console.WriteLine(grain+" Reading from buffer Time: "+forloop);
     }
 
 

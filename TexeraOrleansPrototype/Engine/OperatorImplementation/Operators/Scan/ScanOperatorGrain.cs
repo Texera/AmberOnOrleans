@@ -21,6 +21,7 @@ namespace Engine.OperatorImplementation.Operators
         private ScanStreamReader reader;
         public static int GenerateLimit=1000;
         private string separator;
+        TimeSpan splitingTime=new TimeSpan(0,0,0);
 
         protected override void Start()
         {
@@ -53,7 +54,8 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 if(start>end || reader.IsEOF())
                 {
-                    reader.PrintTimeUsage();
+                    Console.WriteLine(Common.Utils.GetReadableName(self)+" Spliting Time: "+splitingTime);
+                    reader.PrintTimeUsage(Common.Utils.GetReadableName(self));
                     currentEndFlagCount=0;
                     return outputList;
                 }
@@ -96,6 +98,7 @@ namespace Engine.OperatorImplementation.Operators
             try
             {
                 Tuple<string,ulong> res = await reader.ReadLine();
+                DateTime start1=DateTime.UtcNow;
                 start += res.Item2;
                 if (reader.IsEOF())
                 {
@@ -106,7 +109,11 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     ++tuple_counter;
                     if(separator!=null)
-                        return new TexeraTuple(res.Item1.Split(separator));
+                    {
+                        var fields=res.Item1.Split(separator);
+                        splitingTime+=DateTime.UtcNow-start1;
+                        return new TexeraTuple(fields);
+                    }
                     else
                         return new TexeraTuple(new string[]{res.Item1});
                 }
