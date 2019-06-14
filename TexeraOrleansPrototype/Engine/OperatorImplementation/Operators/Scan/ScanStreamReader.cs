@@ -16,6 +16,8 @@ class ScanStreamReader
     private byte[] buffer = new byte[buffer_size];
     private int buffer_start = 0;
     private int buffer_end = 0;
+    StringBuilder sb=new StringBuilder();
+    char[] charbuf=new char[buffer_size];
     private TimeSpan reading=new TimeSpan(0,0,0);
     private TimeSpan forloop=new TimeSpan(0,0,0);
     private TimeSpan readline=new TimeSpan(0,0,0);
@@ -85,9 +87,8 @@ class ScanStreamReader
         if(file==null)throw new Exception("ReadLine: File Not Exists");
         DateTime start2=DateTime.UtcNow;
         DateTime start=DateTime.UtcNow;
+        sb.Clear();
         ulong ByteCount=0;
-        StringBuilder sb=new StringBuilder();
-        char[] charbuf=new char[buffer_size];
         while(true)
         {
             if(buffer_start>=buffer_end)
