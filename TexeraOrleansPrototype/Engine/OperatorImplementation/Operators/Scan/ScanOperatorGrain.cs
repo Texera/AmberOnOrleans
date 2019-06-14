@@ -41,13 +41,13 @@ namespace Engine.OperatorImplementation.Operators
             }
         }
 
-        protected async override Task<List<TexeraTuple>> GenerateTuples()
+        protected override List<TexeraTuple> GenerateTuples()
         {
             DateTime start1=DateTime.UtcNow;
             List<TexeraTuple> outputList=new List<TexeraTuple>();
             for(int i=0;i<GenerateLimit;++i)
             {
-                TexeraTuple tuple=await ReadTuple();
+                TexeraTuple tuple=ReadTuple();
                 DateTime start2=DateTime.UtcNow;
                 if(tuple!=null)
                 {
@@ -100,12 +100,12 @@ namespace Engine.OperatorImplementation.Operators
         
 
 
-        private async Task<TexeraTuple> ReadTuple()
+        private TexeraTuple ReadTuple()
         {
             DateTime start2=DateTime.UtcNow;
             // try
             // {
-            Tuple<string,ulong> res = await reader.ReadLine();
+            Tuple<string,ulong> res = reader.ReadLine().Result;
             DateTime start1=DateTime.UtcNow;
             start += res.Item2;
             if (reader.IsEOF())

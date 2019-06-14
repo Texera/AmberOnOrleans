@@ -351,12 +351,12 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public async void Generate()
+        public void Generate()
         {
             while(true)
             {
                 DateTime start=DateTime.UtcNow;
-                List<TexeraTuple> outputList=await GenerateTuples();
+                List<TexeraTuple> outputList=GenerateTuples();
                 processTime+=DateTime.UtcNow-start;
                 start=DateTime.UtcNow;
                 MakePayloadMessagesThenSend(outputList);
@@ -368,9 +368,9 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        protected virtual Task<List<TexeraTuple>> GenerateTuples()
+        protected virtual List<TexeraTuple> GenerateTuples()
         {
-            return Task.FromResult(new List<TexeraTuple>());
+            return new List<TexeraTuple>();
         }
 
         // protected void StartGenerate(int retryCount)
