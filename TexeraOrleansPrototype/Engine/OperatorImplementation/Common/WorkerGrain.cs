@@ -324,6 +324,7 @@ namespace Engine.OperatorImplementation.Common
         protected virtual void Start()
         {
             currentEndFlagCount=-1;
+            Task.Run(()=>Generate());
         }
 
         public Task AddInputInformation(Pair<Guid,int> inputInfo)
@@ -340,63 +341,22 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public void Generate()
+        public async void Generate()
         {
-            Action action=async ()=>
+            while(true)
             {
-                if(isFinished)
+                if(isPaused || isFinished)
                 {
-                    lock(actionQueue)
-                    {
-                        actionQueue.Clear();
-                    }
-                    return;
+                    break;
                 }
-                if(isPaused)
-                {
-                    Console.WriteLine(Utils.GetReadableName(self)+" Paused before generating tuples");
-                    taskDidPaused=true;
-                    return;
-                }
-                List<TexeraTuple> outputList=new List<TexeraTuple>();
-                await GenerateTuples(outputList);
-                if(isPaused)
-                {
-                    Console.WriteLine(Utils.GetReadableName(self)+" Paused after generating tuples");
-                    MakePayloadMessagesThenSend(outputList);
-                    taskDidPaused=true;
-                    return;
-                }
+                List<TexeraTuple> outputList=await GenerateTuples();
                 MakePayloadMessagesThenSend(outputList);
-                if(currentEndFlagCount!=0)
-                {
-                    Generate();
-                }
-                lock(actionQueue)
-                {
-                    actionQueue.Dequeue();
-                    if(actionQueue.Count>0)
-                    {
-                        Task.Run(actionQueue.Peek());
-                    }
-                }
-            };
-            lock(actionQueue)
-            {
-                if(actionQueue.Count<2)
-                {
-                    actionQueue.Enqueue(action);
-                    if(actionQueue.Count==1)
-                    {
-                        Task.Run(action);
-                    }
-                }
             }
         }
 
-        protected virtual Task GenerateTuples(List<TexeraTuple> outputList)
+        protected virtual Task<List<TexeraTuple>> GenerateTuples()
         {
-            return Task.CompletedTask;
+            return Task.FromResult(new List<TexeraTuple>());
         }
 
         // protected void StartGenerate(int retryCount)

@@ -25,7 +25,6 @@ namespace Engine.OperatorImplementation.Operators
         protected override void Start()
         {
             base.Start();
-            Generate();
         }
 
         protected override void Resume()
@@ -34,48 +33,31 @@ namespace Engine.OperatorImplementation.Operators
             base.Resume();
             if(!isFinished)
             {
-                Generate();
+                Task.Run(()=>Generate());
             }
         }
 
-        protected async override Task GenerateTuples(List<TexeraTuple> outputList)
+        protected async override Task<List<TexeraTuple>> GenerateTuples()
         {
-            if(restarted)
-            {
-                Console.WriteLine(Common.Utils.GetReadableName(self)+" restarted scanning file");
-                restarted=false;
-            }
-            if(((start-original_start)/(double)size)>checkpoint)
-            {
-                Console.WriteLine(Common.Utils.GetReadableName(self)+" reached checkpoint of "+checkpoint);
-                checkpoint+=0.1;
-            }
-            int i=0;
-            while(i<GenerateLimit)
+            List<TexeraTuple> outputList=new List<TexeraTuple>();
+            for(int i=0;i<GenerateLimit;++i)
             {
                 if(isPaused)
                 {
-                    return;
+                    return outputList;
                 }
-                if(start>end)
+                if(start>end || reader.IsEOF())
                 {
-                    Console.WriteLine(Common.Utils.GetReadableName(self)+" set currentEndFlagCount=0 actionQueue.Count="+actionQueue.Count);
                     currentEndFlagCount=0;
-                    break;
+                    return outputList;
                 }
                 TexeraTuple tuple=await ReadTuple();
                 if(tuple!=null)
                 {
                     outputList.Add(tuple);
-                    i++;
-                }
-                if(reader.IsEOF())
-                {
-                    Console.WriteLine(Common.Utils.GetReadableName(self)+" set currentEndFlagCount=0 actionQueue.Count="+actionQueue.Count);
-                    currentEndFlagCount=0;
-                    break;
                 }
             }
+            return outputList;
         }
 
         
