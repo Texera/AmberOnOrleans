@@ -24,6 +24,7 @@ namespace Engine.OperatorImplementation.Operators
         TimeSpan splitingTime=new TimeSpan(0,0,0);
         TimeSpan addingToListTime=new TimeSpan(0,0,0);
         TimeSpan generateTime=new TimeSpan(0,0,0);
+        TimeSpan readtupleTime=new TimeSpan(0,0,0);
 
         protected override void Start()
         {
@@ -58,7 +59,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 if(start>end || reader.IsEOF())
                 {
-                    Console.WriteLine(Common.Utils.GetReadableName(self)+" Spliting Time: "+splitingTime +" Adding to list Time: "+addingToListTime+" Generate Time: "+generateTime);
+                    Console.WriteLine(Common.Utils.GetReadableName(self)+" Spliting Time: "+splitingTime +" Adding to list Time: "+addingToListTime+" Generate Time: "+generateTime+" ReadTuple Time: "+readtupleTime);
                     reader.PrintTimeUsage(Common.Utils.GetReadableName(self));
                     currentEndFlagCount=0;
                     return outputList;
@@ -101,6 +102,7 @@ namespace Engine.OperatorImplementation.Operators
 
         private async Task<TexeraTuple> ReadTuple()
         {
+            DateTime start2=DateTime.UtcNow;
             try
             {
                 Tuple<string,ulong> res = await reader.ReadLine();
@@ -118,6 +120,7 @@ namespace Engine.OperatorImplementation.Operators
                     {
                         var fields=res.Item1.Split(separator);
                         splitingTime+=DateTime.UtcNow-start1;
+                        readtupleTime+=DateTime.UtcNow-start2;
                         return new TexeraTuple(fields);
                     }
                     else
