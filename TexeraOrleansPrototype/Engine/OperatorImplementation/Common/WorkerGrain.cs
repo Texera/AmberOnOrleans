@@ -345,12 +345,12 @@ namespace Engine.OperatorImplementation.Common
         {
             while(true)
             {
+                List<TexeraTuple> outputList=await GenerateTuples();
+                MakePayloadMessagesThenSend(outputList);
                 if(isPaused || isFinished)
                 {
                     break;
                 }
-                List<TexeraTuple> outputList=await GenerateTuples();
-                MakePayloadMessagesThenSend(outputList);
             }
         }
 

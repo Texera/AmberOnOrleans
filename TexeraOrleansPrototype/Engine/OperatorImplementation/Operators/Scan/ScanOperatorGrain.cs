@@ -42,6 +42,11 @@ namespace Engine.OperatorImplementation.Operators
             List<TexeraTuple> outputList=new List<TexeraTuple>();
             for(int i=0;i<GenerateLimit;++i)
             {
+                TexeraTuple tuple=await ReadTuple();
+                if(tuple!=null)
+                {
+                    outputList.Add(tuple);
+                }
                 if(isPaused)
                 {
                     return outputList;
@@ -51,11 +56,6 @@ namespace Engine.OperatorImplementation.Operators
                     reader.PrintTimeUsage();
                     currentEndFlagCount=0;
                     return outputList;
-                }
-                TexeraTuple tuple=await ReadTuple();
-                if(tuple!=null)
-                {
-                    outputList.Add(tuple);
                 }
             }
             return outputList;
