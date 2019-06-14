@@ -16,6 +16,8 @@ class ScanStreamReader
     private byte[] buffer = new byte[buffer_size];
     private int buffer_start = 0;
     private int buffer_end = 0;
+    private TimeSpan reading=new TimeSpan(0,0,0);
+    private TimeSpan forloop=new TimeSpan(0,0,0);
     private Decoder decoder;
 
     public ScanStreamReader(string path)
@@ -93,7 +95,9 @@ class ScanStreamReader
                 buffer_start=0;
                 try
                 {
-                    buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);     
+                    DateTime start1=DateTime.UtcNow;
+                    buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);    
+                    reading+=DateTime.UtcNow-start1; 
                 }
                 catch(Exception e)
                 {
@@ -104,6 +108,7 @@ class ScanStreamReader
             if(buffer_end==0)break;
             int i;
             int charbuf_length;
+            DateTime start=DateTime.UtcNow;
             for(i=buffer_start;i<buffer_end;++i)
             {
                 if(buffer[i]=='\n')
@@ -113,6 +118,7 @@ class ScanStreamReader
                     charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
                     sb.Append(charbuf,0,charbuf_length);
                     buffer_start=i+1;
+                    forloop+=DateTime.UtcNow-start;
                     return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
                 }
             }
@@ -137,5 +143,12 @@ class ScanStreamReader
         return buffer_end==0;
         // return file.EndOfStream;
     }
+
+    public void PrintTimeUsage()
+    {
+        Console.WriteLine("Time for reading from HDFS: "+reading);
+        Console.WriteLine("Time for for-loop: "+forloop);
+    }
+
 
 }

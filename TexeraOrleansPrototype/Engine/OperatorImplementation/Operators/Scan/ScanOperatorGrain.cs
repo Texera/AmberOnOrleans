@@ -48,6 +48,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 if(start>end || reader.IsEOF())
                 {
+                    reader.PrintTimeUsage();
                     currentEndFlagCount=0;
                     return outputList;
                 }
