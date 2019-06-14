@@ -18,6 +18,7 @@ class ScanStreamReader
     private int buffer_end = 0;
     private TimeSpan reading=new TimeSpan(0,0,0);
     private TimeSpan forloop=new TimeSpan(0,0,0);
+    private TimeSpan readline=new TimeSpan(0,0,0);
     private Decoder decoder;
 
     public ScanStreamReader(string path)
@@ -82,9 +83,8 @@ class ScanStreamReader
     public async Task<Tuple<string,ulong>> ReadLine()
     {
         if(file==null)throw new Exception("ReadLine: File Not Exists");
-        // string line=await file.ReadLineAsync();
-        // ulong ByteCount=(ulong)line.Length+1;
-        // return new Tuple<string,ulong>(line,ByteCount);
+        DateTime start2=DateTime.UtcNow;
+        DateTime start=DateTime.UtcNow;
         ulong ByteCount=0;
         StringBuilder sb=new StringBuilder();
         char[] charbuf=new char[buffer_size];
@@ -108,7 +108,7 @@ class ScanStreamReader
             if(buffer_end==0)break;
             int i;
             int charbuf_length;
-            DateTime start=DateTime.UtcNow;
+            start=DateTime.UtcNow;
             for(i=buffer_start;i<buffer_end;++i)
             {
                 if(buffer[i]=='\n')
@@ -127,6 +127,8 @@ class ScanStreamReader
             sb.Append(charbuf,0,charbuf_length);
             buffer_start=buffer_end;
         }
+        forloop+=DateTime.UtcNow-start;
+        readline+=DateTime.UtcNow-start2;
         return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
     }
     public void Close()
@@ -148,6 +150,7 @@ class ScanStreamReader
     {
         Console.WriteLine(grain+" Reading from HDFS to buffer Time: "+reading);
         Console.WriteLine(grain+" Reading from buffer Time: "+forloop);
+        Console.WriteLine(grain+" Reading Line Time: "+readline);
     }
 
 
