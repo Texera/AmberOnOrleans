@@ -22,6 +22,7 @@ namespace Engine.OperatorImplementation.Operators
         public static int GenerateLimit=1000;
         private string separator;
         TimeSpan splitingTime=new TimeSpan(0,0,0);
+        TimeSpan addingToListTime=new TimeSpan(0,0,0);
 
         protected override void Start()
         {
@@ -44,10 +45,12 @@ namespace Engine.OperatorImplementation.Operators
             for(int i=0;i<GenerateLimit;++i)
             {
                 TexeraTuple tuple=await ReadTuple();
+                DateTime start1=DateTime.UtcNow;
                 if(tuple!=null)
                 {
                     outputList.Add(tuple);
                 }
+                addingToListTime+=DateTime.UtcNow-start1;
                 if(isPaused)
                 {
                     return outputList;

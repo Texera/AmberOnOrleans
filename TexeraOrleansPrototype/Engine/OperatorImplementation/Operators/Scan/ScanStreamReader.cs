@@ -93,17 +93,17 @@ class ScanStreamReader
             if(buffer_start>=buffer_end)
             {
                 buffer_start=0;
+                DateTime start1=DateTime.UtcNow;
                 try
                 {
-                    DateTime start1=DateTime.UtcNow;
                     buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);    
-                    reading+=DateTime.UtcNow-start1; 
                 }
                 catch(Exception e)
                 {
                     buffer_end=0;
                     throw e;
                 }
+                reading+=DateTime.UtcNow-start1; 
             }
             if(buffer_end==0)break;
             int i;
