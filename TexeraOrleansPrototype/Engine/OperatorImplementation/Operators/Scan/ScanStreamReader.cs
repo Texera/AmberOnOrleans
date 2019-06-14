@@ -119,6 +119,7 @@ class ScanStreamReader
                     sb.Append(charbuf,0,charbuf_length);
                     buffer_start=i+1;
                     forloop+=DateTime.UtcNow-start;
+                    readline+=DateTime.UtcNow-start2;
                     return new Tuple<string,ulong>(sb.ToString().TrimEnd(),ByteCount);
                 }
             }
