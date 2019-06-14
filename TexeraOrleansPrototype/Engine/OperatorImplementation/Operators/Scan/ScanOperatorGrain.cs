@@ -106,6 +106,7 @@ namespace Engine.OperatorImplementation.Operators
             // try
             // {
             Tuple<string,ulong> res = reader.ReadLine().Result;
+            readtupleTime+=DateTime.UtcNow-start2;
             DateTime start1=DateTime.UtcNow;
             start += res.Item2;
             if (reader.IsEOF())
@@ -120,7 +121,6 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     var fields=res.Item1.Split(separator);
                     splitingTime+=DateTime.UtcNow-start1;
-                    readtupleTime+=DateTime.UtcNow-start2;
                     return new TexeraTuple(fields);
                 }
                 else
