@@ -131,7 +131,8 @@ namespace Engine.OperatorImplementation.Common
         }
         protected void ProcessBatch(List<TexeraTuple> batch,List<TexeraTuple> outputList)
         {
-            for(;currentIndex<batch.Count;++currentIndex)
+            int limit=batch.Count;
+            for(;currentIndex<limit;++currentIndex)
             {
                 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
                 if(breakPointEnabled && outputList.Count+breakPointCurrent>=breakPointTarget)

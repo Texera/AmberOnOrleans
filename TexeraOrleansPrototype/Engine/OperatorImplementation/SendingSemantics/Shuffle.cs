@@ -23,7 +23,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.selectorExpression=jsonLambdaFunction;
         }
 
-        public override void Enqueue(IEnumerable<TexeraTuple> output)
+        public override void Enqueue(List<TexeraTuple> output)
         {
             if(selector==null)
             {
@@ -31,10 +31,12 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 var actualExpression = serializer.DeserializeText(selectorExpression);
                 selector=((Expression<Func<TexeraTuple,int>>)actualExpression).Compile();
             }
-            foreach(TexeraTuple tuple in output)
+            int limit=output.Count;
+            int modlimit=outputRows.Count;
+            for(int i=0;i<limit;++i)
             {
-                int idx=NonNegativeModular(selector(tuple),outputRows.Count);
-                outputRows[idx].Enqueue(tuple);
+                int idx=NonNegativeModular(selector(output[i]),modlimit);
+                outputRows[idx].Enqueue(output[i]);
             }
         }
 

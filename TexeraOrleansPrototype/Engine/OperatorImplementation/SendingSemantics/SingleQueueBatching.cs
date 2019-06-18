@@ -18,11 +18,12 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.batchingLimit=batchingLimit;
         }
 
-        public void Enqueue(IEnumerable<TexeraTuple> output)
+        public void Enqueue(List<TexeraTuple> output)
         {
-            foreach(TexeraTuple tuple in output)
+            int limit=output.Count;
+            for(int i=0;i<limit;++i)
             {
-                outputRows.Enqueue(tuple);
+                outputRows.Enqueue(output[i]);
             }
         }
 

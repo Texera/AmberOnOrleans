@@ -87,7 +87,7 @@ class ScanStreamReader
         if(file==null)throw new Exception("ReadLine: File Not Exists");
         DateTime start2=DateTime.UtcNow;
         DateTime start=DateTime.UtcNow;
-        sb.Clear();
+        sb.Length=0;
         ulong ByteCount=0;
         while(true)
         {
