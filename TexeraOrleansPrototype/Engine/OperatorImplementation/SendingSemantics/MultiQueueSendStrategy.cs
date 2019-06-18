@@ -41,7 +41,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         
         public abstract void RemoveAllReceivers();
 
-        public abstract void Enqueue(IEnumerable<TexeraTuple> output);
+        public abstract void Enqueue(List<TexeraTuple> output);
 
         public abstract void AddReceiver(IWorkerGrain receiver, bool localSending);
 
