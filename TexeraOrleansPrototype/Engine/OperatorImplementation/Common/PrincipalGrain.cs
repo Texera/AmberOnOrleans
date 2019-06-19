@@ -21,7 +21,9 @@ namespace Engine.OperatorImplementation.Common
     [WorkerGrainPlacement]
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
+        #if(GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         private const int waitingThreshold=3000;
+        #endif
         public virtual int DefaultNumGrainsInOneLayer { get { return Constants.DefaultNumGrainsInOneLayer; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
