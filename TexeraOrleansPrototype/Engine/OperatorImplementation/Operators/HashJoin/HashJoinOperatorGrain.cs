@@ -83,6 +83,9 @@ namespace Engine.OperatorImplementation.Operators
         {
             if(inputInfo[innerTableGuid]==0 && otherTable!=null)
             {
+                // temporarily hold the end flag if ended
+                if(currentEndFlagCount==0)
+                    currentEndFlagCount=-1;
                 var batch=otherTable;
                 Action action=()=>
                 {
@@ -101,6 +104,9 @@ namespace Engine.OperatorImplementation.Operators
                         return;
                     }
                     batch=null;
+                    //release the end flag if holded
+                    if(currentEndFlagCount==-1)
+                        currentEndFlagCount=0;
                     currentIndex=0;
                     MakePayloadMessagesThenSend(outputList);
                     lock(actionQueue)
