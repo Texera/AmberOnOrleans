@@ -59,6 +59,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 if(start>end || reader.IsEOF())
                 {
+                    reader.Close();
                     Console.WriteLine(Common.Utils.GetReadableName(self)+" Spliting Time: "+splitingTime +" Adding to list Time: "+addingToListTime+" Generate Time: "+generateTime+" ReadTuple Time: "+readtupleTime);
                     reader.PrintTimeUsage(Common.Utils.GetReadableName(self));
                     currentEndFlagCount=0;
