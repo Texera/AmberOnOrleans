@@ -21,6 +21,7 @@ namespace Engine.OperatorImplementation.Common
     [WorkerGrainPlacement]
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
+        private const int waitingThreshold=3000;
         public virtual int DefaultNumGrainsInOneLayer { get { return Constants.DefaultNumGrainsInOneLayer; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
         private List<IPrincipalGrain> prevPrincipalGrains = new List<IPrincipalGrain>();
@@ -361,17 +362,6 @@ namespace Engine.OperatorImplementation.Common
                     remaining=0;
                 }
             }
-            TaskScheduler grainScheduler=TaskScheduler.Current;
-            Task.Run(async () => {
-                await Task.Delay(30000);
-                Task.Factory.StartNew(()=>
-                {
-                    foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
-                    {
-                        grain.AskToReportCurrentValue();
-                    }
-                },CancellationToken.None, TaskCreationOptions.None, grainScheduler);
-            });
         }
 
         public async Task ReportCurrentValue(IGrain sender, int currentValue, int version)
@@ -394,19 +384,20 @@ namespace Engine.OperatorImplementation.Common
                 {
                     Console.WriteLine("ERROR: "+Utils.GetReadableName(self)+" exceed the target value of global breakpoint! current = "+breakPointCurrent+" target = "+breakPointTarget);
                 }
-                foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
+                Task.Run(()=>
                 {
-                    await grain.AskToReportCurrentValue();
-                }
+                    await Task.Delay(waitingThreshold);
+                    foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
+                    {
+                        await grain.AskToReportCurrentValue();
+                    }
+                })
             }
-            if(reportToBeReceived==0)
+            if(reportToBeReceived==0 && breakPointCurrent<breakPointTarget)
             {
-                if(breakPointCurrent<breakPointTarget)
-                {  
-                    await SetBreakPoint(breakPointTarget-breakPointCurrent);
-                    await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
-                    sequenceNumber++;
-                }
+                await SetBreakPoint(breakPointTarget-breakPointCurrent);
+                await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                sequenceNumber++;
             }
         }
 #endif

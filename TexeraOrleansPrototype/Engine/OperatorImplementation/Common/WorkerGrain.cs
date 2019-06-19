@@ -56,7 +56,7 @@ namespace Engine.OperatorImplementation.Common
 
 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         private int breakPointTarget;
-        private int breakPointCurrent;
+        private int breakPointCurrent=0;
         private int version=-1;
         private bool breakPointEnabled=false;
 #endif
@@ -137,7 +137,6 @@ namespace Engine.OperatorImplementation.Common
                 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
                 if(breakPointEnabled && outputList.Count+breakPointCurrent>=breakPointTarget)
                 {
-                    breakPointCurrent+=outputList.Count;
                     Pause();
                 }
                 #endif
@@ -204,6 +203,9 @@ namespace Engine.OperatorImplementation.Common
                     if(batch!=null)
                     {
                         ProcessBatch(batch,outputList);
+                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+                        breakPointCurrent+=outputList.Count;
+                        #endif
                     }
                     if(isPaused)
                     {
@@ -439,6 +441,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 Pause();
             }
+            while(!taskDidPaused);
             principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
             return Task.CompletedTask;
         }
