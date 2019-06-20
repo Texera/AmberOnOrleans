@@ -94,6 +94,7 @@ namespace Engine.OperatorImplementation.Operators
             List<TexeraTuple> result=new List<TexeraTuple>();
             foreach(KeyValuePair<string,int> pair in counter)
             {
+                Console.WriteLine(pair.Key);
                 switch(aggregationFunc)
                 {
                     case GroupByPredicate.AggregationType.Max:
