@@ -160,14 +160,21 @@ namespace OrleansClient
                     secondScan=op;
             }
             await so.Start();
-            foreach(Operator op in workflow.StartOperators)
+            if(secondScan!=null)
             {
-                if(((ScanPredicate)op.Predicate).File.EndsWith("customer.tbl"))
+                foreach(Operator op in workflow.StartOperators)
                 {
-                    if(secondScan!=null)
+                    if(((ScanPredicate)op.Predicate).File.EndsWith("customer.tbl"))
                     {
                         await op.PrincipalGrain.ActivateWhenFinished(secondScan);
+                        await op.PrincipalGrain.Start();
                     }
+                }
+            }
+            else
+            {
+                foreach(Operator op in workflow.StartOperators)
+                {
                     await op.PrincipalGrain.Start();
                 }
             }
