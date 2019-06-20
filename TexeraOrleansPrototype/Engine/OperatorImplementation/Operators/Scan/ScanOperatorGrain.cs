@@ -50,10 +50,7 @@ namespace Engine.OperatorImplementation.Operators
                 Tuple<TexeraTuple,ulong> res=await reader.ReadTuple();
                 start+=res.Item2;
                 DateTime start2=DateTime.UtcNow;
-                if(res.Item1!=null)
-                {
-                    outputList.Add(res.Item1);
-                }
+                outputList.Add(res.Item1);
                 if(isPaused)
                 {
                     return outputList;
