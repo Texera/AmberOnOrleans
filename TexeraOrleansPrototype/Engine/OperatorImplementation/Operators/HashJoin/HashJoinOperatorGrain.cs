@@ -91,6 +91,7 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     isCurrentInnerTable=false;
                     isInnerTableFinished=true;
+                    DateTime start=DateTime.UtcNow;
                     List<TexeraTuple> outputList=new List<TexeraTuple>();
                     if(batch!=null)
                     {
@@ -108,7 +109,10 @@ namespace Engine.OperatorImplementation.Operators
                     if(currentEndFlagCount==-1)
                         currentEndFlagCount=0;
                     currentIndex=0;
+                    processTime+=DateTime.UtcNow-start;
+                    start=DateTime.UtcNow;
                     MakePayloadMessagesThenSend(outputList);
+                    sendingTime+=DateTime.UtcNow-start;
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
