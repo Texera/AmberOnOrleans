@@ -72,7 +72,7 @@ namespace Engine.OperatorImplementation.Operators
                     {
                         foreach(string[] f in hashTable[field])
                         {  
-                            output.Add(new TexeraTuple(f.FastConcat(tuple.FieldList)));
+                            output.Add(new TexeraTuple(tuple.FieldList.FastConcat(f)));
                         }
                     }
                 }
