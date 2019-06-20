@@ -39,12 +39,12 @@ namespace Engine.OperatorImplementation.Common
                     }
                 }
             }
-            var excludeSilo=RequestContext.Get("excludeSilo");
-            if(excludeSilo!=null)
-            {
-                // Console.WriteLine("excludeSilo: "+excludeSilo);
-                silos=silos.Where(x=>!x.Endpoint.Address.ToString().Equals(excludeSilo)).ToArray();
-            }
+            // var excludeSilo=RequestContext.Get("excludeSilo");
+            // if(excludeSilo!=null)
+            // {
+            //     // Console.WriteLine("excludeSilo: "+excludeSilo);
+            //     silos=silos.Where(x=>!x.Endpoint.Address.ToString().Equals(excludeSilo)).ToArray();
+            // }
             // foreach(SiloAddress silo in silos)
             // {
             //     Console.WriteLine("Silo Address: "+silo.Endpoint.Address+" IsClient = "+silo.IsClient);
