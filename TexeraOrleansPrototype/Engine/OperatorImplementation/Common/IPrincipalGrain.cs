@@ -19,6 +19,7 @@ namespace Engine.OperatorImplementation.Common
         Task Pause();
         Task Resume();
         Task Deactivate();
+        Task ActivateWhenFinished(Operator nextOperator);
         Task Init(IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator);
         Task<Dictionary<SiloAddress,List<IWorkerGrain>>> GetInputGrains();
         Task<ISendStrategy> GetInputSendStrategy(IGrain requester);

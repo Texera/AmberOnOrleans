@@ -52,6 +52,7 @@ namespace Engine.OperatorImplementation.Common
         protected TimeSpan sendingTime=new TimeSpan(0,0,0);
         protected TimeSpan preprocessTime=new TimeSpan(0,0,0);
         //protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
+        protected IWorkerGrain workerToActivate=null;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
@@ -116,6 +117,10 @@ namespace Engine.OperatorImplementation.Common
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.SendEndMessages(self);
+            }
+            if(workerToActivate!=null)
+            {
+                workerToActivate.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,0,ControlMessage.ControlMessageType.Start)));
             }
         }
 
@@ -398,13 +403,13 @@ namespace Engine.OperatorImplementation.Common
         {
             TimeSpan t = (DateTime.UtcNow - new DateTime(1970, 1, 1));
             Console.WriteLine(Utils.GetReadableName(self)+" received control message at "+(int)t.TotalSeconds);
-            List<ControlMessage.ControlMessageType> executeSequence = orderingEnforcer.PreProcess(message);
+            List<Pair<ControlMessage.ControlMessageType,object>> executeSequence = orderingEnforcer.PreProcess(message);
             if(executeSequence!=null)
             {
                 orderingEnforcer.CheckStashed(ref executeSequence,message.Value.SenderIdentifer);
-                foreach(ControlMessage.ControlMessageType type in executeSequence)
+                foreach(Pair<ControlMessage.ControlMessageType,object> pair in executeSequence)
                 {
-                    switch(type)
+                    switch(pair.First)
                     {
                         case ControlMessage.ControlMessageType.Pause:
                             Pause();
@@ -417,6 +422,9 @@ namespace Engine.OperatorImplementation.Common
                             break;
                         case ControlMessage.ControlMessageType.Deactivate:
                             DeactivateOnIdle();
+                            break;
+                        case ControlMessage.ControlMessageType.addCallbackWorker:
+                            workerToActivate=(IWorkerGrain)pair.Second;
                             break;
                     }
                 }

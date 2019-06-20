@@ -9,9 +9,10 @@ namespace Engine
 {
     public class ControlMessage: TexeraMessage
     {
-        public ControlMessage(IGrain sender, ulong sequenceNumber, ControlMessageType type):base(sender,sequenceNumber)
+        public ControlMessage(IGrain sender, ulong sequenceNumber, ControlMessageType type,object additionalInfo=null):base(sender,sequenceNumber)
         {
             Type=type;
+            AdditionalInfo=additionalInfo;
         }
         public enum ControlMessageType
         {
@@ -19,7 +20,9 @@ namespace Engine
             Resume,
             Start,
             Deactivate,
+            addCallbackWorker,
         }
         public ControlMessageType Type;
+        public object AdditionalInfo;
     }    
 }

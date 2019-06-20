@@ -324,6 +324,26 @@ namespace Engine.OperatorImplementation.Common
             sequenceNumber++;
         }
 
+        public virtual async Task ActivateWhenFinished(Operator nextOperator)
+        {
+            List<Task> taskList=new List<Task>();
+            foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
+            {
+                foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
+                {
+                    string ext;
+                    grain.GetPrimaryKey(out ext);
+                    var nextGrain=GrainFactory.GetGrain<IScanOperatorGrain>(nextOperator.PrincipalGrain.GetPrimaryKey(),ext);
+                    taskList.Add(grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.addCallbackWorker,nextGrain))));
+                }
+            }
+            await Task.WhenAll(taskList);
+            //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start)));
+            sequenceNumber++;
+        }
+
+
+
         public virtual Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
             return Task.FromResult(new RoundRobin(predicate.BatchingLimit) as ISendStrategy);

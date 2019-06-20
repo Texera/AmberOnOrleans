@@ -14,7 +14,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
     public class OrderingGrainWithSequenceNumber : IOrderingEnforcer
     {
         private Dictionary<IGrain,Dictionary<ulong, Pair<bool,List<TexeraTuple>>>> stashedPayloadMessages = new Dictionary<IGrain, Dictionary<ulong, Pair<bool, List<TexeraTuple>>>>();
-        private Dictionary<IGrain,Dictionary<ulong, ControlMessage.ControlMessageType>> stashedControlMessages = new Dictionary<IGrain, Dictionary<ulong, ControlMessage.ControlMessageType>>();
+        private Dictionary<IGrain,Dictionary<ulong, Pair<ControlMessage.ControlMessageType,object>>> stashedControlMessages = new Dictionary<IGrain, Dictionary<ulong, Pair<ControlMessage.ControlMessageType, object>>>();
         public Dictionary<IGrain,ulong> inSequenceNumberMap=new Dictionary<IGrain, ulong>();
         private enum MessageStatus
         {
@@ -101,7 +101,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             }
         }
 
-        public List<ControlMessage.ControlMessageType> PreProcess(Immutable<ControlMessage> message)
+        public List<Pair<ControlMessage.ControlMessageType,object>> PreProcess(Immutable<ControlMessage> message)
         {
             IGrain sender=message.Value.SenderIdentifer;
             ulong sequenceNum=message.Value.SequenceNumber;
@@ -109,13 +109,13 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             {
                 case MessageStatus.Vaild:
                     inSequenceNumberMap[sender]++;
-                    return new List<ControlMessage.ControlMessageType>{message.Value.Type};
+                    return new List<Pair<ControlMessage.ControlMessageType,object>>{new Pair<ControlMessage.ControlMessageType, object>(message.Value.Type,message.Value.AdditionalInfo)};
                 case MessageStatus.Ahead:
                     if(!stashedControlMessages.ContainsKey(sender))
                     {
-                        stashedControlMessages[sender]=new Dictionary<ulong, ControlMessage.ControlMessageType>();
+                        stashedControlMessages[sender]=new Dictionary<ulong, Pair<ControlMessage.ControlMessageType,object>>();
                     }
-                    stashedControlMessages[sender].Add(sequenceNum, message.Value.Type);
+                    stashedControlMessages[sender].Add(sequenceNum, new Pair<ControlMessage.ControlMessageType,object>(message.Value.Type,message.Value.AdditionalInfo));
                     break;
                 case MessageStatus.Duplicated:
                     break;
@@ -123,7 +123,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             return null;
         }
 
-        public void CheckStashed(ref List<ControlMessage.ControlMessageType> controlMessages, IGrain sender)
+        public void CheckStashed(ref List<Pair<ControlMessage.ControlMessageType,object>> controlMessages, IGrain sender)
         {
             if(stashedControlMessages.ContainsKey(sender))
             {
@@ -132,7 +132,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     inSequenceNumberMap[sender]=0;
                 }
                 ulong currentSequenceNumber=inSequenceNumberMap[sender];
-                Dictionary<ulong, ControlMessage.ControlMessageType> currentMap=stashedControlMessages[sender];
+                Dictionary<ulong, Pair<ControlMessage.ControlMessageType,object>> currentMap=stashedControlMessages[sender];
                 while(currentMap.ContainsKey(currentSequenceNumber))
                 {
                     controlMessages.Add(currentMap[currentSequenceNumber]);
