@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using Engine.OperatorImplementation.Common;
+using TexeraUtilities;
 
 class ScanStreamReader
 {
@@ -20,12 +21,15 @@ class ScanStreamReader
     char[] charbuf=new char[buffer_size];
     private TimeSpan reading=new TimeSpan(0,0,0);
     private TimeSpan forloop=new TimeSpan(0,0,0);
-    private TimeSpan readline=new TimeSpan(0,0,0);
+    private TimeSpan generate=new TimeSpan(0,0,0);
     private Decoder decoder;
+    private List<String> fields=new List<string>();
+    private char delimiter;
 
-    public ScanStreamReader(string path)
+    public ScanStreamReader(string path,char delimiter)
     {
         file_path=path;
+        this.delimiter=delimiter;
     }
 
 
@@ -37,7 +41,7 @@ class ScanStreamReader
             case FileType.csv:
             case FileType.tbl:
             case FileType.txt:
-            Tuple<string,ulong> res=await ReadLine();
+            Tuple<TexeraTuple,ulong> res=await ReadTuple();
             //Console.WriteLine("Skip: "+res);
             return res.Item2;
             default:
@@ -82,12 +86,12 @@ class ScanStreamReader
         return true;
     }
 
-    public async Task<Tuple<string,ulong>> ReadLine()
+    public async Task<Tuple<TexeraTuple,ulong>> ReadTuple()
     {
         if(file==null)throw new Exception("ReadLine: File Not Exists");
-        DateTime start2=DateTime.UtcNow;
         DateTime start=DateTime.UtcNow;
         sb.Length=0;
+        fields.Clear();
         ulong ByteCount=0;
         while(true)
         {
@@ -112,16 +116,29 @@ class ScanStreamReader
             start=DateTime.UtcNow;
             for(i=buffer_start;i<buffer_end;++i)
             {
-                if(buffer[i]=='\n')
+                if(buffer[i]==delimiter)
                 {
-                    int length=i-buffer_start+1;
-                    ByteCount+=(ulong)(length);
+                    int length=i-buffer_start;
+                    ByteCount+=(ulong)(length+1);
                     charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
                     sb.Append(charbuf,0,charbuf_length);
+                    fields.Add(sb.ToString());
+                    sb.Length=0;
                     buffer_start=i+1;
+                }
+                else if(buffer[i]=='\n')
+                {
+                    int length=i-buffer_start;
+                    ByteCount+=(ulong)(length+1);
+                    charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
+                    fields.Add(sb.ToString());
+                    buffer_start=i+1;
+                    sb.Length=0;
                     forloop+=DateTime.UtcNow-start;
-                    readline+=DateTime.UtcNow-start2;
-                    return new Tuple<string,ulong>(sb.TrimEnd().ToString(),ByteCount);
+                    DateTime start2=DateTime.UtcNow;
+                    var v=new Tuple<TexeraTuple,ulong>(new TexeraTuple(fields.ToArray()),ByteCount);
+                    generate+=DateTime.UtcNow-start2;
+                    return v;
                 }
             }
             ByteCount+=(ulong)(buffer_end-buffer_start);
@@ -130,8 +147,7 @@ class ScanStreamReader
             buffer_start=buffer_end;
         }
         forloop+=DateTime.UtcNow-start;
-        readline+=DateTime.UtcNow-start2;
-        return new Tuple<string,ulong>(sb.TrimEnd().ToString(),ByteCount);
+        return new Tuple<TexeraTuple,ulong>(new TexeraTuple(fields.ToArray()),ByteCount);
     }
     public void Close()
     {
@@ -152,7 +168,7 @@ class ScanStreamReader
     {
         Console.WriteLine(grain+" Reading from HDFS to buffer Time: "+reading);
         Console.WriteLine(grain+" Reading from buffer Time: "+forloop);
-        Console.WriteLine(grain+" Reading Line Time: "+readline);
+        Console.WriteLine(grain+" Generate Time: "+generate);
     }
 
 

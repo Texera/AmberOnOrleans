@@ -47,11 +47,12 @@ namespace Engine.OperatorImplementation.Operators
             List<TexeraTuple> outputList=new List<TexeraTuple>();
             for(int i=0;i<GenerateLimit;++i)
             {
-                TexeraTuple tuple=await ReadTuple();
+                Tuple<TexeraTuple,ulong> res=await reader.ReadTuple();
+                start+=res.Item2;
                 DateTime start2=DateTime.UtcNow;
-                if(tuple!=null)
+                if(res.Item1!=null)
                 {
-                    outputList.Add(tuple);
+                    outputList.Add(res.Item1);
                 }
                 if(isPaused)
                 {
@@ -85,7 +86,7 @@ namespace Engine.OperatorImplementation.Operators
             ulong partition=filesize/num_grains;
             ulong start_byte=i*partition;
             ulong end_byte=num_grains-1==i?filesize:(i+1)*partition;
-            reader=new ScanStreamReader(((ScanPredicate)predicate).File);
+            reader=new ScanStreamReader(((ScanPredicate)predicate).File,'|');
             if(!reader.GetFile(start_byte))
                 throw new Exception("unable to get file");
             start=start_byte;
@@ -96,57 +97,6 @@ namespace Engine.OperatorImplementation.Operators
                 start+=await reader.TrySkipFirst();
             //Console.WriteLine("Init: start byte: "+start.ToString()+" end byte: "+end.ToString());
             return addr;
-        }
-
-        
-
-
-        private async Task<TexeraTuple> ReadTuple()
-        {
-            DateTime start2=DateTime.UtcNow;
-            // try
-            // {
-            Tuple<string,ulong> res = await reader.ReadLine();
-            readtupleTime+=DateTime.UtcNow-start2;
-            DateTime start1=DateTime.UtcNow;
-            start += res.Item2;
-            if (reader.IsEOF())
-            {
-                start = end + 1;
-                return null;
-            }
-            try
-            {
-                ++tuple_counter;
-                if(separator!=null)
-                {
-                    var fields=res.Item1.Split(separator);
-                    splitingTime+=DateTime.UtcNow-start1;
-                    return new TexeraTuple(fields);
-                }
-                else
-                    return new TexeraTuple(new string[]{res.Item1});
-            }
-            catch
-            {
-                Console.WriteLine("Failed to parse the tuple");
-                return null;
-            }
-            // }
-            // catch(Exception ex)
-            // {
-            //     Console.WriteLine("EXCEPTION: in Reading Tuples from File - "+ ex.ToString());
-            //     Console.WriteLine("start_offset: "+start.ToString()+" end_offset: "+end.ToString());
-            //     int retry=0;
-            //     while(retry<10 && !reader.GetFile(start))
-            //     {
-            //         retry++;
-            //         Console.WriteLine("Cannot recover file on {retry} trial, will try again in 5 seconds");
-            //         Thread.Sleep(5000);
-            //     };
-            //     return null;
-            // }
-        }
-        
+        }   
     }
 }

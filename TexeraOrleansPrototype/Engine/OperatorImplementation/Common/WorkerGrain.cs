@@ -18,7 +18,7 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace Engine.OperatorImplementation.Common
 {
-    public class Pair<T, U> 
+    public struct Pair<T, U> 
     {
         public Pair(T first, U second) 
         {
