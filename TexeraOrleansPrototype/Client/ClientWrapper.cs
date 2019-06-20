@@ -156,8 +156,14 @@ namespace OrleansClient
             await so.Start();
             foreach(Operator op in workflow.StartOperators)
             {
-                Console.WriteLine("initing: "+op.GetType().ToString());
-                await op.PrincipalGrain.Start();
+                if(((ScanPredicate)op.Predicate).File.EndsWith("customer.tbl"))
+                    await op.PrincipalGrain.Start();
+            }
+            await Task.Delay(10000);
+            foreach(Operator op in workflow.StartOperators)
+            {
+                if(((ScanPredicate)op.Predicate).File.EndsWith("orders.tbl"))
+                    await op.PrincipalGrain.Start();
             }
 
             while (!so.isFinished)
