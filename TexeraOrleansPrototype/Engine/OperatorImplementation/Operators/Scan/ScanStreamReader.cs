@@ -41,9 +41,9 @@ class ScanStreamReader
             case FileType.csv:
             case FileType.tbl:
             case FileType.txt:
-            Tuple<TexeraTuple,ulong> res=await ReadTuple();
+            Pair<TexeraTuple,ulong> res=await ReadTuple();
             //Console.WriteLine("Skip: "+res);
-            return res.Item2;
+            return res.Second;
             default:
             //not implemented
             break;
@@ -86,7 +86,7 @@ class ScanStreamReader
         return true;
     }
 
-    public async Task<Tuple<TexeraTuple,ulong>> ReadTuple()
+    public async Task<Pair<TexeraTuple,ulong>> ReadTuple()
     {
         if(file==null)throw new Exception("ReadLine: File Not Exists");
         DateTime start=DateTime.UtcNow;
@@ -136,7 +136,7 @@ class ScanStreamReader
                     sb.Length=0;
                     forloop+=DateTime.UtcNow-start;
                     DateTime start2=DateTime.UtcNow;
-                    var v=new Tuple<TexeraTuple,ulong>(new TexeraTuple(fields.ToArray()),ByteCount);
+                    var v=new Pair<TexeraTuple,ulong>(new TexeraTuple(fields.ToArray()),ByteCount);
                     generate+=DateTime.UtcNow-start2;
                     return v;
                 }
@@ -147,7 +147,10 @@ class ScanStreamReader
             buffer_start=buffer_end;
         }
         forloop+=DateTime.UtcNow-start;
-        return new Tuple<TexeraTuple,ulong>(new TexeraTuple(fields.ToArray()),ByteCount);
+        if(fields.Count>0)
+            return new Pair<TexeraTuple,ulong>(new TexeraTuple(fields.ToArray()),ByteCount);
+        else
+            return new Pair<TexeraTuple,ulong>(new TexeraTuple(null),ByteCount);
     }
     public void Close()
     {

@@ -47,10 +47,11 @@ namespace Engine.OperatorImplementation.Operators
             List<TexeraTuple> outputList=new List<TexeraTuple>();
             for(int i=0;i<GenerateLimit;++i)
             {
-                Tuple<TexeraTuple,ulong> res=await reader.ReadTuple();
-                start+=res.Item2;
+                Pair<TexeraTuple,ulong> res=await reader.ReadTuple();
+                start+=res.Second;
                 DateTime start2=DateTime.UtcNow;
-                outputList.Add(res.Item1);
+                if(res.First.FieldList!=null)
+                    outputList.Add(res.First);
                 if(isPaused)
                 {
                     return outputList;
