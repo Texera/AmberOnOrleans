@@ -17,7 +17,7 @@ namespace Engine.OperatorImplementation.Operators
 
         public override void WhenAddInOperator(Operator operatorToAdd)
         {
-            if(((ScanPredicate)operatorToAdd.Predicate).File.EndsWith("customer.tbl"))
+            if(InnerTableID==Guid.Empty)
                 InnerTableID=operatorToAdd.OperatorGuid;
             else
                 outerTableID=operatorToAdd.OperatorGuid;
