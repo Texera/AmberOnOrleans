@@ -48,7 +48,7 @@ namespace Engine.OperatorImplementation.Operators
             for(int i=0;i<GenerateLimit;++i)
             {
                 Pair<TexeraTuple,ulong> res=await reader.ReadTuple();
-                //start+=res.Second;
+                start+=res.Second;
                 //DateTime start2=DateTime.UtcNow;
                 if(res.First.FieldList!=null)
                     outputList.Add(res.First);
