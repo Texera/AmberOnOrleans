@@ -21,10 +21,10 @@ namespace Engine.OperatorImplementation.Operators
         private ScanStreamReader reader;
         public static int GenerateLimit=1000;
         private string separator;
-        TimeSpan splitingTime=new TimeSpan(0,0,0);
-        TimeSpan addingToListTime=new TimeSpan(0,0,0);
-        TimeSpan generateTime=new TimeSpan(0,0,0);
-        TimeSpan readtupleTime=new TimeSpan(0,0,0);
+        // TimeSpan splitingTime=new TimeSpan(0,0,0);
+        // TimeSpan addingToListTime=new TimeSpan(0,0,0);
+        // TimeSpan generateTime=new TimeSpan(0,0,0);
+        // TimeSpan readtupleTime=new TimeSpan(0,0,0);
 
         protected override void Start()
         {
@@ -43,13 +43,13 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override async Task<List<TexeraTuple>> GenerateTuples()
         {
-            DateTime start1=DateTime.UtcNow;
+            //DateTime start1=DateTime.UtcNow;
             List<TexeraTuple> outputList=new List<TexeraTuple>();
             for(int i=0;i<GenerateLimit;++i)
             {
                 Pair<TexeraTuple,ulong> res=await reader.ReadTuple();
-                start+=res.Second;
-                DateTime start2=DateTime.UtcNow;
+                //start+=res.Second;
+                //DateTime start2=DateTime.UtcNow;
                 if(res.First.FieldList!=null)
                     outputList.Add(res.First);
                 if(isPaused)
@@ -59,14 +59,14 @@ namespace Engine.OperatorImplementation.Operators
                 if(start>end || reader.IsEOF())
                 {
                     reader.Close();
-                    Console.WriteLine(Common.Utils.GetReadableName(self)+" Spliting Time: "+splitingTime +" Adding to list Time: "+addingToListTime+" Generate Time: "+generateTime+" ReadTuple Time: "+readtupleTime);
-                    reader.PrintTimeUsage(Common.Utils.GetReadableName(self));
+                    //Console.WriteLine(Common.Utils.GetReadableName(self)+" Spliting Time: "+splitingTime +" Adding to list Time: "+addingToListTime+" Generate Time: "+generateTime+" ReadTuple Time: "+readtupleTime);
+                    //reader.PrintTimeUsage(Common.Utils.GetReadableName(self));
                     currentEndFlagCount=0;
                     return outputList;
                 }
-                addingToListTime+=DateTime.UtcNow-start2;
+                //addingToListTime+=DateTime.UtcNow-start2;
             }
-            generateTime+=DateTime.UtcNow-start1;
+            //generateTime+=DateTime.UtcNow-start1;
             return outputList;
         }
 
