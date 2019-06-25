@@ -20,7 +20,6 @@ namespace Engine.OperatorImplementation.Operators
         private ulong start,end,tuple_counter=0;
         private ScanStreamReader reader;
         public static int GenerateLimit=1000;
-        private string separator;
         // TimeSpan splitingTime=new TimeSpan(0,0,0);
         // TimeSpan addingToListTime=new TimeSpan(0,0,0);
         // TimeSpan generateTime=new TimeSpan(0,0,0);
@@ -76,7 +75,6 @@ namespace Engine.OperatorImplementation.Operators
         {
             SiloAddress addr=await base.Init(self,predicate,principalGrain);
             ulong filesize=((ScanPredicate)predicate).FileSize;
-            separator=((ScanPredicate)predicate).Separator;
             string extensionKey = "";
             Guid key = this.GetPrimaryKey(out extensionKey);
             ulong i=UInt64.Parse(extensionKey);
@@ -84,7 +82,7 @@ namespace Engine.OperatorImplementation.Operators
             ulong partition=filesize/num_grains;
             ulong start_byte=i*partition;
             ulong end_byte=num_grains-1==i?filesize:(i+1)*partition;
-            reader=new ScanStreamReader(((ScanPredicate)predicate).File,'|');
+            reader=new ScanStreamReader(((ScanPredicate)predicate).File,((ScanPredicate)predicate).Separator);
             if(!reader.GetFile(start_byte))
                 throw new Exception("unable to get file");
             start=start_byte;

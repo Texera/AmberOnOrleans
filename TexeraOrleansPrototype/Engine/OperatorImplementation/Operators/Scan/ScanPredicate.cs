@@ -26,7 +26,7 @@ namespace Engine.OperatorImplementation.Operators
                     return fileSize;
             }
         }
-        public string Separator;
+        public char Separator;
         bool filesize_init=false;
         public ScanPredicate(string file,int batchingLimit=1000):base(batchingLimit)
         {
@@ -44,11 +44,11 @@ namespace Engine.OperatorImplementation.Operators
                 
             }
             if(file.EndsWith(".tbl"))
-                Separator="|";
+                Separator='|';
             else if(file.EndsWith(".csv"))
-                Separator=",";
+                Separator=',';
             else 
-                Separator=null;
+                Separator='\0';
         }
     }
 }
