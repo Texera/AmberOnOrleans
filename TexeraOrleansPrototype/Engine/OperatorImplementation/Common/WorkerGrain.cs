@@ -153,7 +153,7 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        protected virtual void ProcessTuple(in TexeraTuple tuple, List<TexeraTuple> output)
+        protected virtual void ProcessTuple(TexeraTuple tuple, List<TexeraTuple> output)
         {
 
         }

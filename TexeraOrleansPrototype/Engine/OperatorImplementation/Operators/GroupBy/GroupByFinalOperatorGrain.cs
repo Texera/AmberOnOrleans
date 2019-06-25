@@ -34,7 +34,7 @@ namespace Engine.OperatorImplementation.Operators
             return addr;
         }
 
-        protected override void ProcessTuple(in TexeraTuple tuple, List<TexeraTuple> output)
+        protected override void ProcessTuple(TexeraTuple tuple, List<TexeraTuple> output)
         {
             string field=tuple.FieldList[0];
             if(aggregationFunc==GroupByPredicate.AggregationType.Count)

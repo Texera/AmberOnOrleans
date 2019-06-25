@@ -61,7 +61,7 @@ namespace Engine.OperatorImplementation.Operators
         }
 
 
-        protected override void ProcessTuple(in TexeraTuple tuple,List<TexeraTuple> output)
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
             string field=tuple.FieldList[joinFieldIndex];
             List<string> fields=tuple.FieldList.ToList();

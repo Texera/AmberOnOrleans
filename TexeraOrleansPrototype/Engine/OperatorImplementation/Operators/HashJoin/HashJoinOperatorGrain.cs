@@ -49,7 +49,7 @@ namespace Engine.OperatorImplementation.Operators
             isInnerTableFinished=(inputInfo[innerTableGuid]==0);
         }
 
-        protected override void ProcessTuple(in TexeraTuple tuple,List<TexeraTuple> output)
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
             if(isCurrentInnerTable)
             {
