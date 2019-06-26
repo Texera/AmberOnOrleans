@@ -37,47 +37,58 @@ namespace Engine.OperatorImplementation.Operators
         }
         private static T Parse(string value)
         {
-            if (typeof(T) == typeof(string))
-                return (T)(object)value;
-            else
-                return (T)ParseInfo.Invoke(null, new[] { value });
+            try
+            {
+                if (typeof(T) == typeof(string))
+                    return (T)(object)value;
+                else
+                    return (T)ParseInfo.Invoke(null, new[] { value });
+            }
+            catch(Exception e)
+            {
+
+                throw e;
+            }
         }
 
         protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
-            if(tuple.FieldList.Length<16)
-            {
-                Console.WriteLine(string.Join(",", tuple.FieldList));
-            }
             if(tuple.FieldList!=null)
             {
-                switch(type)
+                try
                 {
-                    case FilterPredicate.FilterType.Equal:
-                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)==0)
-                            output.Add(tuple);
-                        break;
-                    case FilterPredicate.FilterType.Greater:
-                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)>0)
-                            output.Add(tuple);
-                        break;
-                    case FilterPredicate.FilterType.GreaterOrEqual:
-                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)>=0)
-                            output.Add(tuple);
-                        break;
-                    case FilterPredicate.FilterType.Less:
-                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)<0)
-                            output.Add(tuple);
-                        break;
-                    case FilterPredicate.FilterType.LessOrEqual:
-                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)<=0)
-                            output.Add(tuple);
-                        break;
-                    case FilterPredicate.FilterType.NotEqual:
-                        if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)!=0)
-                            output.Add(tuple);
-                        break;
-                }   
+                    switch(type)
+                    {
+                        case FilterPredicate.FilterType.Equal:
+                            if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)==0)
+                                output.Add(tuple);
+                            break;
+                        case FilterPredicate.FilterType.Greater:
+                            if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)>0)
+                                output.Add(tuple);
+                            break;
+                        case FilterPredicate.FilterType.GreaterOrEqual:
+                            if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)>=0)
+                                output.Add(tuple);
+                            break;
+                        case FilterPredicate.FilterType.Less:
+                            if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)<0)
+                                output.Add(tuple);
+                            break;
+                        case FilterPredicate.FilterType.LessOrEqual:
+                            if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)<=0)
+                                output.Add(tuple);
+                            break;
+                        case FilterPredicate.FilterType.NotEqual:
+                            if(Parse(tuple.FieldList[filterIndex]).CompareTo(threshold)!=0)
+                                output.Add(tuple);
+                            break;
+                    }   
+                }
+                catch(Exception e)
+                {
+                    Console.WriteLine(string.Join(",",tuple.FieldList));
+                }
             }
         }
     }
