@@ -37,18 +37,10 @@ namespace Engine.OperatorImplementation.Operators
         }
         private static T Parse(string value)
         {
-            try
-            {
-                if (typeof(T) == typeof(string))
-                    return (T)(object)value;
-                else
-                    return (T)ParseInfo.Invoke(null, new[] { value });
-            }
-            catch(Exception e)
-            {
-
-                throw e;
-            }
+            if (typeof(T) == typeof(string))
+                return (T)(object)value;
+            else
+                return (T)ParseInfo.Invoke(null, new[] { value });
         }
 
         protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
@@ -87,7 +79,7 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 catch(Exception e)
                 {
-                    Console.WriteLine(string.Join(",",tuple.FieldList));
+                    
                 }
             }
         }
