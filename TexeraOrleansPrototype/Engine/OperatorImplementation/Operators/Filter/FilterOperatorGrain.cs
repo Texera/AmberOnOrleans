@@ -45,6 +45,10 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
+            if(tuple.FieldList.Length<16)
+            {
+                Console.WriteLine(string.Join(",", tuple.FieldList));
+            }
             if(tuple.FieldList!=null)
             {
                 switch(type)
