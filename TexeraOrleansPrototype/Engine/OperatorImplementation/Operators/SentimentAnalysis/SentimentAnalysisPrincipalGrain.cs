@@ -9,8 +9,11 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.Operators
 {
+
     public class SentimentAnalysisPrinicipalGrain : PrincipalGrain, ISentimentAnalysisPrincipalGrain
     {
+        public override int DefaultNumGrainsInOneLayer { get { return 2*Constants.DefaultNumGrainsInOneLayer; } }
+        
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
             return this.GrainFactory.GetGrain<ISentimentAnalysisOperatorGrain>(this.GetPrimaryKey(), extension);
