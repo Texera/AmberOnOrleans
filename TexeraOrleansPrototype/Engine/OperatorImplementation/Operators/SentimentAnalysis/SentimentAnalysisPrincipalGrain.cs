@@ -12,7 +12,7 @@ namespace Engine.OperatorImplementation.Operators
 
     public class SentimentAnalysisPrinicipalGrain : PrincipalGrain, ISentimentAnalysisPrincipalGrain
     {
-        public override int DefaultNumGrainsInOneLayer { get { return 6*Constants.DefaultNumGrainsInOneLayer; } }
+        public override int DefaultNumGrainsInOneLayer { get { return 7*Constants.DefaultNumGrainsInOneLayer; } }
         
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
