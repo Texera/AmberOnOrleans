@@ -262,10 +262,10 @@ namespace Engine.OperatorImplementation.Common
                 //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause)));
                 Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
-                // foreach(IPrincipalGrain next in nextPrincipalGrains)
-                // {
-                //     await SendPauseToNextPrincipalGrain(next,0);
-                // }
+                foreach(IPrincipalGrain next in nextPrincipalGrains)
+                {
+                    await SendPauseToNextPrincipalGrain(next,0);
+                }
             }
         }
 
