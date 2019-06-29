@@ -15,7 +15,7 @@ namespace Engine.WorkflowImplementation
         public HashSet<Operator> AllOperators;
         public HashSet<Operator> EndOperators=new HashSet<Operator>();
         public readonly Guid WorkflowID;
-        private IControllerGrain workflowControllerGrain=null;
+        private ICreatorGrain workflowControllerGrain=null;
 
         public Workflow(Guid workflowID)
         {
@@ -37,13 +37,13 @@ namespace Engine.WorkflowImplementation
 
         public async Task Init(IGrainFactory factory)
         {
-            workflowControllerGrain=factory.GetGrain<IControllerGrain>(new Guid());
+            workflowControllerGrain=factory.GetGrain<ICreatorGrain>(new Guid());
             foreach(Operator o in AllOperators)
             {
                 o.SetPrincipalGrain(factory);
             }
             RequestContext.Set("targetSilo",Constants.ClientIPAddress);
-            await workflowControllerGrain.Init(workflowControllerGrain,WorkflowID,AllOperators);
+            await workflowControllerGrain.Init(null,WorkflowID,AllOperators);
         }
 
         public async Task Pause()
