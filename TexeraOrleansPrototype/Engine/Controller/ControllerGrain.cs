@@ -53,8 +53,9 @@ namespace Engine.Controller
 
         public Task OnTaskDidPaused()
         {
-            Console.WriteLine("Controller received pause");
+            
             currentPausedPrincipals++;
+            Console.WriteLine("Controller received pause! current = "+currentPausedPrincipals+" target = "+targetPausedPrincipals);
             if(currentPausedPrincipals==targetPausedPrincipals)
             {
                 TimeSpan duration=DateTime.UtcNow-pauseStart;

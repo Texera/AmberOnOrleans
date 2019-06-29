@@ -354,6 +354,7 @@ namespace Engine.OperatorImplementation.Common
             currentPausedWorkers++;
             if(currentPausedWorkers==targetPausedWorkers)
             {
+                controllerGrain.OnTaskDidPaused();
                 Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
                 foreach(IPrincipalGrain next in nextPrincipalGrains)
@@ -361,7 +362,6 @@ namespace Engine.OperatorImplementation.Common
                     SendPauseToNextPrincipalGrain(next,0);
                 }
             }
-            controllerGrain.OnTaskDidPaused();
             return Task.CompletedTask;
         }
 
