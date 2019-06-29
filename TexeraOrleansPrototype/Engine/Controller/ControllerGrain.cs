@@ -53,7 +53,7 @@ namespace Engine.Controller
 
         public Task Dummy()
         {
-            Console.WriteLine("dummy received!");
+            //Console.WriteLine("dummy received!");
             return Task.CompletedTask;
         }
 
