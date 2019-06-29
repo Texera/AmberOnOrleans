@@ -22,6 +22,7 @@ namespace Engine.Controller
         public async Task Init(IControllerGrain self,Guid workflowID, HashSet<Operator> graph)
         {
             this.self=self;
+            targetPausedPrincipals=graph.Count;
             WorkflowID=workflowID;
             foreach(Operator o in graph)
             {
@@ -39,9 +40,8 @@ namespace Engine.Controller
         }
 
 
-        public async Task Pause(HashSet<Operator> graph,int target)
+        public async Task Pause(HashSet<Operator> graph)
         {
-            targetPausedPrincipals=target;
             currentPausedPrincipals=0;
             List<Task> taskList=new List<Task>();
             pauseStart=DateTime.UtcNow;
@@ -55,7 +55,7 @@ namespace Engine.Controller
         public Task OnTaskDidPaused()
         {    
             currentPausedPrincipals++;
-            Console.WriteLine(targetPausedPrincipals);
+            //Console.WriteLine(targetPausedPrincipals);
             if(currentPausedPrincipals==targetPausedPrincipals)
             {
                 TimeSpan duration=DateTime.UtcNow-pauseStart;
