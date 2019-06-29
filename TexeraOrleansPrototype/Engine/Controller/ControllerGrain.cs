@@ -42,6 +42,7 @@ namespace Engine.Controller
         public async Task Pause(HashSet<Operator> graph,int target)
         {
             targetPausedPrincipals=target;
+            currentPausedPrincipals=0;
             List<Task> taskList=new List<Task>();
             pauseStart=DateTime.UtcNow;
             foreach(Operator o in graph)
