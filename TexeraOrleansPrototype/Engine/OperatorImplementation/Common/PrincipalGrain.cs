@@ -370,7 +370,7 @@ namespace Engine.OperatorImplementation.Common
             currentPausedWorkers++;
             if(currentPausedWorkers==targetPausedWorkers)
             {
-                controllerGrain.Dummy();
+                //controllerGrain.Dummy();
                 controllerGrain.OnTaskDidPaused();
                 Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
