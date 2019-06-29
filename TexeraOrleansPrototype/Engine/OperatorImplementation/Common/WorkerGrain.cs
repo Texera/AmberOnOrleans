@@ -371,6 +371,7 @@ namespace Engine.OperatorImplementation.Common
                 //sendingTime+=DateTime.UtcNow-start;
                 if(isPaused || isFinished)
                 {
+                    principalGrain.OnTaskDidPaused();
                     break;
                 }
             }
