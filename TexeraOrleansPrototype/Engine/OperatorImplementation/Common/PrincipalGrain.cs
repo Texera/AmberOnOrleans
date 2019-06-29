@@ -243,7 +243,7 @@ namespace Engine.OperatorImplementation.Common
             TimeSpan t = (DateTime.UtcNow - new DateTime(1970, 1, 1));
             Console.WriteLine(this.GetType()+" receives the pause message at "+ (int)t.TotalSeconds);
             currentPauseFlag++;
-            // if(currentPauseFlag>=prevPrincipalGrains.Count || isPaused)
+            if(currentPauseFlag>=prevPrincipalGrains.Count || isPaused)
             {
                 currentPauseFlag=0;
                 if(isPaused)
