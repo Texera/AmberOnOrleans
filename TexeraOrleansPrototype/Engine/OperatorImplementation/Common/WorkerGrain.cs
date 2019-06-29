@@ -249,7 +249,7 @@ namespace Engine.OperatorImplementation.Common
                     {
                         Task.Run(actionQueue.Peek());
                     }
-                    else
+                    else if(isPaused)
                     {
                         principalGrain.OnTaskDidPaused();
                     }
