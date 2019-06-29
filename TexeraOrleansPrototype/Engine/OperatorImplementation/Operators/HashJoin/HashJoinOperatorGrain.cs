@@ -101,7 +101,8 @@ namespace Engine.OperatorImplementation.Operators
                     {
                         //if we don't do so, the outputlist will be lost.
                         MakePayloadMessagesThenSend(outputList);
-                        taskDidPaused.Set();
+                        //taskDidPaused=true
+                        principalGrain.OnTaskDidPaused();
                         return;
                     }
                     batch=null;

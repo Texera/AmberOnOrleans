@@ -23,6 +23,7 @@ namespace Engine.OperatorImplementation.Common
         Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain);
         Task SetSendStrategy(Guid operatorGuid, ISendStrategy sendStrategy);
         Task AddInputInformation(Pair<Guid,int> inputInfo);
+        Task OnTaskDidPaused();
         /*
         Receives and processes the control message completely. This is because the
         control message needs to be acted upon ASAP.

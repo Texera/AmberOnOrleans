@@ -26,6 +26,7 @@ namespace Engine.OperatorImplementation.Common
         Task<Dictionary<SiloAddress,List<IWorkerGrain>>> GetOutputGrains();
         Task LinkWorkerGrains();
         Task Start();
+        Task OnTaskDidPaused();
 
 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         //global count breakpoint: 

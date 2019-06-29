@@ -38,6 +38,8 @@ namespace Engine.OperatorImplementation.Common
         private IControllerGrain controllerGrain;
         private ulong sequenceNumber=0;
         private int currentPauseFlag=0;
+        private int currentPausedWorkers=0;
+        private int targetPausedWorkers=0;
         //protected IAsyncObserver<Immutable<ControlMessage>> controlMessageStream;
 
 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
@@ -251,21 +253,18 @@ namespace Engine.OperatorImplementation.Common
                 isPaused = true;
                 Console.WriteLine(this.GetType()+"sending pause to workers...");
                 List<Task> taskList=new List<Task>();
+                currentPausedWorkers=0;
+                targetPausedWorkers=0;
                 foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
                 {
                     foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
                     {
+                        targetPausedWorkers++;
                         taskList.Add(grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause))));
                     }
                 }
                 await Task.WhenAll(taskList);
                 //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause)));
-                Console.WriteLine(this.GetType()+"workers paused!");
-                sequenceNumber++;
-                foreach(IPrincipalGrain next in nextPrincipalGrains)
-                {
-                    await SendPauseToNextPrincipalGrain(next,0);
-                }
             }
         }
 
@@ -349,7 +348,21 @@ namespace Engine.OperatorImplementation.Common
             return Task.FromResult(new RoundRobin(predicate.BatchingLimit) as ISendStrategy);
         }
 
-        
+        public Task OnTaskDidPaused()
+        {
+            currentPausedWorkers++;
+            if(currentPausedWorkers==targetPausedWorkers)
+            {
+                Console.WriteLine(this.GetType()+"workers paused!");
+                sequenceNumber++;
+                foreach(IPrincipalGrain next in nextPrincipalGrains)
+                {
+                    SendPauseToNextPrincipalGrain(next,0);
+                }
+            }
+            controllerGrain.OnTaskDidPaused();
+            return Task.CompletedTask;
+        }
 
         public virtual async Task Deactivate()
         {

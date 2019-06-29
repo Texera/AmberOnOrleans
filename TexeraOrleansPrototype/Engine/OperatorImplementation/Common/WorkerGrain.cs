@@ -47,7 +47,7 @@ namespace Engine.OperatorImplementation.Common
         protected int currentEndFlagCount=0;
         protected bool isFinished=false;
         protected List<TexeraTuple> savedBatch=null;
-        protected ManualResetEvent taskDidPaused=new ManualResetEvent(false);
+        // protected volatile bool taskDidPaused=false;
         // protected TimeSpan processTime=new TimeSpan(0,0,0);
         // protected TimeSpan sendingTime=new TimeSpan(0,0,0);
         // protected TimeSpan preprocessTime=new TimeSpan(0,0,0);
@@ -179,7 +179,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(isPaused)
                 {
-                    taskDidPaused.Set();
+                    principalGrain.OnTaskDidPaused();
                     return;
                 }
                 //DateTime start=DateTime.UtcNow;
@@ -222,7 +222,7 @@ namespace Engine.OperatorImplementation.Common
                         #endif
                         //if we not do so, the outputlist will be lost.
                         MakePayloadMessagesThenSend(outputList);
-                        taskDidPaused.Set();
+                        principalGrain.OnTaskDidPaused();
                         return;
                     }
                     batch=null;
@@ -291,16 +291,15 @@ namespace Engine.OperatorImplementation.Common
             {
                 strategy.SetPauseFlag(true);
             }
-            taskDidPaused.Reset();
+            //taskDidPaused=false;
             isPaused=true;
-            taskDidPaused.WaitOne();
         }
 
         protected virtual void Resume()
         {
             lock(actionQueue)
             {
-                Console.WriteLine("Resumed: "+Utils.GetReadableName(self) +" taskDidPaused = "+taskDidPaused +" actionQueue.Count = "+actionQueue.Count+" isFinished = "+isFinished);
+                Console.WriteLine("Resumed: "+Utils.GetReadableName(self) +" actionQueue.Count = "+actionQueue.Count+" isFinished = "+isFinished);
             }
             isPaused=false;
             if(isFinished)
@@ -381,6 +380,14 @@ namespace Engine.OperatorImplementation.Common
         {
             return Task.FromResult(new List<TexeraTuple>());
         }
+
+        public Task OnTaskDidPaused()
+        {
+            principalGrain.OnTaskDidPaused();
+            return Task.CompletedTask;
+        }
+
+
 
         // protected void StartGenerate(int retryCount)
         // {
