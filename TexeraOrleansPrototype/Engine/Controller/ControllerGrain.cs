@@ -40,7 +40,7 @@ namespace Engine.Controller
         }
 
 
-        public async Task Pause(HashSet<Operator> graph)
+        public Task Pause(HashSet<Operator> graph)
         {
             currentPausedPrincipals=0;
             List<Task> taskList=new List<Task>();
@@ -49,7 +49,8 @@ namespace Engine.Controller
             {
                 taskList.Add(o.Pause());
             }
-            await Task.WhenAll(taskList);
+            Task.WhenAll(taskList);
+            return Task.CompletedTask;
         }
 
         public Task OnTaskDidPaused()
