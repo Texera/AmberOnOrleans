@@ -60,7 +60,7 @@ namespace Engine.Controller
         public Task OnTaskDidPaused()
         {   
             currentPausedPrincipals++;
-            Console.WriteLine(currentPausedPrincipals+"  "+targetPausedPrincipals);
+            //Console.WriteLine(currentPausedPrincipals+"  "+targetPausedPrincipals);
             if(currentPausedPrincipals==targetPausedPrincipals)
             {
                 TimeSpan duration=DateTime.UtcNow-pauseStart;
