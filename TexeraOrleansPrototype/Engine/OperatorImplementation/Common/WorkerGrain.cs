@@ -47,7 +47,7 @@ namespace Engine.OperatorImplementation.Common
         protected int currentEndFlagCount=0;
         protected bool isFinished=false;
         protected List<TexeraTuple> savedBatch=null;
-        protected volatile bool taskDidPaused=false;
+        protected ManualResetEvent taskDidPaused=new ManualResetEvent(false);
         // protected TimeSpan processTime=new TimeSpan(0,0,0);
         // protected TimeSpan sendingTime=new TimeSpan(0,0,0);
         // protected TimeSpan preprocessTime=new TimeSpan(0,0,0);
@@ -179,7 +179,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(isPaused)
                 {
-                    taskDidPaused=true;
+                    taskDidPaused.Set();
                     return;
                 }
                 //DateTime start=DateTime.UtcNow;
@@ -222,7 +222,7 @@ namespace Engine.OperatorImplementation.Common
                         #endif
                         //if we not do so, the outputlist will be lost.
                         MakePayloadMessagesThenSend(outputList);
-                        taskDidPaused=true;
+                        taskDidPaused.Set();
                         return;
                     }
                     batch=null;
@@ -291,8 +291,9 @@ namespace Engine.OperatorImplementation.Common
             {
                 strategy.SetPauseFlag(true);
             }
-            taskDidPaused=false;
+            taskDidPaused.Reset();
             isPaused=true;
+            taskDidPaused.WaitOne();
         }
 
         protected virtual void Resume()
@@ -331,7 +332,7 @@ namespace Engine.OperatorImplementation.Common
             }
             lock(actionQueue)
             {
-                if(actionQueue.Count>0 && taskDidPaused)
+                if(actionQueue.Count>0)
                 {
                     Task.Run(actionQueue.Peek());
                 }
