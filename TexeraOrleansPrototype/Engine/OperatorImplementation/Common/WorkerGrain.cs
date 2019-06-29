@@ -249,6 +249,10 @@ namespace Engine.OperatorImplementation.Common
                     {
                         Task.Run(actionQueue.Peek());
                     }
+                    else
+                    {
+                        principalGrain.OnTaskDidPaused();
+                    }
                 }
             };
             lock(actionQueue)
