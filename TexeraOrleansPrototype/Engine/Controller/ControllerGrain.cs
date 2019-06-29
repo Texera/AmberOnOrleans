@@ -27,7 +27,7 @@ namespace Engine.Controller
             foreach(Operator o in graph)
             {
                 RequestContext.Set("targetSilo",Constants.ClientIPAddress);
-                await o.PrincipalGrain.Init(self,workflowID,o);
+                await o.PrincipalGrain.Init(GrainFactory.GetGrain<IControllerGrain>(WorkflowID),workflowID,o);
             }
             foreach(Operator o in graph)
             {
@@ -52,7 +52,7 @@ namespace Engine.Controller
         }
 
         public Task OnTaskDidPaused()
-        {    
+        {   
             currentPausedPrincipals++;
             Console.WriteLine(currentPausedPrincipals+"  "+targetPausedPrincipals);
             if(currentPausedPrincipals==targetPausedPrincipals)
