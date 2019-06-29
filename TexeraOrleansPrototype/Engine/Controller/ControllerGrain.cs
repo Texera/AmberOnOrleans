@@ -54,6 +54,7 @@ namespace Engine.Controller
         public Task OnTaskDidPaused()
         {    
             currentPausedPrincipals++;
+            Console.WriteLine("???");
             Console.WriteLine("Controller received pause! current = "+currentPausedPrincipals+" target = "+targetPausedPrincipals);
             if(currentPausedPrincipals==targetPausedPrincipals)
             {
