@@ -37,7 +37,7 @@ namespace Engine.WorkflowImplementation
 
         public async Task Init(IGrainFactory factory)
         {
-            workflowControllerGrain=factory.GetGrain<IControllerGrain>(WorkflowID);
+            workflowControllerGrain=factory.GetGrain<IControllerGrain>(new Guid());
             foreach(Operator o in AllOperators)
             {
                 o.SetPrincipalGrain(factory);

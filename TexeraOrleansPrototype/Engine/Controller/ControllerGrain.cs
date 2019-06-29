@@ -27,7 +27,7 @@ namespace Engine.Controller
             foreach(Operator o in graph)
             {
                 RequestContext.Set("targetSilo",Constants.ClientIPAddress);
-                await o.PrincipalGrain.Init(GrainFactory.GetGrain<IControllerGrain>(WorkflowID),workflowID,o);
+                await o.PrincipalGrain.Init(self,workflowID,o);
             }
             foreach(Operator o in graph)
             {
