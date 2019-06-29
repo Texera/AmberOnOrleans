@@ -51,6 +51,12 @@ namespace Engine.Controller
             return Task.CompletedTask;
         }
 
+        public Task Dummy()
+        {
+            Console.WriteLine("dummy received!");
+            return Task.CompletedTask;
+        }
+
         public Task OnTaskDidPaused()
         {   
             currentPausedPrincipals++;
