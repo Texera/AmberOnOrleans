@@ -55,7 +55,7 @@ namespace Engine.Controller
         {    
             currentPausedPrincipals++;
             Console.WriteLine("???");
-            Console.WriteLine("Controller received pause! current = "+currentPausedPrincipals+" target = "+targetPausedPrincipals);
+            //Console.WriteLine("Controller received pause! current = "+currentPausedPrincipals+" target = "+targetPausedPrincipals);
             if(currentPausedPrincipals==targetPausedPrincipals)
             {
                 TimeSpan duration=DateTime.UtcNow-pauseStart;
