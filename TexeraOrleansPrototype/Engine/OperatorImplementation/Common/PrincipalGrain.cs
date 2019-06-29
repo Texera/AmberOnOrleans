@@ -348,13 +348,13 @@ namespace Engine.OperatorImplementation.Common
             return Task.FromResult(new RoundRobin(predicate.BatchingLimit) as ISendStrategy);
         }
 
-        public Task OnTaskDidPaused()
+        public async Task OnTaskDidPaused()
         {
             Console.WriteLine(this.GetType()+" received pause");
             currentPausedWorkers++;
             if(currentPausedWorkers==targetPausedWorkers)
             {
-                controllerGrain.OnTaskDidPaused();
+                await controllerGrain.OnTaskDidPaused();
                 Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
                 foreach(IPrincipalGrain next in nextPrincipalGrains)
@@ -362,7 +362,6 @@ namespace Engine.OperatorImplementation.Common
                     SendPauseToNextPrincipalGrain(next,0);
                 }
             }
-            return Task.CompletedTask;
         }
 
         public virtual async Task Deactivate()
