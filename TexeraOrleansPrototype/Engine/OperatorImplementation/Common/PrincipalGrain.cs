@@ -350,7 +350,7 @@ namespace Engine.OperatorImplementation.Common
 
         public async Task OnTaskDidPaused()
         {
-            Console.WriteLine(this.GetType()+" received pause");
+            //Console.WriteLine(this.GetType()+" received pause");
             currentPausedWorkers++;
             if(currentPausedWorkers==targetPausedWorkers)
             {

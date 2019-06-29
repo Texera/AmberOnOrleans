@@ -46,10 +46,10 @@ namespace webapi.Controllers
             Console.WriteLine("target: "+workflowID);
             try
             {
-                sw.Start();
+                //sw.Start();
                 await ClientWrapper.Instance.PauseWorkflow(workflowID);
-                sw.Stop();
-                Console.WriteLine("Paused! Time Taken: "+sw.Elapsed);
+                //sw.Stop();
+                //Console.WriteLine("Paused! Time Taken: "+sw.Elapsed);
             }
             catch(Exception e)
             {
