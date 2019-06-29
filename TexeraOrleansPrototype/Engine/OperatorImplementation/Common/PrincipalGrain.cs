@@ -308,6 +308,22 @@ namespace Engine.OperatorImplementation.Common
             });
         }
 
+        private async Task SendTaskDidPaused(IControllerGrain nextGrain, int retryCount)
+        {
+            await nextGrain.OnTaskDidPaused().ContinueWith(async (t)=>
+            {
+                if(Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
+                {
+                    await SendTaskDidPaused(nextGrain,retryCount+1);
+                    Console.WriteLine("send failed!!!!");
+                }
+                else
+                {
+                    Console.WriteLine("send success!!!!");
+                }
+            });
+        }
+
         public virtual async Task Start()
         {
             List<Task> taskList=new List<Task>();
@@ -348,13 +364,13 @@ namespace Engine.OperatorImplementation.Common
             return Task.FromResult(new RoundRobin(predicate.BatchingLimit) as ISendStrategy);
         }
 
-        public async Task OnTaskDidPaused()
+        public Task OnTaskDidPaused()
         {
             //Console.WriteLine(this.GetType()+" received pause");
             currentPausedWorkers++;
             if(currentPausedWorkers==targetPausedWorkers)
             {
-                await controllerGrain.OnTaskDidPaused();
+                SendTaskDidPaused(controllerGrain,0);
                 Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
                 foreach(IPrincipalGrain next in nextPrincipalGrains)
@@ -362,6 +378,7 @@ namespace Engine.OperatorImplementation.Common
                     SendPauseToNextPrincipalGrain(next,0);
                 }
             }
+            return Task.CompletedTask;
         }
 
         public virtual async Task Deactivate()
