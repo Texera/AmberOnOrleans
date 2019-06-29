@@ -48,7 +48,7 @@ namespace Engine.WorkflowImplementation
 
         public async Task Pause()
         {
-            await workflowControllerGrain.Pause(StartOperators);
+            workflowControllerGrain.Pause(StartOperators);
         }
 
         public async Task Resume()

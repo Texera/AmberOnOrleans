@@ -111,7 +111,7 @@ namespace OrleansClient
         {
             if(IDToWorkflowEntry.ContainsKey(workflowID))
             {
-                await IDToWorkflowEntry[workflowID].Pause();
+                IDToWorkflowEntry[workflowID].Pause();
             }
             else
             {

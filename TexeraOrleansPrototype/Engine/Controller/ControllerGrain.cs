@@ -43,13 +43,11 @@ namespace Engine.Controller
         public Task Pause(HashSet<Operator> graph)
         {
             currentPausedPrincipals=0;
-            List<Task> taskList=new List<Task>();
             pauseStart=DateTime.UtcNow;
             foreach(Operator o in graph)
             {
-                taskList.Add(o.Pause());
+                o.Pause();
             }
-            Task.WhenAll(taskList);
             return Task.CompletedTask;
         }
 

@@ -47,7 +47,7 @@ namespace webapi.Controllers
             try
             {
                 //sw.Start();
-                await ClientWrapper.Instance.PauseWorkflow(workflowID);
+                ClientWrapper.Instance.PauseWorkflow(workflowID);
                 //sw.Stop();
                 //Console.WriteLine("Paused! Time Taken: "+sw.Elapsed);
             }
