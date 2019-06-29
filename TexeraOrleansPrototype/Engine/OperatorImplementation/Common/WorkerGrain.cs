@@ -291,8 +291,12 @@ namespace Engine.OperatorImplementation.Common
             {
                 strategy.SetPauseFlag(true);
             }
-            //taskDidPaused=false;
             isPaused=true;
+            lock(actionQueue)
+            {
+                if(actionQueue.Count==0)
+                    principalGrain.OnTaskDidPaused();
+            }
         }
 
         protected virtual void Resume()
@@ -371,7 +375,6 @@ namespace Engine.OperatorImplementation.Common
                 //sendingTime+=DateTime.UtcNow-start;
                 if(isPaused || isFinished)
                 {
-                    principalGrain.OnTaskDidPaused();
                     break;
                 }
             }
