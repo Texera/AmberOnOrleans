@@ -20,8 +20,6 @@ namespace webapi.Controllers
     {
         private static IClusterClient client;
 
-        private const int batchSize=Constants.BatchSize;
-
         [HttpPost]
         [Route("api/queryplan/execute")]
         public IActionResult Execute([FromBody]string logicalPlanJson)
@@ -48,6 +46,7 @@ namespace webapi.Controllers
             {
                 throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString().Substring(16)}");
             }
+            int batchSize=Constants.BatchSize;
             Workflow workflow=new Workflow(workflowID);
             foreach (JObject operator1 in operators)
             {
