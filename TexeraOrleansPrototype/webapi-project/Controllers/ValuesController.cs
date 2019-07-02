@@ -31,10 +31,9 @@ namespace webapi.Controllers
         //Post api/pause
         [HttpPost]
         [Route("api/pause")]
-        public async Task<HttpResponseMessage> PostPause()
+        public Task<HttpResponseMessage> PostPause()
         {
             Console.WriteLine("action: pause");
-            Stopwatch sw=new Stopwatch();
             Stream req = Request.Body;
             string json = new StreamReader(req).ReadToEnd();
             JObject o = JObject.Parse(json);
@@ -46,16 +45,13 @@ namespace webapi.Controllers
             Console.WriteLine("target: "+workflowID);
             try
             {
-                //sw.Start();
                 ClientWrapper.Instance.PauseWorkflow(workflowID);
-                //sw.Stop();
-                //Console.WriteLine("Paused! Time Taken: "+sw.Elapsed);
             }
             catch(Exception e)
             {
                 Console.WriteLine(e);
             }
-            return new HttpResponseMessage();
+            return Task.FromResult(new HttpResponseMessage());
         }
 
 
@@ -65,7 +61,6 @@ namespace webapi.Controllers
         public async Task<HttpResponseMessage> PostResume()
         {
             Console.WriteLine("action: resume");
-            Stopwatch sw=new Stopwatch();
             Stream req = Request.Body;
             //req.Seek(0, System.IO.SeekOrigin.Begin);
             string json = new StreamReader(req).ReadToEnd();
@@ -78,10 +73,7 @@ namespace webapi.Controllers
             Console.WriteLine("target: "+workflowID);
             try
             {
-                sw.Start();
                 await ClientWrapper.Instance.ResumeWorkflow(workflowID);
-                sw.Stop();
-                Console.WriteLine("Resumed! Time Taken: "+sw.Elapsed);
             }
             catch(Exception e)
             {

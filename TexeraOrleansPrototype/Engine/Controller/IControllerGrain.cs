@@ -12,6 +12,6 @@ namespace Engine.Controller
         Task Init(IControllerGrain self,Guid workflowID,HashSet<Operator> graph);
         Task Pause(HashSet<Operator> graph);
         Task OnTaskDidPaused();
-        Task Dummy();
+        Task Resume(HashSet<Operator> graph);
     }
 }

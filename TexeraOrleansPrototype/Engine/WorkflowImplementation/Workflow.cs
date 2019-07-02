@@ -46,19 +46,16 @@ namespace Engine.WorkflowImplementation
             await workflowControllerGrain.Init(null,WorkflowID,AllOperators);
         }
 
-        public async Task Pause()
+        public Task Pause()
         {
             workflowControllerGrain.Pause(StartOperators);
+            return Task.CompletedTask;
         }
 
         public async Task Resume()
         {
-            List<Task> taskList=new List<Task>();
-            foreach(Operator o in StartOperators)
-            {
-                taskList.Add(o.Resume());
-            }
-            await Task.WhenAll(taskList);
+            await workflowControllerGrain.Resume(StartOperators);
+            return;
         }
 
         public async Task Deactivate()

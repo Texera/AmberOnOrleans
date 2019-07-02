@@ -29,6 +29,12 @@ namespace Engine.Controller
             return Task.CompletedTask;
         }
 
+        public async Task Resume(HashSet<Operator> graph)
+        {
+            await controller.Resume(graph);
+            return;
+        }
+
 
     }
 }

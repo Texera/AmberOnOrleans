@@ -22,7 +22,7 @@ namespace Engine.OperatorImplementation.Common
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
         #if(GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-        private const int waitingThreshold=3000;
+        private const int waitingThreshold=5000;
         #endif
         public virtual int DefaultNumGrainsInOneLayer { get { return Constants.DefaultNumGrainsInOneLayer; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
@@ -40,13 +40,17 @@ namespace Engine.OperatorImplementation.Common
         private int currentPauseFlag=0;
         private int currentPausedWorkers=0;
         private int targetPausedWorkers=0;
-        //protected IAsyncObserver<Immutable<ControlMessage>> controlMessageStream;
 
 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         private int breakPointTarget;
         private int breakPointCurrent;
         private Dictionary<IGrain,int> versionTable=new Dictionary<IGrain, int>();
         private int reportToBeReceived;
+        private bool startWaiting=false;
+        private TimeSpan stage1=new TimeSpan();
+        private TimeSpan stage2=new TimeSpan();
+        private DateTime start;
+        private CancellationTokenSource tokenSource = new CancellationTokenSource();
 #endif
         
         public virtual IWorkerGrain GetOperatorGrain(string extension)
@@ -74,8 +78,6 @@ namespace Engine.OperatorImplementation.Common
             this.self=currentOperator.PrincipalGrain;
             this.predicate=currentOperator.Predicate;
             PassExtraParametersByPredicate(ref this.predicate);
-            //var provider=GetStreamProvider("SMSProvider");
-            //this.controlMessageStream=provider.GetStream<Immutable<ControlMessage>>(self.GetPrimaryKey(),"Ctrl");
             await BuildWorkerTopology();
         }
 
@@ -214,14 +216,6 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        // protected async Task Link2Layers(Guid nextOperatorGuid, List<IWorkerGrain> currentLayer,List<IWorkerGrain> nextLayer)
-        // {
-        //     for(int i=0;i<currentLayer.Count;++i)
-        //     {
-        //         await currentLayer[i].AddNextGrainList(nextOperatorGuid,nextLayer);
-        //     }
-        // }
-
         public Task<Dictionary<SiloAddress,List<IWorkerGrain>>> GetInputGrains()
         {
             return Task.FromResult(inputGrains);
@@ -264,7 +258,6 @@ namespace Engine.OperatorImplementation.Common
                     }
                 }
                 await Task.WhenAll(taskList);
-                //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Pause)));
             }
         }
 
@@ -288,14 +281,15 @@ namespace Engine.OperatorImplementation.Common
                 await SendResumeToNextPrincipalGrain(next,0);
             }
             isPaused = false;
+            List<Task> taskList=new List<Task>();
             foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
             {
                 foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
                 {
-                    await grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                    taskList.Add(grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume))));
                 }
             }
-            //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+            await Task.WhenAll(taskList);
             sequenceNumber++;
         }
 
@@ -305,22 +299,6 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
                     await SendResumeToNextPrincipalGrain(nextGrain,retryCount+1);
-            });
-        }
-
-        private async Task SendTaskDidPaused(IControllerGrain nextGrain, int retryCount)
-        {
-            await nextGrain.OnTaskDidPaused().ContinueWith(async (t)=>
-            {
-                if(Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
-                {
-                    await SendTaskDidPaused(nextGrain,retryCount+1);
-                    Console.WriteLine("send failed!!!!");
-                }
-                else
-                {
-                    Console.WriteLine("send success!!!!");
-                }
             });
         }
 
@@ -335,7 +313,6 @@ namespace Engine.OperatorImplementation.Common
                 }
             }
             await Task.WhenAll(taskList);
-            //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start)));
             sequenceNumber++;
         }
 
@@ -353,7 +330,6 @@ namespace Engine.OperatorImplementation.Common
                 }
             }
             await Task.WhenAll(taskList);
-            //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Start)));
             sequenceNumber++;
         }
 
@@ -366,11 +342,9 @@ namespace Engine.OperatorImplementation.Common
 
         public Task OnTaskDidPaused()
         {
-            //Console.WriteLine(this.GetType()+" received pause");
             currentPausedWorkers++;
             if(currentPausedWorkers==targetPausedWorkers)
             {
-                //controllerGrain.Dummy();
                 controllerGrain.OnTaskDidPaused();
                 Console.WriteLine(this.GetType()+"workers paused!");
                 sequenceNumber++;
@@ -391,17 +365,18 @@ namespace Engine.OperatorImplementation.Common
                     await grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Deactivate)));
                 }
             }
-            //await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Deactivate)));
             sequenceNumber++;
             DeactivateOnIdle();
         }
 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
         public async Task SetBreakPoint(int targetValue)
         {
+            start=DateTime.UtcNow;
             breakPointCurrent=0;
             breakPointTarget=targetValue;
+            reportToBeReceived=DefaultNumGrainsInOneLayer;
             int remaining=targetValue;
-            int size=outputGrains.Count+1;
+            int size=outputGrains.Count;
             foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
             {
                 if(remaining>targetValue/size)
@@ -431,25 +406,51 @@ namespace Engine.OperatorImplementation.Common
                 breakPointCurrent+=currentValue;
                 if(breakPointCurrent==breakPointTarget)
                 {
+                    stage2+=DateTime.UtcNow-start;
                     Console.WriteLine(Utils.GetReadableName(self)+" reached the global breakpoint of count = "+breakPointCurrent);
+                    Console.WriteLine("stage1 took "+stage1+" stage2 took "+stage2);
+                    foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
+                    {
+                        foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
+                        {
+                            grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                        }
+                    }
+                    sequenceNumber++;
                 }
                 else if(breakPointCurrent>breakPointTarget)
                 {
                     Console.WriteLine("ERROR: "+Utils.GetReadableName(self)+" exceed the target value of global breakpoint! current = "+breakPointCurrent+" target = "+breakPointTarget);
                 }
-                Task.Run(()=>
+                if(!startWaiting)
                 {
-                    await Task.Delay(waitingThreshold);
-                    foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
+                    stage1+=DateTime.UtcNow-start;
+                    start=DateTime.UtcNow;
+                    startWaiting=true;
+                    Task.Run(async ()=>
                     {
-                        await grain.AskToReportCurrentValue();
-                    }
-                })
+                        await Task.Delay(waitingThreshold);
+                        foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
+                        {
+                            grain.AskToReportCurrentValue();
+                        }
+                    },tokenSource.Token);
+                }
             }
+            Console.WriteLine("report to be received = "+reportToBeReceived+" current = "+breakPointCurrent+" target = "+breakPointTarget);
             if(reportToBeReceived==0 && breakPointCurrent<breakPointTarget)
             {
+                stage2+=DateTime.UtcNow-start;
+                tokenSource.Cancel();
+                startWaiting=false;
                 await SetBreakPoint(breakPointTarget-breakPointCurrent);
-                await controlMessageStream.OnNextAsync(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                foreach(Dictionary<SiloAddress,List<IWorkerGrain>> layer in operatorGrains)
+                {
+                    foreach(IWorkerGrain grain in layer.Values.SelectMany(x=>x))
+                    {
+                        grain.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,sequenceNumber,ControlMessage.ControlMessageType.Resume)));
+                    }
+                }
                 sequenceNumber++;
             }
         }

@@ -89,6 +89,11 @@ namespace Engine.OperatorImplementation.Operators
                 var batch=otherTable;
                 Action action=()=>
                 {
+                    if(isPaused)
+                    {
+                        principalGrain.OnTaskDidPaused();
+                        return;
+                    }
                     isCurrentInnerTable=false;
                     isInnerTableFinished=true;
                     //DateTime start=DateTime.UtcNow;
@@ -101,7 +106,6 @@ namespace Engine.OperatorImplementation.Operators
                     {
                         //if we don't do so, the outputlist will be lost.
                         MakePayloadMessagesThenSend(outputList);
-                        //taskDidPaused=true
                         principalGrain.OnTaskDidPaused();
                         return;
                     }
@@ -120,6 +124,10 @@ namespace Engine.OperatorImplementation.Operators
                         if(actionQueue.Count>0)
                         {
                             Task.Run(actionQueue.Peek());
+                        }
+                        else if(isPaused)
+                        {
+                            principalGrain.OnTaskDidPaused();
                         }
                     }
                 };

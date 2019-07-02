@@ -30,7 +30,6 @@ namespace Engine.OperatorImplementation.Common
             var targetSilo=RequestContext.Get("targetSilo");
             if(targetSilo!=null)
             {
-                // Console.WriteLine("targetSilo: "+targetSilo);
                 foreach(SiloAddress silo in silos)
                 {
                     if(silo.Endpoint.Address.ToString().Equals(targetSilo))
@@ -42,15 +41,8 @@ namespace Engine.OperatorImplementation.Common
             var excludeSilo=RequestContext.Get("excludeSilo");
             if(excludeSilo!=null)
             {
-                // Console.WriteLine("excludeSilo: "+excludeSilo);
                 silos=silos.Where(x=>!x.Endpoint.Address.ToString().Equals(excludeSilo)).ToArray();
             }
-            // foreach(SiloAddress silo in silos)
-            // {
-            //     Console.WriteLine("Silo Address: "+silo.Endpoint.Address+" IsClient = "+silo.IsClient);
-            //     Console.WriteLine("String repr: "+silo.ToString());
-            // }
-            // Console.WriteLine("---------------------------------------");
             object index = RequestContext.Get("grainIndex");
             if(index==null)
             {

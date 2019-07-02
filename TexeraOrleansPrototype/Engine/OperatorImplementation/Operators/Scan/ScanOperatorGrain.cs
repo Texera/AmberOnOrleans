@@ -14,17 +14,10 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class ScanOperatorGrain : WorkerGrain, IScanOperatorGrain
     {
-        private bool restarted=false;
-        private double checkpoint=0.1;
         private ulong size=0,original_start=0;
-        private ulong start,end,tuple_counter=0;
+        private ulong start,end;
         private ScanStreamReader reader;
-        public static int GenerateLimit=1000;
-        // TimeSpan splitingTime=new TimeSpan(0,0,0);
-        // TimeSpan addingToListTime=new TimeSpan(0,0,0);
-        // TimeSpan generateTime=new TimeSpan(0,0,0);
-        // TimeSpan readtupleTime=new TimeSpan(0,0,0);
-
+        public int GenerateLimit=Constants.BatchSize*2;
         protected override void Start()
         {
             base.Start();
@@ -32,7 +25,6 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override void Resume()
         {
-            restarted=true;
             base.Resume();
             if(!isFinished)
             {
@@ -42,13 +34,11 @@ namespace Engine.OperatorImplementation.Operators
 
         protected override async Task<List<TexeraTuple>> GenerateTuples()
         {
-            //DateTime start1=DateTime.UtcNow;
             List<TexeraTuple> outputList=new List<TexeraTuple>();
             for(int i=0;i<GenerateLimit;++i)
             {
                 Pair<TexeraTuple,ulong> res=await reader.ReadTuple();
                 start+=res.Second;
-                //DateTime start2=DateTime.UtcNow;
                 if(res.First.FieldList!=null)
                     outputList.Add(res.First);
                 if(isPaused)
@@ -58,14 +48,10 @@ namespace Engine.OperatorImplementation.Operators
                 if(start>end || reader.IsEOF())
                 {
                     reader.Close();
-                    //Console.WriteLine(Common.Utils.GetReadableName(self)+" Spliting Time: "+splitingTime +" Adding to list Time: "+addingToListTime+" Generate Time: "+generateTime+" ReadTuple Time: "+readtupleTime);
-                    //reader.PrintTimeUsage(Common.Utils.GetReadableName(self));
                     currentEndFlagCount=0;
                     return outputList;
                 }
-                //addingToListTime+=DateTime.UtcNow-start2;
             }
-            //generateTime+=DateTime.UtcNow-start1;
             return outputList;
         }
 

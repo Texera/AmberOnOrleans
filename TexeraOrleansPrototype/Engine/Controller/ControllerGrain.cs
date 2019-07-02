@@ -16,13 +16,14 @@ namespace Engine.Controller
     {
         public Guid WorkflowID;
         private IControllerGrain self;
-        private int currentPausedPrincipals=0;
-        private int targetPausedPrincipals=0;
-        private DateTime pauseStart;
+        private int currentRepliedPrincipals=0;
+        private int targetRepliedPrincipals=0;
+        private DateTime actionStart;
+        private bool performingAction=false;
         public async Task Init(IControllerGrain self,Guid workflowID, HashSet<Operator> graph)
         {
             this.self=self;
-            targetPausedPrincipals=graph.Count;
+            targetRepliedPrincipals=graph.Count;
             WorkflowID=workflowID;
             foreach(Operator o in graph)
             {
@@ -42,8 +43,14 @@ namespace Engine.Controller
 
         public Task Pause(HashSet<Operator> graph)
         {
-            currentPausedPrincipals=0;
-            pauseStart=DateTime.UtcNow;
+            if(performingAction)
+            {
+                Console.WriteLine("one action is performing, please wait...");
+                return Task.CompletedTask;
+            }
+            performingAction=true;
+            currentRepliedPrincipals=0;
+            actionStart=DateTime.UtcNow;
             foreach(Operator o in graph)
             {
                 o.Pause();
@@ -51,22 +58,37 @@ namespace Engine.Controller
             return Task.CompletedTask;
         }
 
-        public Task Dummy()
-        {
-            Console.WriteLine("dummy received!");
+        public Task OnTaskDidPaused()
+        {   
+            currentRepliedPrincipals++;
+            //Console.WriteLine(currentPausedPrincipals+"  "+targetPausedPrincipals);
+            if(currentRepliedPrincipals==targetRepliedPrincipals)
+            {
+                TimeSpan duration=DateTime.UtcNow-actionStart;
+                Console.WriteLine("Workflow Paused in "+duration);
+                performingAction=false;
+            }
             return Task.CompletedTask;
         }
 
-        public Task OnTaskDidPaused()
-        {   
-            currentPausedPrincipals++;
-            //Console.WriteLine(currentPausedPrincipals+"  "+targetPausedPrincipals);
-            if(currentPausedPrincipals==targetPausedPrincipals)
+
+        public async Task Resume(HashSet<Operator> graph)
+        {
+            if(performingAction)
             {
-                TimeSpan duration=DateTime.UtcNow-pauseStart;
-                Console.WriteLine("Workflow Paused in "+duration);
+                Console.WriteLine("one action is performing, please wait...");
+                return;
             }
-            return Task.CompletedTask;
+            performingAction=true;
+            currentRepliedPrincipals=0;
+            actionStart=DateTime.UtcNow;
+            foreach(Operator o in graph)
+            {
+                await o.Resume();
+            }
+            TimeSpan duration=DateTime.UtcNow-actionStart;
+            Console.WriteLine("Workflow Resumed in "+duration);
+            performingAction=false;
         }
     }
 }

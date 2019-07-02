@@ -5,6 +5,7 @@
   </PropertyGroup>
 
   <PropertyGroup>
+  <!--<DefineConstants>PROFILING_ENABLED</DefineConstants>-->
   <!--<DefineConstants>GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED</DefineConstants>-->
   <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   <ServerGarbageCollection>true</ServerGarbageCollection>

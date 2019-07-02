@@ -21,23 +21,35 @@ namespace webapi
         => CommandLineApplication.Execute<Program>(args);
 
         [Option("-c|--clientIP", Description = "IP address of client (MySQL server)")]
-        public string ClientIPAddress { get; }="10.138.15.198";
+        public string ClientIPAddress { get; }=null;
 
         [Option("-r|--maxretries", Description = "number of max retries when message sending fails")]
-        public int MaxRetries { get; }=60;
+        public int MaxRetries { get; }=-1;
 
         [Option("-b|--batchsize", Description = "number of tuples per batch")]
-        public int BatchSize { get; }=400;
+        public int BatchSize { get; }=-1;
 
         [Option("-n|--defaultlayersize", Description = "default number of grains per layer per operator")]
-        public int DefaultNumGrainsInOneLayer{ get; }=20;
+        public int DefaultNumGrainsInOneLayer{ get; }=-1;
 
         private void OnExecute()
         {
-            Constants.BatchSize=BatchSize;
-            Constants.ClientIPAddress=ClientIPAddress;
-            Constants.DefaultNumGrainsInOneLayer=DefaultNumGrainsInOneLayer;
-            Constants.MaxRetries=MaxRetries;
+            if(DefaultNumGrainsInOneLayer!=-1)
+            {
+                Constants.DefaultNumGrainsInOneLayer=DefaultNumGrainsInOneLayer;
+            }
+            if(BatchSize!=-1)
+            {
+                Constants.BatchSize=BatchSize;
+            }
+            if(ClientIPAddress!=null)
+            {
+                Constants.ClientIPAddress=ClientIPAddress;
+            }
+            if(MaxRetries!=-1)
+            {
+                Constants.MaxRetries=MaxRetries;
+            }
             Console.WriteLine("Ready to build connection...");
             client=ClientWrapper.Instance.client;
             BuildWebHost().Run();

@@ -35,7 +35,6 @@ namespace Engine.OperatorImplementation.Common
     {
         protected PredicateBase predicate = null;
         protected volatile bool isPaused = false;
-        //protected List<Immutable<PayloadMessage>> pausedMessages = new List<Immutable<PayloadMessage>>();
         protected IPrincipalGrain principalGrain;
         protected IWorkerGrain self = null;
         private IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
@@ -47,11 +46,13 @@ namespace Engine.OperatorImplementation.Common
         protected int currentEndFlagCount=0;
         protected bool isFinished=false;
         protected List<TexeraTuple> savedBatch=null;
-        // protected volatile bool taskDidPaused=false;
-        // protected TimeSpan processTime=new TimeSpan(0,0,0);
-        // protected TimeSpan sendingTime=new TimeSpan(0,0,0);
-        // protected TimeSpan preprocessTime=new TimeSpan(0,0,0);
-        //protected StreamSubscriptionHandle<Immutable<ControlMessage>> controlMessageStreamHandle;
+
+        #if (PROFILING_ENABLED)
+        protected TimeSpan processTime=new TimeSpan(0,0,0);
+        protected TimeSpan sendingTime=new TimeSpan(0,0,0);
+        protected TimeSpan preprocessTime=new TimeSpan(0,0,0);
+        #endif
+
         protected IWorkerGrain workerToActivate=null;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
@@ -60,6 +61,7 @@ namespace Engine.OperatorImplementation.Common
         private int breakPointCurrent=0;
         private int version=-1;
         private bool breakPointEnabled=false;
+        private object counterlock=new object();
 #endif
         public virtual Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
@@ -67,22 +69,16 @@ namespace Engine.OperatorImplementation.Common
             this.principalGrain=principalGrain;
             this.predicate=predicate;
             Console.WriteLine("Init: "+Utils.GetReadableName(self));
-            //var streamProvider = GetStreamProvider("SMSProvider");
-            //var stream=streamProvider.GetStream<Immutable<ControlMessage>>(principalGrain.GetPrimaryKey(), "Ctrl");
-            //controlMessageStreamHandle=await stream.SubscribeAsync(this);
             return Task.FromResult(localSiloDetails.SiloAddress);
-            
         }
     
 
         public override Task OnDeactivateAsync()
         {
             Console.WriteLine("Deactivate: "+Utils.GetReadableName(self));
-            //pausedMessages=null;
             orderingEnforcer=null;
             sendStrategies=null;
             actionQueue=null;
-            //controlMessageStreamHandle.UnsubscribeAsync();
             GC.Collect();
             return Task.CompletedTask;
         }
@@ -97,7 +93,9 @@ namespace Engine.OperatorImplementation.Common
             if(!isFinished && currentEndFlagCount==0)
             {
                 //Console.WriteLine(Utils.GetReadableName(self)+" END!");
-                //Console.WriteLine(Utils.GetReadableName(self)+" Preprocess Time: "+preprocessTime+" Process Time: "+processTime+" Sending Time: "+sendingTime);
+                #if (PROFILING_ENABLED)
+                Console.WriteLine(Utils.GetReadableName(self)+" Preprocess Time: "+preprocessTime+" Process Time: "+processTime+" Sending Time: "+sendingTime);
+                #endif
                 isFinished=true;
                 MakeLastPayloadMessageThenSend();
             }
@@ -157,8 +155,7 @@ namespace Engine.OperatorImplementation.Common
         {
 
         }
-
-        
+ 
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
             Process(message.Value);
@@ -171,8 +168,6 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-
-
         public void Process(PayloadMessage message)
         {
             Action action=()=>
@@ -182,7 +177,9 @@ namespace Engine.OperatorImplementation.Common
                     principalGrain.OnTaskDidPaused();
                     return;
                 }
-                //DateTime start=DateTime.UtcNow;
+                #if (PROFILING_ENABLED)
+                DateTime start=DateTime.UtcNow;
+                #endif
                 if(messageChecked || orderingEnforcer.PreProcess(message))
                 {
                     bool isEnd=message.IsEnd;
@@ -200,24 +197,36 @@ namespace Engine.OperatorImplementation.Common
                         orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.SenderIdentifer);
                         savedBatch=batch;
                         messageChecked=true;
-                    }  
-                    //preprocessTime+=DateTime.UtcNow-start;
-                    //start=DateTime.UtcNow;
+                    }
+                    #if (PROFILING_ENABLED)  
+                    preprocessTime+=DateTime.UtcNow-start;
+                    start=DateTime.UtcNow;
+                    #endif
                     BeforeProcessBatch(message);
                     List<TexeraTuple> outputList=new List<TexeraTuple>();
                     if(batch!=null)
                     {
                         ProcessBatch(batch,outputList);
                         #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-                        breakPointCurrent+=outputList.Count;
+                        lock(counterlock)
+                        {
+                            breakPointCurrent+=outputList.Count;
+                        }
                         #endif
                     }
                     if(isPaused)
                     {
                         #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+                        int temp;
                         if(breakPointEnabled && breakPointCurrent>=breakPointTarget)
                         {
-                            await principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
+                            lock(counterlock)
+                            {
+                                temp=breakPointCurrent;
+                                breakPointCurrent=0;
+                            }
+                            principalGrain.ReportCurrentValue(self,temp,version);
+                            breakPointEnabled=false;
                         }
                         #endif
                         //if we not do so, the outputlist will be lost.
@@ -234,13 +243,16 @@ namespace Engine.OperatorImplementation.Common
                         string ext;
                         inputInfo[message.SenderIdentifer.GetPrimaryKey(out ext)]--;
                         currentEndFlagCount--;
-                        Console.WriteLine(Utils.GetReadableName(self)+" <- "+Utils.GetReadableName(message.SenderIdentifer)+" END: "+message.SequenceNumber);
                     }
                     AfterProcessBatch(message);
-                    //processTime+=DateTime.UtcNow-start;
-                    //start=DateTime.UtcNow;
+                    #if (PROFILING_ENABLED)
+                    processTime+=DateTime.UtcNow-start;
+                    start=DateTime.UtcNow;
+                    #endif
                     MakePayloadMessagesThenSend(outputList);
-                    //sendingTime+=DateTime.UtcNow-start;
+                    #if (PROFILING_ENABLED)
+                    sendingTime+=DateTime.UtcNow-start;
+                    #endif
                 }
                 lock(actionQueue)
                 {
@@ -265,18 +277,6 @@ namespace Engine.OperatorImplementation.Common
             }
             //return Task.CompletedTask;
         }
-
-        // private void SendPayloadMessageToSelf(Immutable<PayloadMessage> message, int retryCount)
-        // {
-        //     self.Process(message).ContinueWith((t)=>
-        //     {  
-        //         if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-        //         {
-        //             Console.WriteLine(this.GetType().Name+"("+self+")"+" re-receive message with retry count "+retryCount);
-        //             SendPayloadMessageToSelf(message, retryCount + 1); 
-        //         }
-        //     });
-        // }
 
         protected virtual List<TexeraTuple> MakeFinalOutputTuples()
         {
@@ -371,12 +371,18 @@ namespace Engine.OperatorImplementation.Common
         {
             while(true)
             {
-                //DateTime start=DateTime.UtcNow;
+                #if (PROFILING_ENABLED)
+                DateTime start=DateTime.UtcNow;
+                #endif
                 List<TexeraTuple> outputList=await GenerateTuples();
-                //processTime+=DateTime.UtcNow-start;
-                //start=DateTime.UtcNow;
+                #if (PROFILING_ENABLED)
+                processTime+=DateTime.UtcNow-start;
+                start=DateTime.UtcNow;
+                #endif
                 MakePayloadMessagesThenSend(outputList);
-                //sendingTime+=DateTime.UtcNow-start;
+                #if (PROFILING_ENABLED)
+                sendingTime+=DateTime.UtcNow-start;
+                #endif
                 if(isPaused || isFinished)
                 {
                     break;
@@ -395,19 +401,6 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-
-
-        // protected void StartGenerate(int retryCount)
-        // {
-        //     self.Generate().ContinueWith((t)=>
-        //     {
-        //         if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-        //         {
-        //             Console.WriteLine(this.GetType().Name+"("+self+")"+" re-receive message with retry count "+retryCount);
-        //             StartGenerate(retryCount+1);
-        //         }
-        //     });
-        // }
 
         public Task SetSendStrategy(Guid operatorGuid,ISendStrategy sendStrategy)
         {
@@ -453,7 +446,6 @@ namespace Engine.OperatorImplementation.Common
         {
             breakPointEnabled=true;
             version++;
-            breakPointCurrent=0;
             breakPointTarget=targetValue;
             Console.WriteLine(Utils.GetReadableName(self)+" set breakpoint! target value = "+targetValue+" version = "+version);
             return Task.CompletedTask;
@@ -461,12 +453,20 @@ namespace Engine.OperatorImplementation.Common
 
         public Task AskToReportCurrentValue()
         {
+            if(breakPointEnabled==false)return Task.CompletedTask;
+            Console.WriteLine(Utils.GetReadableName(self)+" received AskToReport");
             if(!isPaused)
             {
                 Pause();
             }
-            while(!taskDidPaused);
-            principalGrain.ReportCurrentValue(self,breakPointCurrent,version);
+            breakPointEnabled=false;
+            int temp;
+            lock(counterlock)
+            {
+                temp=breakPointCurrent;
+                breakPointCurrent=0;
+            }
+            principalGrain.ReportCurrentValue(self,temp,version);
             return Task.CompletedTask;
         }
 #endif

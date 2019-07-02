@@ -13,7 +13,7 @@ namespace TexeraUtilities
         public static string ClientIPAddress="10.138.15.198";
         public static int MaxRetries = 60;
         public static int BatchSize = 400;
-        public static int DefaultNumGrainsInOneLayer=20;
+        public static int DefaultNumGrainsInOneLayer=4;
         public static string ConnectionString 
         {
             get
