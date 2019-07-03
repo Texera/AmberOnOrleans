@@ -376,7 +376,7 @@ namespace Engine.OperatorImplementation.Common
             breakPointTarget=targetValue;
             reportToBeReceived=DefaultNumGrainsInOneLayer;
             int remaining=targetValue;
-            int size=outputGrains.Count;
+            int size=DefaultNumGrainsInOneLayer;
             foreach(IWorkerGrain grain in outputGrains.Values.SelectMany(x=>x))
             {
                 if(remaining>targetValue/size)
