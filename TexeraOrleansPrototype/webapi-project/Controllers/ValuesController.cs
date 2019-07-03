@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -11,21 +12,15 @@ using Newtonsoft.Json.Linq;
 using Orleans;
 using Orleans.Hosting;
 using OrleansClient;
-using SiloHost;
 
 namespace webapi.Controllers
 {
     //[Route("api/[controller]")]
     public class ValuesController : Controller
     {
-        private static ISiloHost host;
         private static IClusterClient client;
         public ValuesController()
         {
-            if(host == null)
-            {
-                host = SiloWrapper.Instance.host;
-            }
             
             if(client == null)
             {
@@ -36,7 +31,7 @@ namespace webapi.Controllers
         //Post api/pause
         [HttpPost]
         [Route("api/pause")]
-        public async Task<HttpResponseMessage> PostPause()
+        public Task<HttpResponseMessage> PostPause()
         {
             Console.WriteLine("action: pause");
             Stream req = Request.Body;
@@ -50,14 +45,13 @@ namespace webapi.Controllers
             Console.WriteLine("target: "+workflowID);
             try
             {
-                await ClientWrapper.Instance.PauseWorkflow(workflowID);
-                Console.WriteLine("Paused!");
+                ClientWrapper.Instance.PauseWorkflow(workflowID);
             }
             catch(Exception e)
             {
                 Console.WriteLine(e);
             }
-            return new HttpResponseMessage();
+            return Task.FromResult(new HttpResponseMessage());
         }
 
 
@@ -80,7 +74,6 @@ namespace webapi.Controllers
             try
             {
                 await ClientWrapper.Instance.ResumeWorkflow(workflowID);
-                Console.WriteLine("Resumed!");
             }
             catch(Exception e)
             {

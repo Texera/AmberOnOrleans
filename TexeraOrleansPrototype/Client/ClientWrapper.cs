@@ -5,6 +5,7 @@ using Orleans.Concurrency;
 using System;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Linq;
 using Microsoft.Extensions.Logging;
 using Orleans.Configuration;
 using Engine.Controller;
@@ -13,7 +14,9 @@ using Engine.OperatorImplementation.Operators;
 using Engine.WorkflowImplementation;
 using TexeraUtilities;
 using System.Threading;
+using System.Net;
 using Engine;
+using Orleans.Runtime.Placement;
 
 namespace OrleansClient
 {
@@ -58,14 +61,27 @@ namespace OrleansClient
             attempt = 0;
             IClusterClient client;
             var clientBuilder = new ClientBuilder()
-                    .UseLocalhostClustering()
+                    .UseAdoNetClustering(options =>
+                    {
+                        options.ConnectionString = Constants.ConnectionString;
+                        options.Invariant = "MySql.Data.MySqlClient";
+                    })
                     .AddSimpleMessageStreamProvider("SMSProvider")
                     .Configure<ClusterOptions>(options =>
                     {
                         options.ClusterId = "dev";
                         options.ServiceId = "TexeraOrleansPrototype";
                     })
-                    .ConfigureLogging(logging => logging.AddConsole());
+                    .Configure<GatewayOptions>(options =>
+                    {
+                    })
+                    .ConfigureServices(services => 
+                    {
+                        services.AddSingletonNamedService<PlacementStrategy, WorkerGrainPlacement>(nameof(WorkerGrainPlacement));
+                        services.AddSingletonKeyedService<Type, IPlacementDirector, WorkerGrainPlacementDirector>(typeof(WorkerGrainPlacement));
+                    })
+                    .ConfigureLogging(logging => logging.AddConsole())
+                    .Configure<ClientMessagingOptions>(options => options.ResponseTimeout=new TimeSpan(0,4,0));
 
             client = clientBuilder.Build();
 
@@ -95,7 +111,7 @@ namespace OrleansClient
         {
             if(IDToWorkflowEntry.ContainsKey(workflowID))
             {
-                await IDToWorkflowEntry[workflowID].Pause();
+                IDToWorkflowEntry[workflowID].Pause();
             }
             else
             {
@@ -129,24 +145,53 @@ namespace OrleansClient
             var streamProvider = client.GetStreamProvider("SMSProvider");
             var so = new StreamObserver();
             var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflow.GetStreamGuid(), "OutputStream");
-            await stream.SubscribeAsync(so);
+            var handle = await stream.SubscribeAsync(so);
             int numEndGrains=0;
             foreach(Operator o in workflow.EndOperators)
             {
-                numEndGrains+=o.PrincipalGrain.GetOutputGrains().Result.Count;
+                numEndGrains+=(await o.PrincipalGrain.GetOutputGrains()).Values.SelectMany(x=>x).Count();
             }
             so.SetNumEndFlags(numEndGrains);
             instance.IDToWorkflowEntry[workflow.WorkflowID]=workflow;
-            await so.Start();
+            Operator secondScan=null;
             foreach(Operator op in workflow.StartOperators)
             {
-                await op.PrincipalGrain.Start();
+                if(((ScanPredicate)op.Predicate).File.EndsWith("orders.tbl"))
+                    secondScan=op;
+            }
+            #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+            foreach(Operator op in workflow.AllOperators)
+            {
+                if(op is FilterOperator<DateTime>)
+                    await op.PrincipalGrain.SetBreakPoint(100000000);
+            }
+            #endif
+            await so.Start();
+            if(secondScan!=null)
+            {
+                foreach(Operator op in workflow.StartOperators)
+                {
+                    if(((ScanPredicate)op.Predicate).File.EndsWith("customer.tbl"))
+                    {
+                        await op.PrincipalGrain.ActivateWhenFinished(secondScan);
+                        await op.PrincipalGrain.Start();
+                    }
+                }
+            }
+            else
+            {
+                foreach(Operator op in workflow.StartOperators)
+                {
+                    await op.PrincipalGrain.Start();
+                }
             }
 
             while (!so.isFinished)
             {
 
             }
+            await handle.UnsubscribeAsync();
+            await workflow.Deactivate();
             instance.IDToWorkflowEntry.Remove(workflow.WorkflowID);
             return so.resultsToRet;
         }

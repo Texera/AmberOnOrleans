@@ -5,6 +5,12 @@ using Microsoft.Extensions.Logging;
 using Orleans;
 using Orleans.Configuration;
 using Orleans.Hosting;
+using Orleans.Runtime;
+using TexeraUtilities;
+using Engine.OperatorImplementation.Operators;
+using Orleans.Runtime.Placement;
+using Engine.OperatorImplementation.Common;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace SiloHost
 {
@@ -41,7 +47,11 @@ namespace SiloHost
         private static async Task<ISiloHost> StartSilo()
         {
             var siloBuilder = new SiloHostBuilder()
-                .UseLocalhostClustering()
+                .UseAdoNetClustering(options =>
+                 {
+                     options.ConnectionString = Constants.ConnectionString;
+                     options.Invariant = "MySql.Data.MySqlClient";
+                 })
                 .AddSimpleMessageStreamProvider("SMSProvider")
                 // add storage to store list of subscriptions
                 .AddMemoryGrainStorage("PubSubStore")
@@ -51,10 +61,18 @@ namespace SiloHost
                     options.ClusterId = "dev";
                     options.ServiceId = "TexeraOrleansPrototype";
                 })
-                .Configure<EndpointOptions>(options =>
-                    options.AdvertisedIPAddress = IPAddress.Loopback)
+                .ConfigureServices(services => 
+                {
+                    // services.Configure<SchedulingOptions>(options =>
+                    // {
+                    //     options.MaxActiveThreads = 2;
+                    // });
+                    services.AddSingletonNamedService<PlacementStrategy, WorkerGrainPlacement>(nameof(WorkerGrainPlacement));
+                    services.AddSingletonKeyedService<Type, IPlacementDirector, WorkerGrainPlacementDirector>(typeof(WorkerGrainPlacement));
+                })
+                .ConfigureEndpoints(siloPort: 11111, gatewayPort: 30000)
                 .ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Critical).AddConsole())
-                .Configure<SiloMessagingOptions>(options => { options.ResendOnTimeout = true; options.MaxResendCount = 60; options.ResponseTimeout = new TimeSpan(0,2,0); });
+                .Configure<SiloMessagingOptions>(options => { options.ResponseTimeout = new TimeSpan(0,0,45); });
 
             var host = siloBuilder.Build();
             await host.StartAsync();

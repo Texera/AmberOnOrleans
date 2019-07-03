@@ -9,17 +9,20 @@ namespace Engine
 {
     public class ControlMessage: TexeraMessage
     {
-        public ControlMessage(string sender, ulong sequenceNumber, ControlMessageType type):base(sender,sequenceNumber)
+        public ControlMessage(IGrain sender, ulong sequenceNumber, ControlMessageType type,object additionalInfo=null):base(sender,sequenceNumber)
         {
             Type=type;
+            AdditionalInfo=additionalInfo;
         }
         public enum ControlMessageType
         {
             Pause,
             Resume,
             Start,
-            End,
+            Deactivate,
+            addCallbackWorker,
         }
         public ControlMessageType Type;
+        public object AdditionalInfo;
     }    
 }

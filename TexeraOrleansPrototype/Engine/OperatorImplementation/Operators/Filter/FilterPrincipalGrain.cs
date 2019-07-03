@@ -11,6 +11,12 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class FilterPrinicipalGrain<T> : PrincipalGrain, IFilterPrincipalGrain<T> where T:IComparable<T>
     {
+        public override async Task Init(Controller.IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator)
+        {
+            await base.Init(controllerGrain,workflowID,currentOperator);
+        }
+
+
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
             return this.GrainFactory.GetGrain<IFilterOperatorGrain<T>>(this.GetPrimaryKey(), extension);

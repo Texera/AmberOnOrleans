@@ -10,100 +10,179 @@ using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
 using System.Linq;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
     public class HashJoinOperatorGrain : WorkerGrain, IHashJoinOperatorGrain
     {
-        Dictionary<String,List<TexeraTuple>> hashTable=new Dictionary<string, List<TexeraTuple>>();
-        int tableSource=-1;
-        string sourceOperator=null;
+        Dictionary<String,List<string[]>> hashTable=new Dictionary<string, List<string[]>>();
         List<TexeraTuple> otherTable=new List<TexeraTuple>();
-        int joinFieldIndex=-1;
-        int TableID;
-        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        int innerTableIndex=-1;
+        int outerTableIndex=-1;
+        bool isCurrentInnerTable=false;
+        bool isInnerTableFinished=false;
+        Guid innerTableGuid=Guid.Empty;
+
+        public override Task OnDeactivateAsync()
         {
-            base.Init(self,predicate,principalGrain);
-            joinFieldIndex=((HashJoinPredicate)predicate).JoinFieldIndex;
-            TableID=((HashJoinPredicate)predicate).TableID;
+            base.OnDeactivateAsync();
+            hashTable=null;
+            otherTable=null;
             return Task.CompletedTask;
         }
-        protected override void ProcessTuple(TexeraTuple tuple)
+
+        public override async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
-            if(tableSource==-1)
+            SiloAddress addr=await base.Init(self,predicate,principalGrain);
+            innerTableIndex=((HashJoinPredicate)predicate).InnerTableIndex;
+            outerTableIndex=((HashJoinPredicate)predicate).OuterTableIndex;
+            innerTableGuid=((HashJoinPredicate)predicate).InnerTableID;
+            return addr;
+        }
+
+
+        protected override void BeforeProcessBatch(PayloadMessage message)
+        {
+            string ext;
+            isCurrentInnerTable=innerTableGuid.Equals(message.SenderIdentifer.GetPrimaryKey(out ext));
+            isInnerTableFinished=(inputInfo[innerTableGuid]==0);
+        }
+
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
+        {
+            if(isCurrentInnerTable)
             {
-                tableSource=tuple.TableID;
-            }
-            if(tuple.TableID.Equals(tableSource))
-            {
-                string source=tuple.FieldList[joinFieldIndex];
+                string source=tuple.FieldList[innerTableIndex];
                 if(!hashTable.ContainsKey(source))
-                    hashTable[source]=new List<TexeraTuple>{tuple};
+                    hashTable[source]=new List<string[]>{tuple.FieldList.RemoveAt(innerTableIndex)};
                 else
-                    hashTable[source].Add(tuple);
+                    hashTable[source].Add(tuple.FieldList.RemoveAt(innerTableIndex));
             }
             else
             {
-                if(inputInfo[sourceOperator]!=0)
+                if(!isInnerTableFinished)
                 {
                     otherTable.Add(tuple);
                 }
                 else
                 {
-                    string field=tuple.FieldList[joinFieldIndex];
-                    List<string> fields=tuple.FieldList.ToList();
-                    fields.RemoveAt(joinFieldIndex);
-                    foreach(TexeraTuple t in hashTable[field])
-                    {  
-                        outputTuples.Enqueue(new TexeraTuple(TableID,t.FieldList.Concat(fields).ToArray()));
+                    string field=tuple.FieldList[outerTableIndex];
+                    if(hashTable.ContainsKey(field))
+                    {
+                        foreach(string[] f in hashTable[field])
+                        {  
+                            output.Add(new TexeraTuple(tuple.FieldList.FastConcat(f)));
+                        }
                     }
                 }
             }
         }
 
-        protected override void AfterProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
+        protected override void AfterProcessBatch(PayloadMessage message)
         {
-            if(inputInfo[sourceOperator]==0 && otherTable!=null)
+            if(inputInfo[innerTableGuid]==0 && otherTable!=null)
             {
+                // temporarily hold the end flag if ended
+                if(currentEndFlagCount==0)
+                    currentEndFlagCount=-1;
                 var batch=otherTable;
-                Action action=async ()=>
+                Action action=()=>
                 {
+                    if(isPaused)
+                    {
+                        if(!pauseBySelf)
+                            principalGrain.OnTaskDidPaused();
+                        else
+                        {
+                            #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+                            int temp;
+                            if(breakPointEnabled)
+                            {
+                                lock(counterlock)
+                                {
+                                    temp=breakPointCurrent;
+                                    breakPointCurrent=0;
+                                }
+                                principalGrain.ReportCurrentValue(self,temp,version);
+                                breakPointEnabled=false;
+                            }
+                            #endif
+                        }
+                        return;
+                    }
+                    isCurrentInnerTable=false;
+                    isInnerTableFinished=true;
+                    //DateTime start=DateTime.UtcNow;
+                    List<TexeraTuple> outputList=new List<TexeraTuple>();
                     if(batch!=null)
                     {
-                        ProcessBatch(batch);
+                        ProcessBatch(batch,outputList);
+                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+                        lock(counterlock)
+                        {
+                            breakPointCurrent+=outputList.Count;
+                        }
+                        #endif
                     }
                     if(isPaused)
                     {
+                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+                        if(pauseBySelf)
+                        {
+                            int temp;
+                            if(breakPointEnabled)
+                            {
+                                lock(counterlock)
+                                {
+                                    temp=breakPointCurrent;
+                                    breakPointCurrent=0;
+                                }
+                                principalGrain.ReportCurrentValue(self,temp,version);
+                                breakPointEnabled=false;
+                            }
+                        }
+                        #endif
+                        //if we don't do so, the outputlist will be lost.
+                        MakePayloadMessagesThenSend(outputList);
+                        if(!pauseBySelf)
+                        {
+                            principalGrain.OnTaskDidPaused();
+                        }
                         return;
                     }
+                    batch=null;
+                    //release the end flag if holded
+                    if(currentEndFlagCount==-1)
+                        currentEndFlagCount=0;
                     currentIndex=0;
-                    await Task.Factory.StartNew(()=>{MakePayloadMessagesThenSend();},CancellationToken.None,TaskCreationOptions.None,orleansScheduler);
+                    //processTime+=DateTime.UtcNow-start;
+                    //start=DateTime.UtcNow;
+                    MakePayloadMessagesThenSend(outputList);
+                    //sendingTime+=DateTime.UtcNow-start;
                     lock(actionQueue)
                     {
                         actionQueue.Dequeue();
-                        if(!isPaused && actionQueue.Count>0)
+                        if(actionQueue.Count>0)
                         {
                             Task.Run(actionQueue.Peek());
+                        }
+                        else if(isPaused && !pauseBySelf)
+                        {
+                            principalGrain.OnTaskDidPaused();
                         }
                     }
                 };
                 lock(actionQueue)
                 {
                     actionQueue.Enqueue(action);
-                    if(actionQueue.Count==1)
-                    {
-                        Task.Run(action);
-                    }
+                    // if(actionQueue.Count==1)
+                    // {
+                    //     Task.Run(action);
+                    // }
                 }
                 otherTable=null;
             }
         }
-
-        protected override void BeforeProcessBatch(Immutable<PayloadMessage> message, TaskScheduler orleansScheduler)
-        {
-            if(sourceOperator==null)
-                sourceOperator=message.Value.SenderIdentifer.Split(' ')[0];
-        }
     }
-
 }

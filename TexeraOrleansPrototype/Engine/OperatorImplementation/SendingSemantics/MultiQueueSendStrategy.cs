@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Engine.OperatorImplementation.Common;
 using Orleans;
@@ -12,33 +13,44 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public abstract class MultiQueueSendStrategy: MultiQueueBatching, ISendStrategy
     {
-        protected List<IWorkerGrain> receivers;
+        protected List<SendingUnit> receivers;
         protected List<ulong> outputSequenceNumbers;
-        public MultiQueueSendStrategy(List<IWorkerGrain> receivers, int batchingLimit=1000):base(receivers.Count,batchingLimit)
+        protected TaskScheduler scheduler;
+        public MultiQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
-            this.receivers=receivers;
+            receivers=new List<SendingUnit>();
+            outputSequenceNumbers=new List<ulong>();
             this.outputSequenceNumbers=Enumerable.Repeat((ulong)0, receivers.Count).ToList();
         }
 
-        public abstract void Enqueue(IEnumerable<TexeraTuple> output);
-
-        public abstract void AddReceiver(IWorkerGrain receiver);
-
-        public abstract void AddReceivers(List<IWorkerGrain> receivers);
-
-        public abstract void SendBatchedMessages(string senderIdentifier);
-
-        public abstract void SendEndMessages(string senderIdentifier);
-
-        protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
+        public void SetPauseFlag(bool flag)
         {
-            nextGrain.ReceivePayloadMessage(message).ContinueWith((t)=>
+            foreach(SendingUnit unit in receivers)
             {
-                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                {
-                    SendMessageTo(nextGrain,message, retryCount + 1);
-                }
-            });
+                unit.SetPauseFlag(flag);
+            }
         }
+
+        public void ResumeSending()
+        {
+            foreach(SendingUnit unit in receivers)
+            {
+                unit.ResumeSending();
+            }
+        }
+        
+        public abstract void RemoveAllReceivers();
+
+        public abstract void Enqueue(List<TexeraTuple> output);
+
+        public abstract void AddReceiver(IWorkerGrain receiver, bool localSending);
+
+        public abstract void AddReceivers(List<IWorkerGrain> receivers, bool localSending);
+
+        public abstract void SendBatchedMessages(IGrain senderIdentifier);
+
+        public abstract void SendEndMessages(IGrain senderIdentifier);
+
+
     }
 }

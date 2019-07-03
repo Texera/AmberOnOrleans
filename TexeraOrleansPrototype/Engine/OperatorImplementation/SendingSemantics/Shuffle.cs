@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Linq.Expressions;
+using System.Threading.Tasks;
 using Engine.OperatorImplementation.Common;
 using Orleans;
 using Orleans.Concurrency;
@@ -16,12 +17,13 @@ namespace Engine.OperatorImplementation.SendingSemantics
     {
         private string selectorExpression;
         private Func<TexeraTuple,int> selector=null;
-        public Shuffle(List<IWorkerGrain> receivers, string jsonLambdaFunction, int batchingLimit=1000):base(receivers,batchingLimit)
+        int localSender=0;
+        public Shuffle(string jsonLambdaFunction, int batchingLimit=1000):base(batchingLimit)
         {
             this.selectorExpression=jsonLambdaFunction;
         }
 
-        public override void Enqueue(IEnumerable<TexeraTuple> output)
+        public override void Enqueue(List<TexeraTuple> output)
         {
             if(selector==null)
             {
@@ -29,53 +31,86 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 var actualExpression = serializer.DeserializeText(selectorExpression);
                 selector=((Expression<Func<TexeraTuple,int>>)actualExpression).Compile();
             }
-            foreach(TexeraTuple tuple in output)
+            int limit=output.Count;
+            int modlimit=outputRows.Count;
+            for(int i=0;i<limit;++i)
             {
-                int idx=NonNegativeModular(selector(tuple),outputRows.Count);
-                outputRows[idx].Enqueue(tuple);
+                int idx=NonNegativeModular(selector(output[i]),modlimit);
+                outputRows[idx].Enqueue(output[i]);
             }
         }
 
-        public override void AddReceiver(IWorkerGrain receiver)
+        public override void AddReceiver(IWorkerGrain receiver, bool localSending)
         {
-            receivers.Add(receiver);
+            if(localSending)
+            {
+                localSender+=1;
+                receivers.Add(new SendingUnit(receiver));
+            }
+            else
+                receivers.Add(new FlowControlUnit(receiver));
             this.outputSequenceNumbers.Add(0);
             this.outputRows.Add(new Queue<TexeraTuple>());
         }
 
-        public override void AddReceivers(List<IWorkerGrain> receivers)
+        public override void AddReceivers(List<IWorkerGrain> receivers, bool localSending)
         {
-            this.receivers.AddRange(receivers);
+            if(localSending)
+            {
+                foreach(IWorkerGrain grain in receivers)
+                {
+                    localSender+=1;
+                    this.receivers.Add(new SendingUnit(grain));
+                }
+            }
+            else
+            {
+                foreach(IWorkerGrain grain in receivers)
+                {
+                    this.receivers.Add(new FlowControlUnit(grain));
+                }
+            }
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
             this.outputRows.AddRange(Enumerable.Range(0,receivers.Count).Select(x=>new Queue<TexeraTuple>()));
         }
 
 
-        public override void SendBatchedMessages(string senderIdentifier)
+        public override void SendBatchedMessages(IGrain senderIdentifier)
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeBatchedPayloads())
             {
-                SendMessageTo(receivers[pair.First],new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable(),0);
+                receivers[pair.First].Send(new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false));
             }
         }
 
-        public override void SendEndMessages(string senderIdentifier)
+        public override void SendEndMessages(IGrain senderIdentifier)
         {
             foreach(Pair<int,List<TexeraTuple>> pair in MakeLastPayload())
             {
-                SendMessageTo(receivers[pair.First],new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false).AsImmutable(),0);
+                receivers[pair.First].Send(new PayloadMessage(senderIdentifier,outputSequenceNumbers[pair.First]++,pair.Second,false));
             }
             for(int i=0;i<receivers.Count;++i)
             {
                 PayloadMessage message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
-                SendMessageTo(receivers[i],message.AsImmutable(),0);
+                receivers[i].Send(message);
             }
-
         }
 
         private int NonNegativeModular(int x, int m) {
             return (x%m + m)%m;
         }
 
+        public override void RemoveAllReceivers()
+        {
+            receivers.Clear();
+            this.outputSequenceNumbers.Clear();
+            this.outputRows.Clear();
+            localSender=0;
+        }
+
+        public override string ToString()
+        {
+            return "Shuffle: local = "+localSender+" non-local = "+(receivers.Count-localSender);
+        }
     }
 }

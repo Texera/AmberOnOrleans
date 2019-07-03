@@ -8,64 +8,59 @@ using System.IO;
 using Orleans.Concurrency;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
     public class ScanOperatorGrain : WorkerGrain, IScanOperatorGrain
     {
-        private ulong start,end,tuple_counter=0;
+        private ulong size=0,original_start=0;
+        private ulong start,end;
         private ScanStreamReader reader;
-        private int tableId;
-        public static int GenerateLimit=1000;
-        private string separator;
-
+        public int GenerateLimit=Constants.BatchSize*2;
         protected override void Start()
         {
-            StartGenerate(0);
+            base.Start();
         }
 
         protected override void Resume()
         {
-            isPaused=false;
-            if(isFinished)
+            base.Resume();
+            if(!isFinished)
             {
-                return;
+                Task.Run(()=>Generate());
             }
-            StartGenerate(0);
         }
 
-        protected override void GenerateTuples()
+        protected override async Task<List<TexeraTuple>> GenerateTuples()
         {
-            int i=0;
-            while(i<GenerateLimit)
+            List<TexeraTuple> outputList=new List<TexeraTuple>();
+            for(int i=0;i<GenerateLimit;++i)
             {
-                if(start>end)
+                Pair<TexeraTuple,ulong> res=await reader.ReadTuple();
+                start+=res.Second;
+                if(res.First.FieldList!=null)
+                    outputList.Add(res.First);
+                if(isPaused)
                 {
-                    isFinished=true;
-                    break;
+                    return outputList;
                 }
-                TexeraTuple tuple;
-                if(ReadTuple(out tuple))
+                if(start>end || reader.IsEOF())
                 {
-                    outputTuples.Enqueue(tuple);
-                    i++;
-                }
-                if(reader.IsEOF())
-                {
-                    isFinished=true;
-                    break;
+                    reader.Close();
+                    currentEndFlagCount=0;
+                    return outputList;
                 }
             }
+            return outputList;
         }
 
         
 
-        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        public async override Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
-            base.Init(self,predicate,principalGrain);
+            SiloAddress addr=await base.Init(self,predicate,principalGrain);
             ulong filesize=((ScanPredicate)predicate).FileSize;
-            tableId=((ScanPredicate)predicate).TableID;
-            separator=((ScanPredicate)predicate).Separator;
             string extensionKey = "";
             Guid key = this.GetPrimaryKey(out extensionKey);
             ulong i=UInt64.Parse(extensionKey);
@@ -73,55 +68,17 @@ namespace Engine.OperatorImplementation.Operators
             ulong partition=filesize/num_grains;
             ulong start_byte=i*partition;
             ulong end_byte=num_grains-1==i?filesize:(i+1)*partition;
-            reader=new ScanStreamReader(((ScanPredicate)predicate).File);
+            reader=new ScanStreamReader(((ScanPredicate)predicate).File,((ScanPredicate)predicate).Separator);
             if(!reader.GetFile(start_byte))
-                return Task.FromException(new Exception("unable to get file"));
+                throw new Exception("unable to get file");
             start=start_byte;
             end=end_byte;
+            size=partition;
+            original_start=start;
             if(start!=0)
-                start+=reader.TrySkipFirst();
-            Console.WriteLine("Init: start byte: "+start.ToString()+" end byte: "+end.ToString());
-            return Task.CompletedTask;
-        }
-
-        
-
-
-        private bool ReadTuple(out TexeraTuple tx)
-        {
-            try
-            {
-                ulong ByteCount;
-                string res = reader.ReadLine(out ByteCount);
-                start += ByteCount;
-                if (reader.IsEOF())
-                {
-                    start = end + 1;
-                    tx=null;
-                    return false;
-                }
-                try
-                {
-                    tx=new TexeraTuple(tableId, res.Split(separator));
-                    ++tuple_counter;
-                    return true;
-                }
-                catch
-                {
-                    tx=null;
-                    Console.WriteLine("Failed to parse the tuple");
-                    return false;
-                }
-            }
-            catch(Exception ex)
-            {
-                Console.WriteLine("EXCEPTION in Reading Tuples from File - "+ ex.ToString());
-                Console.WriteLine("start_offset: "+start.ToString()+" end_offset: "+end.ToString());
-                if(!reader.GetFile(start))throw new Exception("Reading Tuple: Cannot Get File");
-                tx=null;
-                return false;
-            }
-        }
-        
+                start+=await reader.TrySkipFirst();
+            //Console.WriteLine("Init: start byte: "+start.ToString()+" end byte: "+end.ToString());
+            return addr;
+        }   
     }
 }

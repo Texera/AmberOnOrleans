@@ -10,49 +10,76 @@ using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
 using System.Linq;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
     public class HashRippleJoinOperatorGrain : WorkerGrain, IHashRippleJoinOperatorGrain
     {
-        Dictionary<int,Dictionary<string,List<TexeraTuple>>> joinedTuples=new Dictionary<int, Dictionary<string, List<TexeraTuple>>>();
-        int joinFieldIndex=-1;
-        int TableID;
-        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        Dictionary<string,List<TexeraTuple>> innerJoinedTuples=new Dictionary<string, List<TexeraTuple>>();
+        Dictionary<string,List<TexeraTuple>> outerJoinedTuples=new Dictionary<string, List<TexeraTuple>>();
+        int innerTableIndex=-1;
+        int outerTableIndex=-1;
+        Guid innerTableGuid=Guid.Empty;
+
+        int joinFieldIndex;
+        Dictionary<string,List<TexeraTuple>> joinedTuples;
+        Dictionary<string,List<TexeraTuple>> toInsert;
+
+        public override Task OnDeactivateAsync()
         {
-            base.Init(self,predicate,principalGrain);
-            joinFieldIndex=((HashRippleJoinPredicate)predicate).JoinFieldIndex;
-            TableID=((HashRippleJoinPredicate)predicate).TableID;
+            base.OnDeactivateAsync();
+            innerJoinedTuples=null;
+            outerJoinedTuples=null;
             return Task.CompletedTask;
         }
-        protected override void ProcessTuple(TexeraTuple tuple)
+
+        public override async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        {
+            SiloAddress addr=await base.Init(self,predicate,principalGrain);
+            innerTableIndex=((HashRippleJoinPredicate)predicate).InnerTableIndex;
+            outerTableIndex=((HashRippleJoinPredicate)predicate).OuterTableIndex;
+            innerTableGuid=((HashRippleJoinPredicate)predicate).InnerTableID;
+            return addr;
+        }
+
+        protected override void BeforeProcessBatch(PayloadMessage message)
+        {
+            string ext;
+            if(innerTableGuid.Equals(message.SenderIdentifer.GetPrimaryKey(out ext)))
+            {
+                joinFieldIndex=innerTableIndex;
+                joinedTuples=outerJoinedTuples;
+                toInsert=innerJoinedTuples;
+            }
+            else
+            {
+                joinFieldIndex=outerTableIndex;
+                joinedTuples=innerJoinedTuples;
+                toInsert=outerJoinedTuples;
+            }
+        }
+
+
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
             string field=tuple.FieldList[joinFieldIndex];
             List<string> fields=tuple.FieldList.ToList();
             fields.RemoveAt(joinFieldIndex);
-            foreach(KeyValuePair<int,Dictionary<string,List<TexeraTuple>>> entry in joinedTuples)
+            if(joinedTuples.ContainsKey(field))
             {
-                if(entry.Key!=tuple.TableID && entry.Value.ContainsKey(field))
+                foreach(TexeraTuple joinedTuple in joinedTuples[field])
                 {
-                    foreach(TexeraTuple joinedTuple in entry.Value[field])
-                    {
-                        outputTuples.Enqueue(new TexeraTuple(TableID,joinedTuple.FieldList.Concat(fields).ToArray()));
-                    }
+                    output.Add(new TexeraTuple(joinedTuple.FieldList.Concat(fields).ToArray()));
                 }
             }
-            if(!joinedTuples.ContainsKey(tuple.TableID))
+            if(!toInsert.ContainsKey(field))
             {
-                Dictionary<string,List<TexeraTuple>> d = new Dictionary<string, List<TexeraTuple>>();
-                d.Add(field,new List<TexeraTuple>{tuple});
-                joinedTuples.Add(tuple.TableID,d);
-            }
-            else if(!joinedTuples[tuple.TableID].ContainsKey(field))
-            {
-                joinedTuples[tuple.TableID].Add(field,new List<TexeraTuple>{tuple});
+                toInsert.Add(field,new List<TexeraTuple>{tuple});
             }
             else
             {
-                joinedTuples[tuple.TableID][field].Add(tuple);
+                toInsert[field].Add(tuple);
             }
         }
     }

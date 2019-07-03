@@ -11,23 +11,27 @@ using System.Linq.Expressions;
 using Engine.OperatorImplementation.SendingSemantics;
 using Serialize.Linq.Extensions;
 using Serialize.Linq.Serializers;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
     public class HashJoinPrinicipalGrain : PrincipalGrain, IHashJoinPrincipalGrain
     {
-        public override int DefaultNumGrainsInOneLayer { get { return 4; } }
+
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
             return this.GrainFactory.GetGrain<IHashJoinOperatorGrain>(this.GetPrimaryKey(), extension);
         }
-
-        public override Task<ISendStrategy> GetInputSendStrategy()
+        public override Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
-            int joinFieldIndex=((HashJoinPredicate)predicate).JoinFieldIndex;
-            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetHashCode();
+            int joinFieldIndex;
+            if(requester.GetPrimaryKey().Equals(((HashJoinPredicate)predicate).InnerTableID))
+                joinFieldIndex=((HashJoinPredicate)predicate).InnerTableIndex;
+            else
+                joinFieldIndex=((HashJoinPredicate)predicate).OuterTableIndex;
+            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
-            return Task.FromResult(new Shuffle(inputGrains,serializer.SerializeText(exp)) as ISendStrategy);
+            return Task.FromResult(new Shuffle(serializer.SerializeText(exp),predicate.BatchingLimit) as ISendStrategy);
         }
     }
 }

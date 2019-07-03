@@ -5,10 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.IO;
 using Engine.OperatorImplementation.Common;
+using TexeraUtilities;
 
 class ScanStreamReader
 {
-    public const int buffer_size = 4096;
+    public const int buffer_size = 1024*4;
     private enum FileType{unknown,csv,pdf,txt,tbl};
     private FileType file_type;
     private string file_path;
@@ -16,25 +17,37 @@ class ScanStreamReader
     private byte[] buffer = new byte[buffer_size];
     private int buffer_start = 0;
     private int buffer_end = 0;
-    private Decoder decoder;
+    StringBuilder sb=new StringBuilder();
+    char[] charbuf=new char[buffer_size];
 
-    public ScanStreamReader(string path)
+    #if (PROFILING_ENABLED)
+    private TimeSpan reading=new TimeSpan(0,0,0);
+    private TimeSpan forloop=new TimeSpan(0,0,0);
+    private TimeSpan generate=new TimeSpan(0,0,0);
+    #endif
+    
+    private Decoder decoder;
+    private List<String> fields=new List<string>();
+    private char delimiter;
+
+    public ScanStreamReader(string path,char delimiter)
     {
         file_path=path;
+        this.delimiter=delimiter;
     }
 
 
-    public ulong TrySkipFirst()
+    public async Task<ulong> TrySkipFirst()
     {
         if(file==null)throw new Exception("TrySkipFirst: File Not Exists");
         switch(file_type)
         {
             case FileType.csv:
             case FileType.tbl:
-            ulong ByteCount;
-            string res=ReadLine(out ByteCount);
-            Console.WriteLine("Skip: "+res);
-            return ByteCount;
+            case FileType.txt:
+            Pair<TexeraTuple,ulong> res=await ReadTuple();
+            //Console.WriteLine("Skip: "+res);
+            return res.Second;
             default:
             //not implemented
             break;
@@ -77,39 +90,71 @@ class ScanStreamReader
         return true;
     }
 
-    public string ReadLine(out ulong ByteCount)
+    public async Task<Pair<TexeraTuple,ulong>> ReadTuple()
     {
         if(file==null)throw new Exception("ReadLine: File Not Exists");
-        ByteCount=0;
-        StringBuilder sb=new StringBuilder();
-        char[] charbuf=new char[buffer_size];
+        #if (PROFILING_ENABLED)
+        DateTime start=DateTime.UtcNow;
+        #endif
+        sb.Length=0;
+        fields.Clear();
+        ulong ByteCount=0;
         while(true)
         {
             if(buffer_start>=buffer_end)
             {
                 buffer_start=0;
+                #if (PROFILING_ENABLED)
+                DateTime start1=DateTime.UtcNow;
+                #endif
                 try
                 {
-                    buffer_end=file.BaseStream.Read(buffer,0,buffer_size);
+                    buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);    
                 }
                 catch(Exception e)
                 {
+                    buffer_end=0;
                     throw e;
                 }
+                #if (PROFILING_ENABLED)
+                reading+=DateTime.UtcNow-start1;
+                #endif 
             }
             if(buffer_end==0)break;
             int i;
             int charbuf_length;
+            #if (PROFILING_ENABLED)
+            start=DateTime.UtcNow;
+            #endif
             for(i=buffer_start;i<buffer_end;++i)
             {
-                if(buffer[i]=='\n')
+                if(buffer[i]==delimiter)
                 {
-                    int length=i-buffer_start+1;
-                    ByteCount+=(ulong)(length);
+                    int length=i-buffer_start;
+                    ByteCount+=(ulong)(length+1);
                     charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
                     sb.Append(charbuf,0,charbuf_length);
+                    fields.Add(sb.ToString());
+                    sb.Length=0;
                     buffer_start=i+1;
-                    return sb.ToString().TrimEnd();
+                }
+                else if(buffer[i]=='\n')
+                {
+                    int length=i-buffer_start;
+                    ByteCount+=(ulong)(length+1);
+                    charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
+                    fields.Add(sb.ToString());
+                    buffer_start=i+1;
+                    sb.Length=0;
+                    #if (PROFILING_ENABLED)
+                    forloop+=DateTime.UtcNow-start;
+                    DateTime start2=DateTime.UtcNow;
+                    #endif
+                    var v=new Pair<TexeraTuple,ulong>(new TexeraTuple(fields.ToArray()),ByteCount);
+                    #if (PROFILING_ENABLED)
+                    generate+=DateTime.UtcNow-start2;
+                    #endif
+                    return v;
                 }
             }
             ByteCount+=(ulong)(buffer_end-buffer_start);
@@ -117,7 +162,13 @@ class ScanStreamReader
             sb.Append(charbuf,0,charbuf_length);
             buffer_start=buffer_end;
         }
-        return sb.ToString().TrimEnd();
+        #if (PROFILING_ENABLED)
+        forloop+=DateTime.UtcNow-start;
+        #endif
+        if(fields.Count>0)
+            return new Pair<TexeraTuple,ulong>(new TexeraTuple(fields.ToArray()),ByteCount);
+        else
+            return new Pair<TexeraTuple,ulong>(new TexeraTuple(null),ByteCount);
     }
     public void Close()
     {
@@ -131,6 +182,17 @@ class ScanStreamReader
     public bool IsEOF()
     {
         return buffer_end==0;
+        // return file.EndOfStream;
     }
+
+    #if (PROFILING_ENABLED)
+    public void PrintTimeUsage(string grain)
+    {
+        Console.WriteLine(grain+" Reading from HDFS to buffer Time: "+reading);
+        Console.WriteLine(grain+" Reading from buffer Time: "+forloop);
+        Console.WriteLine(grain+" Generate Time: "+generate);
+    }
+    #endif
+
 
 }

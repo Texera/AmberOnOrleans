@@ -8,7 +8,6 @@ using Microsoft.AspNetCore.Mvc;
 using Orleans;
 using Orleans.Hosting;
 using OrleansClient;
-using SiloHost;
 using Engine.WorkflowImplementation;
 using Engine.OperatorImplementation.Common;
 using Engine.OperatorImplementation.Operators;
@@ -19,17 +18,12 @@ namespace webapi.Controllers
     // [Route("api/[controller]")]
     public class QueryplanController : Controller
     {
-        private static ISiloHost host;
         private static IClusterClient client;
 
         [HttpPost]
         [Route("api/queryplan/execute")]
         public IActionResult Execute([FromBody]string logicalPlanJson)
         {
-            if(host == null)
-            {
-                host = SiloWrapper.Instance.host;
-            }
             
             if(client == null)
             {
@@ -40,32 +34,32 @@ namespace webapi.Controllers
             req.Seek(0, System.IO.SeekOrigin.Begin);
             string json = new StreamReader(req).ReadToEnd();
             //apply TPC-H Query-1
-            //json="{\"logicalPlan\":{\"operators\":[{\"tableName\":\"<file>\",\"operatorID\":\"operator-3bc05014-357d-45f5-a053-9baf1a62bd27\",\"operatorType\":\"ScanSource\"},{\"attributeName\":\"_c10\",\"attributeType\":\"date\",\"comparisonType\":\">\",\"compareTo\":\"1991-01-01\",\"operatorID\":\"operator-345a8b3d-2b1b-485e-b7c1-1cd9f579ce4f\",\"operatorType\":\"Comparison\"},{\"groupByAttribute\":\"_c8\",\"aggregationAttribute\":\"_c4\",\"aggregationFunction\":\"sum\",\"operatorID\":\"operator-89854b72-7c28-436b-b162-ead3daa75f72\",\"operatorType\":\"GroupBy\"},{\"attributeName\":\"_c0\",\"attributeType\":\"string\",\"operatorID\":\"operator-c7d7e79c-49ca-46a4-8420-490c25cd052d\",\"operatorType\":\"InsertionSort\"}],\"links\":[{\"origin\":\"operator-3bc05014-357d-45f5-a053-9baf1a62bd27\",\"destination\":\"operator-345a8b3d-2b1b-485e-b7c1-1cd9f579ce4f\"},{\"origin\":\"operator-345a8b3d-2b1b-485e-b7c1-1cd9f579ce4f\",\"destination\":\"operator-89854b72-7c28-436b-b162-ead3daa75f72\"},{\"origin\":\"operator-89854b72-7c28-436b-b162-ead3daa75f72\",\"destination\":\"operator-c7d7e79c-49ca-46a4-8420-490c25cd052d\"}]},\"workflowID\":\"texera-workflow-824ec494-8f6c-41a3-a3c0-29ca6dc7fe97\"}";
+            //json="{\"logicalPlan\":{\"operators\":[{\"tableName\":\"D:\\\\median_input.csv\",\"operatorID\":\"operator-348819d9-d8f7-4751-b9fb-60d84354c667\",\"operatorType\":\"ScanSource\"},{\"attributeName\":\"_c0\",\"attributeType\":\"string\",\"operatorID\":\"operator-20c3d1f3-bad1-4118-931a-4e28d95eaab1\",\"operatorType\":\"InsertionSort\"},{\"projectionAttributes\":\"_c0\",\"operatorID\":\"operator-9925727b-5a6c-4ce7-884d-34f9368bdfa8\",\"operatorType\":\"Projection\"}],\"links\":[{\"origin\":\"operator-348819d9-d8f7-4751-b9fb-60d84354c667\",\"destination\":\"operator-20c3d1f3-bad1-4118-931a-4e28d95eaab1\"},{\"origin\":\"operator-20c3d1f3-bad1-4118-931a-4e28d95eaab1\",\"destination\":\"operator-9925727b-5a6c-4ce7-884d-34f9368bdfa8\"}]},\"workflowID\":\"texera-workflow-d60c3150-bc78-4304-bf36-757aa7324ef1\"}";
             Console.WriteLine("JSON BODY = " + json);
             Dictionary<string, Operator> map = new Dictionary<string, Operator>();
 
             JObject o = JObject.Parse(json);
             JArray operators = (JArray)o["logicalPlan"]["operators"];
             Guid workflowID;
-            //remove "texera-workflow-" at the begining of workflowID to make it parsable
+            //remove "texera-workflow-" at the begining of workflowID to make it parsable to Guid
             if(!Guid.TryParse(o["workflowID"].ToString().Substring(16),out workflowID))
             {
                 throw new Exception($"Parse workflowID failed! For {o["workflowID"].ToString().Substring(16)}");
             }
+            int batchSize=Constants.BatchSize;
             Workflow workflow=new Workflow(workflowID);
-            int table_id=0;
             foreach (JObject operator1 in operators)
             {
                 Operator op=null;
                 if((string)operator1["operatorType"] == "ScanSource")
                 {
                     //example path to HDFS through WebHDFS API: "http://localhost:50070/webhdfs/v1/input/very_large_input.csv"
-                    ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"],table_id++);
+                    ScanPredicate scanPredicate = new ScanPredicate((string)operator1["tableName"],batchSize);
                     op = new ScanOperator(scanPredicate);
                 }
                 else if((string)operator1["operatorType"] == "KeywordMatcher")
                 {
-                    KeywordPredicate keywordPredicate = new KeywordPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["keyword"]!=null?operator1["keyword"].ToString():"");
+                    KeywordPredicate keywordPredicate = new KeywordPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["keyword"]!=null?operator1["keyword"].ToString():"",batchSize);
                     op = new KeywordOperator(keywordPredicate);
                 }
                 else if((string)operator1["operatorType"] == "Aggregation")
@@ -75,7 +69,7 @@ namespace webapi.Controllers
                 }
                 else if((string)operator1["operatorType"] == "Comparison")
                 {
-                    FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["compareTo"].ToString(),operator1["comparisonType"].ToString());
+                    FilterPredicate filterPredicate = new FilterPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),operator1["compareTo"].ToString(),operator1["comparisonType"].ToString(),batchSize);
                     switch(operator1["attributeType"].ToString())
                     {
                         case "int":
@@ -95,17 +89,19 @@ namespace webapi.Controllers
                 else if((string)operator1["operatorType"] == "CrossRippleJoin")
                 {
                     int inputLimit=operator1["batchingLimit"]==null?1000:int.Parse(operator1["batchingLimit"].ToString());
-                    CrossRippleJoinPredicate crossRippleJoinPredicate=new CrossRippleJoinPredicate(table_id++,inputLimit);
+                    CrossRippleJoinPredicate crossRippleJoinPredicate=new CrossRippleJoinPredicate(inputLimit);
                     op = new CrossRippleJoinOperator(crossRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "HashRippleJoin")
                 {
-                    HashRippleJoinPredicate hashRippleJoinPredicate=new HashRippleJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
+                    int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
+                    int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
+                    HashRippleJoinPredicate hashRippleJoinPredicate=new HashRippleJoinPredicate(innerIndex,outerIndex,batchSize);
                     op = new HashRippleJoinOperator(hashRippleJoinPredicate);
                 }
                 else if((string)operator1["operatorType"] == "InsertionSort")
                 {
-                    SortPredicate sortPredicate=new SortPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")));
+                    SortPredicate sortPredicate=new SortPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),batchSize);
                     switch(operator1["attributeType"].ToString())
                     {
                         case "int":
@@ -126,19 +122,27 @@ namespace webapi.Controllers
                 {
                     int groupByIndex=int.Parse(operator1["groupByAttribute"].ToString().Replace("_c",""));
                     int aggregationIndex=int.Parse(operator1["aggregationAttribute"].ToString().Replace("_c",""));
-                    GroupByPredicate groupByPredicate=new GroupByPredicate(groupByIndex,aggregationIndex,operator1["aggregationFunction"].ToString());
+                    GroupByPredicate groupByPredicate=new GroupByPredicate(groupByIndex,aggregationIndex,operator1["aggregationFunction"].ToString(),batchSize);
                     op=new GroupByOperator(groupByPredicate);
                 }
                 else if((string)operator1["operatorType"] == "Projection")
                 {
                     List<int> projectionIndexs=operator1["projectionAttributes"].ToString().Split(",").Select(x=>int.Parse(x.Replace("_c",""))).ToList();
-                    ProjectionPredicate projectionPredicate=new ProjectionPredicate(projectionIndexs);
+                    ProjectionPredicate projectionPredicate=new ProjectionPredicate(projectionIndexs,batchSize);
                     op=new ProjectionOperator(projectionPredicate);
                 }
                 else if((string)operator1["operatorType"] == "HashJoin")
                 {
-                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(int.Parse(operator1["attributeName"].ToString().Replace("_c","")),table_id++);
+                    int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
+                    int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
+                    HashJoinPredicate hashJoinPredicate=new HashJoinPredicate(innerIndex,outerIndex,batchSize);
                     op = new HashJoinOperator(hashJoinPredicate);
+                }
+                else if((string)operator1["operatorType"]=="SentimentAnalysis")
+                {
+                    int predictIndex=int.Parse(operator1["targetAttribute"].ToString().Replace("_c",""));
+                    SentimentAnalysisPredicate sentimentAnalysisPredicate= new SentimentAnalysisPredicate(predictIndex,batchSize);
+                    op=new SentimentAnalysisOperator(sentimentAnalysisPredicate);
                 }
 
                 if(op!=null)
@@ -165,7 +169,6 @@ namespace webapi.Controllers
             foreach(TexeraTuple tuple in results)
             {
                 JObject jsonTuple=new JObject();
-                jsonTuple.Add("TableID",tuple.TableID);
                 for(int i=0;i<tuple.FieldList.Length;++i)
                 {
                     jsonTuple.Add("_c"+i,tuple.FieldList[i]);
@@ -176,7 +179,6 @@ namespace webapi.Controllers
             texeraResult.code = 0;
             texeraResult.result = resultJson;
             texeraResult.resultID = Guid.NewGuid();
-
             return Json(texeraResult);
         }
     }

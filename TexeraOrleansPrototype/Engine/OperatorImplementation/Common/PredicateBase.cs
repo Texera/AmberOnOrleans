@@ -10,5 +10,15 @@ namespace Engine.OperatorImplementation.Common
         {
             BatchingLimit=batchingLimit;
         }
+
+        public virtual void WhenAddInOperator(Operator operatorToAdd)
+        {
+
+        }
+
+        public virtual void WhenAddOutOperator(Operator operatorToAdd)
+        {
+            
+        }
     }
 }

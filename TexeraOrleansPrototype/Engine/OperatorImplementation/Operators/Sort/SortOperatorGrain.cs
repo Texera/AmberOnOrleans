@@ -11,6 +11,7 @@ using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
 using System.Linq;
 using System.Reflection;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
@@ -20,12 +21,21 @@ namespace Engine.OperatorImplementation.Operators
         List<TexeraTuple> sortedTuples=new List<TexeraTuple>();
         List<T> sortedValues=new List<T>();
         int sortIndex;
-        int counter=0;
-        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+
+        public override Task OnDeactivateAsync()
         {
-            base.Init(self,predicate,principalGrain);
-            sortIndex=((SortPredicate)predicate).SortIndex;
+            base.OnDeactivateAsync();
+            sortedValues=null;
+            sortedTuples=null;
             return Task.CompletedTask;
+        }
+
+
+        public override async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        {
+            SiloAddress addr=await base.Init(self,predicate,principalGrain);
+            sortIndex=((SortPredicate)predicate).SortIndex;
+            return addr;
         }
 
         private static T Parse(string value)
@@ -36,7 +46,7 @@ namespace Engine.OperatorImplementation.Operators
                 return (T)ParseInfo.Invoke(null, new[] { value });
         }
 
-        protected override void ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
             T value=Parse(tuple.FieldList[sortIndex]);
             int index = sortedValues.BinarySearch(value);
@@ -48,10 +58,9 @@ namespace Engine.OperatorImplementation.Operators
             sortedValues.Insert(index,value);
         }
 
-        protected override void MakeFinalOutputTuples()
+        protected override List<TexeraTuple> MakeFinalOutputTuples()
         {
-            foreach(TexeraTuple tuple in sortedTuples)
-                outputTuples.Enqueue(tuple);
+            return sortedTuples;
         }
     }
 

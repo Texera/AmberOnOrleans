@@ -19,37 +19,52 @@ namespace Engine.OperatorImplementation.SendingSemantics
             this.stream=stream;
         }
 
-        public void AddReceiver(IWorkerGrain receiver)
+        public void AddReceiver(IWorkerGrain receiver, bool localSending)
         {
             throw new NotImplementedException();
         }
 
-        public void AddReceivers(List<IWorkerGrain> receivers)
+        public void AddReceivers(List<IWorkerGrain> receivers, bool localSending)
         {
             throw new NotImplementedException();
         }
 
-        public void SendBatchedMessages(string senderIdentifier)
+        public void RemoveAllReceivers()
+        {
+            throw new NotImplementedException();
+        }
+
+        public async void SendBatchedMessages(IGrain senderIdentifier)
         {
             while(true)
             {
                 PayloadMessage message = MakeBatchedMessage(senderIdentifier,sequenceNumber);
                 if(message==null)break;
                 ++sequenceNumber;
-                stream.OnNextAsync(message.AsImmutable());
+                await stream.OnNextAsync(message.AsImmutable());
             }
         }
 
-        public void SendEndMessages(string senderIdentifier)
+        public async void SendEndMessages(IGrain senderIdentifier)
         {
             PayloadMessage message = MakeLastMessage(senderIdentifier,sequenceNumber);
             if(message!=null)
             {
                 ++sequenceNumber;
-                stream.OnNextAsync(message.AsImmutable());
+                await stream.OnNextAsync(message.AsImmutable());
             }
             message = new PayloadMessage(senderIdentifier,sequenceNumber++,null,true);
-            stream.OnNextAsync(message.AsImmutable());
+            await stream.OnNextAsync(message.AsImmutable());
+        }
+
+        public void SetPauseFlag(bool pause)
+        {
+
+        }
+
+        public void ResumeSending()
+        {
+            
         }
 
     }

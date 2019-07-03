@@ -9,20 +9,21 @@ using Orleans.Concurrency;
 using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
+using Orleans.Placement;
 
 namespace Engine.OperatorImplementation.Operators
 {
     public class CountOperatorGrain : WorkerGrain, ICountOperatorGrain
     {
         int count=0;
-        protected override void ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
             count++;
         }
 
-        protected override void MakeFinalOutputTuples()
+        protected override List<TexeraTuple> MakeFinalOutputTuples()
         {
-            outputTuples.Enqueue(new TexeraTuple(-1,new string[]{count.ToString()}));
+            return new List<TexeraTuple>{new TexeraTuple(new string[]{count.ToString()})};
         }
     }
 }

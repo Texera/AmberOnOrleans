@@ -7,6 +7,8 @@ using System.Text;
 using System.Threading.Tasks;
 using TexeraUtilities;
 using Engine.OperatorImplementation.SendingSemantics;
+using Orleans.Core;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -16,11 +18,20 @@ namespace Engine.OperatorImplementation.Common
         Task AddPrevPrincipalGrain(IPrincipalGrain prevGrain);
         Task Pause();
         Task Resume();
+        Task Deactivate();
+        Task ActivateWhenFinished(Operator nextOperator);
         Task Init(IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator);
-        Task<List<IWorkerGrain>> GetInputGrains();
-        Task<ISendStrategy> GetInputSendStrategy();
-        Task<List<IWorkerGrain>> GetOutputGrains();
+        Task<Dictionary<SiloAddress,List<IWorkerGrain>>> GetInputGrains();
+        Task<ISendStrategy> GetInputSendStrategy(IGrain requester);
+        Task<Dictionary<SiloAddress,List<IWorkerGrain>>> GetOutputGrains();
         Task LinkWorkerGrains();
         Task Start();
+        Task OnTaskDidPaused();
+
+#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+        //global count breakpoint: 
+        Task SetBreakPoint(int targetValue);
+        Task ReportCurrentValue(IGrain sender, int currentValue, int version);
+#endif
     }
 }

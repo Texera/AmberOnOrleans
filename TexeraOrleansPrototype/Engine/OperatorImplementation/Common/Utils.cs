@@ -9,7 +9,6 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using Engine.OperatorImplementation.MessagingSemantics;
-using Engine.Common;
 using Engine.OperatorImplementation.Operators;
 using System.Text;
 using System.IO;
@@ -18,6 +17,76 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Common
 {
+
+    public static class StringExtensionMethods
+    {
+        public static int GetStableHashCode(this string str)
+        {
+            unchecked
+            {
+                int hash1 = 5381;
+                int hash2 = hash1;
+
+                for(int i = 0; i < str.Length && str[i] != '\0'; i += 2)
+                {
+                    hash1 = ((hash1 << 5) + hash1) ^ str[i];
+                    if (i == str.Length - 1 || str[i+1] == '\0')
+                        break;
+                    hash2 = ((hash2 << 5) + hash2) ^ str[i+1];
+                }
+
+                return hash1 + (hash2*1566083941);
+            }
+        }
+    }
+
+    public static class ArrayExtension
+    {
+        public static T[] RemoveAt<T>(this T[] source, int index)
+        {
+            T[] dest = new T[source.Length - 1];
+            if( index > 0 )
+                Array.Copy(source, 0, dest, 0, index);
+
+            if( index < source.Length - 1 )
+                Array.Copy(source, index + 1, dest, index, source.Length - index - 1);
+
+            return dest;
+        }
+
+        public static T[] FastConcat<T>(this T[] source1, T[] source2)
+        {
+            T[] result = new T[source1.Length + source2.Length];
+            Array.Copy(source1, result, source1.Length);
+            Array.Copy(source2, 0, result, source1.Length, source2.Length);
+            return result;
+        }
+    }
+
+
+    public static class StringBuilderExtension
+    {
+        public static StringBuilder TrimEnd(this StringBuilder sb)
+        {
+            if (sb == null || sb.Length == 0) return sb;
+
+            int i = sb.Length - 1;
+            for (; i >= 0; i--)
+                if (!char.IsWhiteSpace(sb[i]))
+                    break;
+
+            if (i < sb.Length - 1)
+                sb.Length = i + 1;
+
+            return sb;
+        }
+    }
+
+
+
+
+
+
     static public class Utils
     {
         static public IOrderingEnforcer GetOrderingEnforcerInstance()
@@ -25,6 +94,8 @@ namespace Engine.OperatorImplementation.Common
             return new OrderingGrainWithSequenceNumber();
             // return new OrderingGrainWithContinuousSending();
         }
+
+        public static readonly string[] OperatorTypes=new string[]{"Scan","Sort","SentimentAnalysis","Filter","GroupBy","HashJoin","HashRippleJoin","CrossRippleJoin","Count","KeywordSearch","Projection"}; 
 
         static public string GenerateURLForHDFSWebAPI(string filename,ulong offset)
         {
@@ -47,7 +118,6 @@ namespace Engine.OperatorImplementation.Common
             using (StreamReader Reader = new StreamReader(response.GetResponseStream()))
             {
                 string str_response=Reader.ReadToEnd();
-                Console.WriteLine(str_response);
                 JObject obj =JObject.Parse(str_response);
                 return UInt64.Parse(obj["FileStatus"]["length"].ToString());
             }
@@ -91,7 +161,35 @@ namespace Engine.OperatorImplementation.Common
 
         public static bool IsTaskTimedOutAndStillNeedRetry(Task t, int retryCount)
         {
-            return IsTaskTimedOut(t) && retryCount<Constants.max_retries;
+            return IsTaskTimedOut(t) && retryCount<Constants.MaxRetries;
+        }
+
+
+        public static bool IsTaskFaultedAndStillNeedRetry(Task t, int retryCount)
+        {
+            return t.IsFaulted && retryCount<Constants.MaxRetries;
+        }
+
+
+        public static string GetOperatorTypeFromGrainClass(string grainClass)
+        {
+            foreach(string op in OperatorTypes)
+            {
+                if(grainClass.Contains(op))
+                {
+                    return op;
+                }
+            }
+            Console.WriteLine("Unknown Operator Found! Make sure to register it in Utils.cs");
+            return "Unknown";
+        }
+
+        public static string GetReadableName(IGrain grain)
+        {
+            string ext1,opType1;
+            string guidPrefix=grain.GetPrimaryKey(out ext1).ToString().Substring(0,8);
+            opType1=Utils.GetOperatorTypeFromGrainClass(grain.GetType().Name);
+            return opType1+" "+guidPrefix+" "+ext1;
         }
     }
 }

@@ -12,39 +12,28 @@ using System.IO;
 using Orleans.Concurrency;
 using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
+using SentimentAnalyzer;
 using TexeraUtilities;
 using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class ProjectionOperatorGrain : WorkerGrain, IProjectionOperatorGrain
+    public class SentimentAnalysisOperatorGrain : WorkerGrain, ISentimentAnalysisOperatorGrain
     {
-        List<int> projectionIndexs;
-
-        public override Task OnDeactivateAsync()
-        {
-            base.OnDeactivateAsync();
-            projectionIndexs=null;
-            return Task.CompletedTask;
-        }
+        int predictIndex;
 
         public override async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
             SiloAddress addr=await base.Init(self,predicate,principalGrain);
-            projectionIndexs=((ProjectionPredicate)predicate).ProjectionIndexs;
+            predictIndex=((SentimentAnalysisPredicate)predicate).PredictIndex;
             return addr;
         }
 
 
         protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
-            TexeraTuple result=new TexeraTuple(new string[projectionIndexs.Count]);
-            int i=0;
-            foreach(int attr in projectionIndexs)
-            {
-                result.FieldList[i++]=tuple.FieldList[attr];
-            }
-            output.Add(result);
+            var result=SentimentAnalyzer.Sentiments.Predict(tuple.FieldList[predictIndex]);
+            output.Add(new TexeraTuple(new string[]{tuple.FieldList[predictIndex],$"{(result.Prediction?"positive":"negative")}(Prob:{result.Probability},Score:{result.Score})"}));
         }
     }
 }

@@ -4,6 +4,8 @@ using Engine.Controller;
 using Orleans;
 using System.Threading.Tasks;
 using System;
+using Orleans.Runtime;
+using TexeraUtilities;
 
 namespace Engine.WorkflowImplementation
 {
@@ -13,7 +15,7 @@ namespace Engine.WorkflowImplementation
         public HashSet<Operator> AllOperators;
         public HashSet<Operator> EndOperators=new HashSet<Operator>();
         public readonly Guid WorkflowID;
-        private IControllerGrain workflowControllerGrain=null;
+        private ICreatorGrain workflowControllerGrain=null;
 
         public Workflow(Guid workflowID)
         {
@@ -35,30 +37,33 @@ namespace Engine.WorkflowImplementation
 
         public async Task Init(IGrainFactory factory)
         {
-            workflowControllerGrain=factory.GetGrain<IControllerGrain>(WorkflowID);
+            workflowControllerGrain=factory.GetGrain<ICreatorGrain>(new Guid());
             foreach(Operator o in AllOperators)
             {
                 o.SetPrincipalGrain(factory);
             }
-            await workflowControllerGrain.Init(workflowControllerGrain,WorkflowID,AllOperators);
+            RequestContext.Set("targetSilo",Constants.ClientIPAddress);
+            await workflowControllerGrain.Init(null,WorkflowID,AllOperators);
         }
 
-        public async Task Pause()
+        public Task Pause()
         {
-            List<Task> taskList=new List<Task>();
-            foreach(Operator o in StartOperators)
-            {
-                taskList.Add(o.Pause());
-            }
-            await Task.WhenAll(taskList);
+            workflowControllerGrain.Pause(StartOperators);
+            return Task.CompletedTask;
         }
 
         public async Task Resume()
         {
+            await workflowControllerGrain.Resume(StartOperators);
+            return;
+        }
+
+        public async Task Deactivate()
+        {
             List<Task> taskList=new List<Task>();
-            foreach(Operator o in StartOperators)
+            foreach(Operator o in AllOperators)
             {
-                taskList.Add(o.Resume());
+                taskList.Add(o.Deactivate());
             }
             await Task.WhenAll(taskList);
         }

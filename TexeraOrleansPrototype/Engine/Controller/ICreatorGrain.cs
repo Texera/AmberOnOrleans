@@ -7,11 +7,10 @@ using System;
 
 namespace Engine.Controller
 {
-    public interface IControllerGrain : IGrainWithGuidKey
+    public interface ICreatorGrain : IGrainWithGuidKey
     {
         Task Init(IControllerGrain self,Guid workflowID,HashSet<Operator> graph);
         Task Pause(HashSet<Operator> graph);
-        Task OnTaskDidPaused();
         Task Resume(HashSet<Operator> graph);
     }
 }

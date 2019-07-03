@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using Engine.OperatorImplementation.Common;
 using Orleans;
@@ -12,39 +13,73 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public abstract class SingleQueueSendStrategy: SingleQueueBatching, ISendStrategy
     {
-        protected List<IWorkerGrain> receivers;
+        protected List<SendingUnit> receivers;
         protected List<ulong> outputSequenceNumbers;
-        public SingleQueueSendStrategy(List<IWorkerGrain> receivers, int batchingLimit=1000):base(batchingLimit)
+
+        protected int localSender=0;
+        public SingleQueueSendStrategy(int batchingLimit=1000):base(batchingLimit)
         {
-            this.receivers=receivers;
-            this.outputSequenceNumbers=Enumerable.Repeat((ulong)0, receivers.Count).ToList();
+            this.receivers=new List<SendingUnit>();
+            this.outputSequenceNumbers=new List<ulong>();
         }
 
-        public void AddReceiver(IWorkerGrain receiver)
+        public void SetPauseFlag(bool flag)
         {
-            receivers.Add(receiver);
+            foreach(SendingUnit unit in receivers)
+            {
+                unit.SetPauseFlag(flag);
+            }
+        }
+
+        public void ResumeSending()
+        {
+            foreach(SendingUnit unit in receivers)
+            {
+                unit.ResumeSending();
+            }
+        }
+        public void AddReceiver(IWorkerGrain receiver,bool localSending)
+        {
+            if(localSending)
+            {
+                localSender+=1;
+                receivers.Add(new SendingUnit(receiver));
+            }
+            else
+                receivers.Add(new FlowControlUnit(receiver));
             this.outputSequenceNumbers.Add(0);
         }
 
-        public void AddReceivers(List<IWorkerGrain> receivers)
+        public void AddReceivers(List<IWorkerGrain> receivers, bool localSending)
         {
-            receivers.AddRange(receivers);
+            if(localSending)
+            {
+                foreach(IWorkerGrain grain in receivers)
+                {
+                    localSender+=1;
+                    this.receivers.Add(new SendingUnit(grain));
+                }
+            }
+            else
+            {
+                foreach(IWorkerGrain grain in receivers)
+                {
+                    this.receivers.Add(new FlowControlUnit(grain));
+                }
+            }
             this.outputSequenceNumbers.AddRange(Enumerable.Repeat((ulong)0,receivers.Count));
         }
 
-        public abstract void SendBatchedMessages(string senderIdentifier);
-
-        public abstract void SendEndMessages(string senderIdentifier);
-
-        protected async Task SendMessageTo(IWorkerGrain nextGrain,Immutable<PayloadMessage> message,int retryCount)
+        public void RemoveAllReceivers()
         {
-            nextGrain.ReceivePayloadMessage(message).ContinueWith((t)=>
-            {
-                if(Utils.IsTaskTimedOutAndStillNeedRetry(t,retryCount))
-                {
-                    SendMessageTo(nextGrain,message, retryCount + 1);
-                }
-            });
+            localSender=0;
+            receivers.Clear();
+            this.outputSequenceNumbers.Clear();
         }
+
+        public abstract void SendBatchedMessages(IGrain senderIdentifier);
+
+        public abstract void SendEndMessages(IGrain senderIdentifier);
+
     }
 }

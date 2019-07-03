@@ -20,10 +20,12 @@ namespace Engine.OperatorImplementation.Common
         public void AddOutOperator(Operator operatorToAdd)
         {
             outOperators.Add(operatorToAdd);
+            Predicate.WhenAddOutOperator(operatorToAdd);
         }
         public void AddInOperator(Operator operatorToAdd)
         {
             inOperators.Add(operatorToAdd);
+            Predicate.WhenAddInOperator(operatorToAdd);
         }
         public HashSet<Operator> GetAllOutOperators()
         {
@@ -87,12 +89,17 @@ namespace Engine.OperatorImplementation.Common
 
         public async Task Pause()
         {
-            await PrincipalGrain.Pause();
+            PrincipalGrain.Pause();
         }
 
         public async Task Resume()
         {
             await PrincipalGrain.Resume();
+        }
+
+        public async Task Deactivate()
+        {
+            await PrincipalGrain.Deactivate();
         }
 
     }

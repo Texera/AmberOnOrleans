@@ -13,6 +13,7 @@ using Orleans.Concurrency;
 using Engine.OperatorImplementation.MessagingSemantics;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
@@ -21,19 +22,19 @@ namespace Engine.OperatorImplementation.Operators
         int searchIndex;
         string keyword;
 
-        public override Task Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        public override async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
-            base.Init(self,predicate,principalGrain);
+            SiloAddress addr=await base.Init(self,predicate,principalGrain);
             searchIndex=((KeywordPredicate)predicate).SearchIndex;
             keyword=((KeywordPredicate)predicate).Query;
-            return Task.CompletedTask;
+            return addr;
         }
 
 
-        protected override void ProcessTuple(TexeraTuple tuple)
+        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
         {
-            if(tuple.FieldList!=null && tuple.FieldList[searchIndex].Contains(keyword))
-                outputTuples.Enqueue(tuple);
+            if(tuple.FieldList[searchIndex].Contains(keyword))
+                output.Add(tuple);
         }
     }
 }

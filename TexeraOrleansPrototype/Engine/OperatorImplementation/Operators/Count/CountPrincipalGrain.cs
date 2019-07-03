@@ -8,6 +8,7 @@ using TexeraUtilities;
 using Engine.OperatorImplementation.Common;
 using System.Linq;
 using Engine.OperatorImplementation.SendingSemantics;
+using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
@@ -17,20 +18,31 @@ namespace Engine.OperatorImplementation.Operators
         {
             //build backward
             //2-layer
-            operatorGrains=Enumerable.Range(0, 2).Select(x=>new List<IWorkerGrain>()).ToList();
+            operatorGrains=Enumerable.Range(0, 2).Select(x=>new Dictionary<SiloAddress,List<IWorkerGrain>>()).ToList();
             //last layer
             IWorkerGrain finalGrain=this.GrainFactory.GetGrain<ICountFinalOperatorGrain>(this.GetPrimaryKey(),"final");
-            operatorGrains[1].Add(finalGrain);            
+            SiloAddress finalAddr=await finalGrain.Init(finalGrain,predicate,self);
+            operatorGrains[1].Add(finalAddr,new List<IWorkerGrain>{finalGrain});            
             //first layer
-            ISendStrategy strategy=new RoundRobin(new List<IWorkerGrain>{finalGrain});
+            ISendStrategy strategy=new RoundRobin();
+            strategy.AddReceiver(finalGrain);
             for(int i=0;i<DefaultNumGrainsInOneLayer;++i)
             {
                 IWorkerGrain grain=this.GrainFactory.GetGrain<ICountOperatorGrain>(this.GetPrimaryKey(),i.ToString());
+                RequestContext.Set("grainIndex",i);
+                SiloAddress addr=await grain.Init(grain,predicate,self);
                 await grain.SetSendStrategy(this.GetPrimaryKey(),strategy);
-                operatorGrains[0].Add(grain);
+                if(!operatorGrains[0].ContainsKey(addr))
+                {
+                    operatorGrains[0].Add(addr,new List<IWorkerGrain>{grain});
+                }
+                else
+                {
+                    operatorGrains[0][addr].Add(grain);
+                }
             }
             //set target end flag
-            await finalGrain.SetInputInformation(new Dictionary<string, int>{{this.GetPrimaryKeyString(),DefaultNumGrainsInOneLayer}});
+            await finalGrain.AddInputInformation(new Pair<Guid, int>(this.GetPrimaryKey(),DefaultNumGrainsInOneLayer));
         }
     }
 }

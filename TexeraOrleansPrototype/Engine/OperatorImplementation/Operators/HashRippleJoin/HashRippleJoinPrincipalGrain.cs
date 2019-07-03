@@ -16,18 +16,20 @@ namespace Engine.OperatorImplementation.Operators
 {
     public class HashRippleJoinPrinicipalGrain : PrincipalGrain, IHashRippleJoinPrincipalGrain
     {
-        public override int DefaultNumGrainsInOneLayer { get { return 4; } }
         public override IWorkerGrain GetOperatorGrain(string extension)
         {
             return this.GrainFactory.GetGrain<IHashRippleJoinOperatorGrain>(this.GetPrimaryKey(), extension);
         }
-
-        public override Task<ISendStrategy> GetInputSendStrategy()
+        public override Task<ISendStrategy> GetInputSendStrategy(IGrain requester)
         {
-            int joinFieldIndex=((HashRippleJoinPredicate)predicate).JoinFieldIndex;
-            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetHashCode();
+            int joinFieldIndex;
+            if(requester.GetPrimaryKey().Equals(((HashRippleJoinPredicate)predicate).InnerTableID))
+                joinFieldIndex=((HashRippleJoinPredicate)predicate).InnerTableIndex;
+            else
+                joinFieldIndex=((HashRippleJoinPredicate)predicate).OuterTableIndex;
+            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
-            return Task.FromResult(new Shuffle(inputGrains,serializer.SerializeText(exp)) as ISendStrategy);
+            return Task.FromResult(new Shuffle(serializer.SerializeText(exp),predicate.BatchingLimit) as ISendStrategy);
         }
     }
 }

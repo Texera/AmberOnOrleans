@@ -9,6 +9,7 @@ using Orleans.Concurrency;
 using System.Diagnostics;
 using TexeraUtilities;
 using Engine;
+using Orleans;
 
 namespace OrleansClient
 {
@@ -16,8 +17,8 @@ namespace OrleansClient
     {
         public List<TexeraTuple> resultsToRet = new List<TexeraTuple>();
         Stopwatch sw=new Stopwatch();
-        private Dictionary<string,ulong> currentSequenceNumber=new Dictionary<string, ulong>();
-        private Dictionary<string,Dictionary<ulong,Immutable<PayloadMessage>>> stashedMessage=new Dictionary<string, Dictionary<ulong, Immutable<PayloadMessage>>>();
+        private Dictionary<IGrain,ulong> currentSequenceNumber=new Dictionary<IGrain, ulong>();
+        private Dictionary<IGrain,Dictionary<ulong,Immutable<PayloadMessage>>> stashedMessage=new Dictionary<IGrain, Dictionary<ulong, Immutable<PayloadMessage>>>();
         private int numEndFlags;
         private int currentEndFlags=0;
         public bool isFinished=false;
@@ -46,7 +47,7 @@ namespace OrleansClient
 
         public Task OnNextAsync(Immutable<PayloadMessage> item, StreamSequenceToken token = null)
         {
-            string sender=item.Value.SenderIdentifer;
+            IGrain sender=item.Value.SenderIdentifer;
             ulong seqNum=item.Value.SequenceNumber;
             bool isEnd=item.Value.IsEnd;
             if(!currentSequenceNumber.ContainsKey(sender))
@@ -56,7 +57,11 @@ namespace OrleansClient
             if(currentSequenceNumber[sender]<seqNum)
             {
                 //ahead
-                stashedMessage[sender][seqNum]=item;
+                if(!stashedMessage.ContainsKey(sender))
+                {
+                    stashedMessage.Add(sender,new Dictionary<ulong, Immutable<PayloadMessage>>());
+                }
+                stashedMessage[sender].Add(seqNum,item);
             }
             else if(currentSequenceNumber[sender]>seqNum)
             {
@@ -72,7 +77,7 @@ namespace OrleansClient
                     {
                         resultsToRet.AddRange(currentPayload);
                     }
-                    ulong nextSeqNum=currentSequenceNumber[sender]++;
+                    ulong nextSeqNum=++currentSequenceNumber[sender];
                     if(stashedMessage.ContainsKey(sender) && stashedMessage[sender].ContainsKey(nextSeqNum))
                     {
                         Immutable<PayloadMessage> message=stashedMessage[sender][nextSeqNum];
@@ -83,18 +88,17 @@ namespace OrleansClient
                     else
                         break;
                 }
-            }
-
-            if(isEnd)
-            {
-                currentEndFlags++;
-            }
-
-            if(currentEndFlags==numEndFlags)
-            {
-                isFinished=true;
-                sw.Stop();
-                Console.WriteLine("Time usage: " + sw.Elapsed);
+                if(isEnd)
+                {
+                    currentEndFlags++;
+                    Console.WriteLine("End received! sequence num = "+seqNum);
+                }
+                if(currentEndFlags==numEndFlags)
+                {
+                    isFinished=true;
+                    sw.Stop();
+                    Console.WriteLine("Time usage: " + sw.Elapsed +"----- result tuples: "+resultsToRet.Count);
+                }
             }
             return Task.CompletedTask;
         }

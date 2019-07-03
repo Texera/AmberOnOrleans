@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using Engine.OperatorImplementation.Common;
 using Orleans;
 using Orleans.Concurrency;
@@ -11,11 +12,11 @@ namespace Engine.OperatorImplementation.SendingSemantics
     public class RoundRobin: SingleQueueSendStrategy
     {
         private int roundRobinIndex=0;
-        public RoundRobin(List<IWorkerGrain> receivers, int batchingLimit=1000):base(receivers,batchingLimit)
+        public RoundRobin(int batchingLimit=1000):base(batchingLimit)
         {
         }
 
-        public override void SendBatchedMessages(string senderIdentifier)
+        public override void SendBatchedMessages(IGrain senderIdentifier)
         {
             while(true)
             {
@@ -24,29 +25,34 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 {
                     break;
                 }
-                RoundRobinSending(message.AsImmutable());
+                RoundRobinSending(message);
             }
         }
 
-        public override void SendEndMessages(string senderIdentifier)
+        public override void SendEndMessages(IGrain senderIdentifier)
         {
             PayloadMessage message=MakeLastMessage(senderIdentifier,outputSequenceNumbers[roundRobinIndex]);
             if(message!=null)
             {
-                RoundRobinSending(message.AsImmutable());
+                RoundRobinSending(message);
             }
             for(int i=0;i<receivers.Count;++i)
             {
                 message = new PayloadMessage(senderIdentifier,outputSequenceNumbers[i]++,null,true);
-                SendMessageTo(receivers[i],message.AsImmutable(),0);
+                receivers[i].Send(message);
             }
         }
 
-        private void RoundRobinSending(Immutable<PayloadMessage> message)
+        private void RoundRobinSending(PayloadMessage message)
         {
             outputSequenceNumbers[roundRobinIndex]++;
-            SendMessageTo(receivers[roundRobinIndex],message,0);
+            receivers[roundRobinIndex].Send(message);
             roundRobinIndex = (roundRobinIndex+1)%receivers.Count;
+        }
+
+        public override string ToString()
+        {
+            return "RoundRobin: local = "+localSender+" non-local = "+(receivers.Count-localSender);
         }
     }
 }
