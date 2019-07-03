@@ -22,7 +22,7 @@ namespace Engine.OperatorImplementation.Common
     public class PrincipalGrain : Grain, IPrincipalGrain
     {
         #if(GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-        private const int waitingThreshold=5000;
+        private const int waitingThreshold=100;
         #endif
         public virtual int DefaultNumGrainsInOneLayer { get { return Constants.DefaultNumGrainsInOneLayer; } }
         private List<IPrincipalGrain> nextPrincipalGrains = new List<IPrincipalGrain>();
