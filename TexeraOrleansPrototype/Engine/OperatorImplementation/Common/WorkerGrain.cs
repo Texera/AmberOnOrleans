@@ -57,11 +57,11 @@ namespace Engine.OperatorImplementation.Common
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
 #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-        private int breakPointTarget;
-        private int breakPointCurrent=0;
-        private int version=-1;
-        private bool breakPointEnabled=false;
-        private object counterlock=new object();
+        protected int breakPointTarget;
+        protected int breakPointCurrent=0;
+        protected int version=-1;
+        protected bool breakPointEnabled=false;
+        protected object counterlock=new object();
 #endif
         public virtual Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
         {
@@ -483,6 +483,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 Pause();
             }
+            return Task.CompeletedTask;
         }
 #endif
     }
