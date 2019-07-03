@@ -483,7 +483,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 Pause();
             }
-            return Task.CompeletedTask;
+            return Task.CompletedTask;
         }
 #endif
     }
