@@ -153,15 +153,37 @@ namespace OrleansClient
             }
             so.SetNumEndFlags(numEndGrains);
             instance.IDToWorkflowEntry[workflow.WorkflowID]=workflow;
-            // foreach(Operator op in workflow.AllOperators)
-            // {
-            //     if(op is FilterOperator<DateTime>)
-            //         await op.PrincipalGrain.SetBreakPoint(100000000);
-            // }
-            await so.Start();
+            Operator secondScan=null;
             foreach(Operator op in workflow.StartOperators)
             {
-                await op.PrincipalGrain.Start();
+                if(((ScanPredicate)op.Predicate).File.EndsWith("orders.tbl"))
+                    secondScan=op;
+            }
+            #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+            foreach(Operator op in workflow.AllOperators)
+            {
+                if(op is FilterOperator<DateTime>)
+                    await op.PrincipalGrain.SetBreakPoint(100000000);
+            }
+            #endif
+            await so.Start();
+            if(secondScan!=null)
+            {
+                foreach(Operator op in workflow.StartOperators)
+                {
+                    if(((ScanPredicate)op.Predicate).File.EndsWith("customer.tbl"))
+                    {
+                        await op.PrincipalGrain.ActivateWhenFinished(secondScan);
+                        await op.PrincipalGrain.Start();
+                    }
+                }
+            }
+            else
+            {
+                foreach(Operator op in workflow.StartOperators)
+                {
+                    await op.PrincipalGrain.Start();
+                }
             }
 
             while (!so.isFinished)
