@@ -91,7 +91,24 @@ namespace Engine.OperatorImplementation.Operators
                 {
                     if(isPaused)
                     {
-                        principalGrain.OnTaskDidPaused();
+                        if(!pauseBySelf)
+                            principalGrain.OnTaskDidPaused();
+                        else
+                        {
+                            #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+                            int temp;
+                            if(breakPointEnabled)
+                            {
+                                lock(counterlock)
+                                {
+                                    temp=breakPointCurrent;
+                                    breakPointCurrent=0;
+                                }
+                                principalGrain.ReportCurrentValue(self,temp,version);
+                                breakPointEnabled=false;
+                            }
+                            #endif
+                        }
                         return;
                     }
                     isCurrentInnerTable=false;
@@ -101,12 +118,37 @@ namespace Engine.OperatorImplementation.Operators
                     if(batch!=null)
                     {
                         ProcessBatch(batch,outputList);
+                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+                        lock(counterlock)
+                        {
+                            breakPointCurrent+=outputList.Count;
+                        }
+                        #endif
                     }
                     if(isPaused)
                     {
+                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+                        if(pauseBySelf)
+                        {
+                            int temp;
+                            if(breakPointEnabled)
+                            {
+                                lock(counterlock)
+                                {
+                                    temp=breakPointCurrent;
+                                    breakPointCurrent=0;
+                                }
+                                principalGrain.ReportCurrentValue(self,temp,version);
+                                breakPointEnabled=false;
+                            }
+                        }
+                        #endif
                         //if we don't do so, the outputlist will be lost.
                         MakePayloadMessagesThenSend(outputList);
-                        principalGrain.OnTaskDidPaused();
+                        if(!pauseBySelf)
+                        {
+                            principalGrain.OnTaskDidPaused();
+                        }
                         return;
                     }
                     batch=null;
@@ -125,7 +167,7 @@ namespace Engine.OperatorImplementation.Operators
                         {
                             Task.Run(actionQueue.Peek());
                         }
-                        else if(isPaused)
+                        else if(isPaused && !pauseBySelf)
                         {
                             principalGrain.OnTaskDidPaused();
                         }

@@ -52,7 +52,7 @@ namespace Engine.OperatorImplementation.Common
         protected TimeSpan sendingTime=new TimeSpan(0,0,0);
         protected TimeSpan preprocessTime=new TimeSpan(0,0,0);
         #endif
-
+        protected bool pauseBySelf=false;
         protected IWorkerGrain workerToActivate=null;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
@@ -174,7 +174,24 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(isPaused)
                 {
-                    principalGrain.OnTaskDidPaused();
+                    if(!pauseBySelf)
+                        principalGrain.OnTaskDidPaused();
+                    else
+                    {
+                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
+                        int temp;
+                        if(breakPointEnabled)
+                        {
+                            lock(counterlock)
+                            {
+                                temp=breakPointCurrent;
+                                breakPointCurrent=0;
+                            }
+                            principalGrain.ReportCurrentValue(self,temp,version);
+                            breakPointEnabled=false;
+                        }
+                        #endif
+                    }
                     return;
                 }
                 #if (PROFILING_ENABLED)
@@ -217,21 +234,27 @@ namespace Engine.OperatorImplementation.Common
                     if(isPaused)
                     {
                         #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-                        int temp;
-                        if(breakPointEnabled && breakPointCurrent>=breakPointTarget)
+                        if(pauseBySelf)
                         {
-                            lock(counterlock)
+                            int temp;
+                            if(breakPointEnabled)
                             {
-                                temp=breakPointCurrent;
-                                breakPointCurrent=0;
+                                lock(counterlock)
+                                {
+                                    temp=breakPointCurrent;
+                                    breakPointCurrent=0;
+                                }
+                                principalGrain.ReportCurrentValue(self,temp,version);
+                                breakPointEnabled=false;
                             }
-                            principalGrain.ReportCurrentValue(self,temp,version);
-                            breakPointEnabled=false;
                         }
                         #endif
                         //if we not do so, the outputlist will be lost.
                         MakePayloadMessagesThenSend(outputList);
-                        principalGrain.OnTaskDidPaused();
+                        if(!pauseBySelf)
+                        {
+                            principalGrain.OnTaskDidPaused();
+                        }
                         return;
                     }
                     batch=null;
@@ -261,7 +284,7 @@ namespace Engine.OperatorImplementation.Common
                     {
                         Task.Run(actionQueue.Peek());
                     }
-                    else if(isPaused)
+                    else if(isPaused && !pauseBySelf)
                     {
                         principalGrain.OnTaskDidPaused();
                     }
@@ -283,8 +306,9 @@ namespace Engine.OperatorImplementation.Common
             return null;
         }
 
-        protected virtual void Pause()
+        protected virtual void Pause(bool bySelf=true)
         {
+            pauseBySelf=bySelf;
             TimeSpan t = (DateTime.UtcNow - new DateTime(1970, 1, 1));
             Console.WriteLine(Utils.GetReadableName(self)+" receives the pause message at "+ (int)t.TotalSeconds);
             lock(actionQueue)
@@ -298,7 +322,7 @@ namespace Engine.OperatorImplementation.Common
             isPaused=true;
             lock(actionQueue)
             {
-                if(actionQueue.Count==0)
+                if(actionQueue.Count==0 && !bySelf)
                     principalGrain.OnTaskDidPaused();
             }
         }
@@ -421,7 +445,7 @@ namespace Engine.OperatorImplementation.Common
                     switch(pair.First)
                     {
                         case ControlMessage.ControlMessageType.Pause:
-                            Pause();
+                            Pause(false);
                             break;
                         case ControlMessage.ControlMessageType.Resume:
                             Resume();
@@ -459,15 +483,6 @@ namespace Engine.OperatorImplementation.Common
             {
                 Pause();
             }
-            breakPointEnabled=false;
-            int temp;
-            lock(counterlock)
-            {
-                temp=breakPointCurrent;
-                breakPointCurrent=0;
-            }
-            principalGrain.ReportCurrentValue(self,temp,version);
-            return Task.CompletedTask;
         }
 #endif
     }
