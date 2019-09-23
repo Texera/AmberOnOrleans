@@ -61,7 +61,14 @@ namespace OrleansClient
                 {
                     stashedMessage.Add(sender,new Dictionary<ulong, Immutable<PayloadMessage>>());
                 }
-                stashedMessage[sender].Add(seqNum,item);
+                if(stashedMessage[sender].ContainsKey(seqNum))
+                {
+                    Console.WriteLine("find duplicated message with seqNum = "+seqNum+" from "+sender);
+                }
+                else
+                {
+                    stashedMessage[sender].Add(seqNum,item);
+                }
             }
             else if(currentSequenceNumber[sender]>seqNum)
             {

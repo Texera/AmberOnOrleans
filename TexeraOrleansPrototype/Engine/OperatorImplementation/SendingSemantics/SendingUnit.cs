@@ -13,7 +13,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 {
     public class SendingUnit
     {
-        protected IWorkerGrain receiver;
+        public IWorkerGrain receiver;
 
         public virtual void SetPauseFlag(bool flag)
         {

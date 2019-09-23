@@ -15,27 +15,19 @@ using Orleans.Runtime;
 
 namespace Engine.OperatorImplementation.Operators
 {
-    public class SortOperatorGrain<T> : WorkerGrain, ISortOperatorGrain<T> where T:IComparable<T>
+    public class SortProcessor<T> : ITupleProcessor
     {
         private static MethodInfo ParseInfo = typeof(T).GetMethod("Parse", BindingFlags.Public | BindingFlags.Static, null, new[] { typeof(string) }, null);
-        List<TexeraTuple> sortedTuples=new List<TexeraTuple>();
-        List<T> sortedValues=new List<T>();
+        List<TexeraTuple> sortedTuples;
+        List<T> sortedValues;
         int sortIndex;
+        bool flag = false;
+        int outputIndex = 0;
 
-        public override Task OnDeactivateAsync()
+
+        public SortProcessor(int sortIndex)
         {
-            base.OnDeactivateAsync();
-            sortedValues=null;
-            sortedTuples=null;
-            return Task.CompletedTask;
-        }
-
-
-        public override async Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
-        {
-            SiloAddress addr=await base.Init(self,predicate,principalGrain);
-            sortIndex=((SortPredicate)predicate).SortIndex;
-            return addr;
+            this.sortIndex=sortIndex;
         }
 
         private static T Parse(string value)
@@ -46,7 +38,7 @@ namespace Engine.OperatorImplementation.Operators
                 return (T)ParseInfo.Invoke(null, new[] { value });
         }
 
-        protected override void ProcessTuple(TexeraTuple tuple,List<TexeraTuple> output)
+        public void Accept(TexeraTuple tuple)
         {
             T value=Parse(tuple.FieldList[sortIndex]);
             int index = sortedValues.BinarySearch(value);
@@ -58,9 +50,53 @@ namespace Engine.OperatorImplementation.Operators
             sortedValues.Insert(index,value);
         }
 
-        protected override List<TexeraTuple> MakeFinalOutputTuples()
+        public void NoMore()
         {
-            return sortedTuples;
+            flag = true;
+        }
+
+        public Task Initialize()
+        {
+            sortedValues=new List<T>();
+            sortedTuples=new List<TexeraTuple>();
+            return Task.CompletedTask;
+            
+        }
+
+        public bool HasNext()
+        {
+            return flag;
+        }
+
+        public TexeraTuple Next()
+        {
+            int i = outputIndex++;
+            if(outputIndex>=sortedTuples.Count)
+            {
+                flag = false;
+            }
+            return sortedTuples[i];
+        }
+
+        public void Dispose()
+        {
+            sortedValues=null;
+            sortedTuples=null;
+        }
+
+        public Task<TexeraTuple> NextAsync()
+        {
+            throw new NotImplementedException();
+        }
+
+        public void OnRegisterSource(Guid from)
+        {
+            
+        }
+
+        public void MarkSourceCompleted(Guid source)
+        {
+            
         }
     }
 

@@ -51,6 +51,9 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public abstract void SendEndMessages(IGrain senderIdentifier);
 
-
+        public List<IWorkerGrain> GetReceivers()
+        {
+            return receivers.Select(x => x.receiver).ToList();
+        }
     }
 }

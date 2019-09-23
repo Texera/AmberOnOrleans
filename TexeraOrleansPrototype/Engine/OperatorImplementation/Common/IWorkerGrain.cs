@@ -8,6 +8,7 @@ using TexeraUtilities;
 using Orleans.Streams;
 using Engine.OperatorImplementation.SendingSemantics;
 using Orleans.Runtime;
+using Engine.Breakpoint.LocalBreakpoint;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -20,15 +21,18 @@ namespace Engine.OperatorImplementation.Common
         #endregion
 
         #region Used by all operators
-        Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain);
-        Task SetSendStrategy(Guid operatorGuid, ISendStrategy sendStrategy);
-        Task AddInputInformation(Pair<Guid,int> inputInfo);
+        Task<SiloAddress> Init(IPrincipalGrain principalGrain, ITupleProcessor processor);
+        Task<SiloAddress> Init(IPrincipalGrain principalGrain, ITupleProducer producer);
+        Task SetSendStrategy(string id, ISendStrategy sendStrategy);
+        Task AddInputInformation(IWorkerGrain sender);
         Task OnTaskDidPaused();
-        /*
-        Receives and processes the control message completely. This is because the
-        control message needs to be acted upon ASAP.
-         */
-        Task ReceiveControlMessage(Immutable<ControlMessage> message);
+        Task OnTaskFinished();
+        Task AddBreakpoint(LocalBreakpointBase breakpoint);
+        Task<LocalBreakpointBase> QueryBreakpoint(string id);
+        Task RemoveBreakpoint(string id);
+        Task Pause();
+        Task Resume();
+        Task Deactivate();
         /*
         Just receives the payload message, sends message to itself to process it and returns. The
         method is coded to return ASAP, thus doesn't do any processing.
@@ -39,15 +43,8 @@ namespace Engine.OperatorImplementation.Common
         #endregion
 
         #region Used by source operators
-        // Task Generate();
+        Task Start();
         #endregion
 
-
-
-#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-        //global count breakpoint:
-        Task SetTargetValue(int targetValue);
-        Task AskToReportCurrentValue();
-#endif
     }
 }

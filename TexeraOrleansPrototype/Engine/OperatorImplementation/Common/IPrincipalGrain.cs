@@ -9,29 +9,24 @@ using TexeraUtilities;
 using Engine.OperatorImplementation.SendingSemantics;
 using Orleans.Core;
 using Orleans.Runtime;
+using Engine.DeploySemantics;
+using Engine.Breakpoint.LocalBreakpoint;
+using Engine.Breakpoint.GlobalBreakpoint;
 
 namespace Engine.OperatorImplementation.Common
 {
     public interface IPrincipalGrain : IGrainWithGuidKey
     {
-        Task AddNextPrincipalGrain(IPrincipalGrain nextGrain);
-        Task AddPrevPrincipalGrain(IPrincipalGrain prevGrain);
+        Task Start();
         Task Pause();
         Task Resume();
         Task Deactivate();
-        Task ActivateWhenFinished(Operator nextOperator);
-        Task Init(IControllerGrain controllerGrain, Guid workflowID, Operator currentOperator);
-        Task<Dictionary<SiloAddress,List<IWorkerGrain>>> GetInputGrains();
-        Task<ISendStrategy> GetInputSendStrategy(IGrain requester);
-        Task<Dictionary<SiloAddress,List<IWorkerGrain>>> GetOutputGrains();
-        Task LinkWorkerGrains();
-        Task Start();
-        Task OnTaskDidPaused();
-
-#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-        //global count breakpoint: 
-        Task SetBreakPoint(int targetValue);
-        Task ReportCurrentValue(IGrain sender, int currentValue, int version);
-#endif
+        Task Init(IControllerGrain controllerGrain, Operator op, List<Pair<Operator,WorkerLayer>> prev);
+        Task<WorkerLayer> GetInputLayer();
+        Task<WorkerLayer> GetOutputLayer();
+        Task SetBreakpoint(GlobalBreakpointBase breakpoint);
+        Task OnWorkerLocalBreakpointTriggered(IWorkerGrain sender, List<LocalBreakpointBase> breakpoint);
+        Task OnWorkerDidPaused(IWorkerGrain sender);
+        Task OnWorkerFinished(IWorkerGrain sender);
     }
 }

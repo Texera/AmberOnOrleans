@@ -15,10 +15,11 @@ using System.Collections.Concurrent;
 using Orleans.Placement;
 using Orleans.Runtime;
 using Microsoft.Extensions.DependencyInjection;
+using Engine.Breakpoint.LocalBreakpoint;
 
 namespace Engine.OperatorImplementation.Common
 {
-    public struct Pair<T, U> 
+    public class Pair<T, U> 
     {
         public Pair(T first, U second) 
         {
@@ -33,18 +34,34 @@ namespace Engine.OperatorImplementation.Common
     [WorkerGrainPlacement]
     public class WorkerGrain : Grain, IWorkerGrain
     {
-        protected PredicateBase predicate = null;
-        protected volatile bool isPaused = false;
+        public enum ThreadStatus
+        {
+            Idle=0,
+            Running=1,
+            Pausing=2,
+            Paused=4,
+        }
+
+        protected bool isActive
+        {
+            get
+            {
+                return (int)currentStatus<2;
+            }
+        }
+
+        protected bool isFinished=false;
+        protected ThreadStatus currentStatus=ThreadStatus.Idle;
+        protected ITupleProcessor processor = null;
+        protected ITupleProducer producer = null;
         protected IPrincipalGrain principalGrain;
         protected IWorkerGrain self = null;
         private IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
-        private Dictionary<Guid,ISendStrategy> sendStrategies = new Dictionary<Guid, ISendStrategy>();
-        protected Dictionary<Guid,int> inputInfo=new Dictionary<Guid, int>();
+        private Dictionary<string,ISendStrategy> sendStrategies = new Dictionary<string, ISendStrategy>();
+        protected Dictionary<Guid, HashSet<IGrain>> unFinishedUpstream = new Dictionary<Guid,HashSet<IGrain>>();
         protected Queue<Action> actionQueue=new Queue<Action>();
         protected int currentIndex=0;
         protected bool messageChecked=false;
-        protected int currentEndFlagCount=0;
-        protected bool isFinished=false;
         protected List<TexeraTuple> savedBatch=null;
 
         #if (PROFILING_ENABLED)
@@ -52,30 +69,25 @@ namespace Engine.OperatorImplementation.Common
         protected TimeSpan sendingTime=new TimeSpan(0,0,0);
         protected TimeSpan preprocessTime=new TimeSpan(0,0,0);
         #endif
-        protected bool pauseBySelf=false;
-        protected IWorkerGrain workerToActivate=null;
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
-
-#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-        protected int breakPointTarget;
-        protected int breakPointCurrent=0;
-        protected int version=-1;
-        protected bool breakPointEnabled=false;
-        protected object counterlock=new object();
-#endif
-        public virtual Task<SiloAddress> Init(IWorkerGrain self, PredicateBase predicate, IPrincipalGrain principalGrain)
+        protected List<LocalBreakpointBase> activeBreakpoints=new List<LocalBreakpointBase>();
+        public virtual async Task<SiloAddress> Init(IPrincipalGrain principalGrain,ITupleProcessor processor)
         {
-            this.self=self;
-            this.principalGrain=principalGrain;
-            this.predicate=predicate;
-            Console.WriteLine("Init: "+Utils.GetReadableName(self));
-            return Task.FromResult(localSiloDetails.SiloAddress);
+            this.self = this.GrainReference.Cast<IWorkerGrain>();
+            Console.WriteLine("Init Start: "+Utils.GetReadableName(self));
+            this.principalGrain = principalGrain;
+            this.processor = processor;
+            await this.processor.Initialize();
+            Console.WriteLine("Init Finished: "+Utils.GetReadableName(self));
+            return localSiloDetails.SiloAddress;
         }
     
 
         public override Task OnDeactivateAsync()
         {
             Console.WriteLine("Deactivate: "+Utils.GetReadableName(self));
+            processor = null;
+            producer = null;
             orderingEnforcer=null;
             sendStrategies=null;
             actionQueue=null;
@@ -83,77 +95,147 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        protected void MakePayloadMessagesThenSend(List<TexeraTuple> outputTuples)
+        protected async Task MakePayloadMessagesThenSend(List<TexeraTuple> outputTuples)
         {
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.Enqueue(outputTuples);
                 strategy.SendBatchedMessages(self);
             }
-            if(!isFinished && currentEndFlagCount==0)
+            if(!isFinished && unFinishedUpstream.Count == 0)
             {
-                //Console.WriteLine(Utils.GetReadableName(self)+" END!");
+                Console.WriteLine("Info: "+Utils.GetReadableName(self)+" start to produce final batch");
                 #if (PROFILING_ENABLED)
                 Console.WriteLine(Utils.GetReadableName(self)+" Preprocess Time: "+preprocessTime+" Process Time: "+processTime+" Sending Time: "+sendingTime);
                 #endif
-                isFinished=true;
-                MakeLastPayloadMessageThenSend();
+                await MakeLastPayloadMessageThenSend();
             }
         }
 
-        private void MakeLastPayloadMessageThenSend()
+        protected async Task<bool> MakeFinalOutputTuples(List<TexeraTuple> outputList)
         {
-            List<TexeraTuple> output=MakeFinalOutputTuples();
-            if(output!=null)
+            processor.NoMore();
+            while(processor.HasNext())
+            {
+                var output = processor.Next();
+                outputList.Add(output);
+                List<LocalBreakpointBase> reachedBreakpoints=null;
+                foreach(LocalBreakpointBase breakpoint in activeBreakpoints)
+                {
+                    breakpoint.Accept(output);
+                    if(breakpoint.IsTriggered)
+                    {
+                        if(reachedBreakpoints==null)
+                            reachedBreakpoints=new List<LocalBreakpointBase>{breakpoint};
+                        else
+                            reachedBreakpoints.Add(breakpoint);
+                    }
+                }
+                if(reachedBreakpoints!=null)
+                {
+                    await principalGrain.OnWorkerLocalBreakpointTriggered(self,reachedBreakpoints);
+                    await self.Pause();
+                }
+                if(currentStatus==ThreadStatus.Pausing)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private async Task MakeLastPayloadMessageThenSend()
+        {
+            List<TexeraTuple> output=new List<TexeraTuple>();
+            bool res = true;
+            if(processor != null)
+            {
+                res = await MakeFinalOutputTuples(output);
+                if(output.Count > 0)
+                {
+                    foreach(ISendStrategy strategy in sendStrategies.Values)
+                    {
+                        strategy.Enqueue(output);
+                        strategy.SendBatchedMessages(self);
+                    }
+                }
+            }
+            if(res)
             {
                 foreach(ISendStrategy strategy in sendStrategies.Values)
                 {
-                    strategy.Enqueue(output);
-                    strategy.SendBatchedMessages(self);
+                    strategy.SendEndMessages(self);
                 }
-            }
-            foreach(ISendStrategy strategy in sendStrategies.Values)
-            {
-                strategy.SendEndMessages(self);
-            }
-            if(workerToActivate!=null)
-            {
-                workerToActivate.ReceiveControlMessage(new Immutable<ControlMessage>(new ControlMessage(self,0,ControlMessage.ControlMessageType.Start)));
-            }
-        }
-
-
-        protected virtual void BeforeProcessBatch(PayloadMessage message)
-        {
-
-        }
-
-        protected virtual void AfterProcessBatch(PayloadMessage message)
-        {
-
-        }
-        protected void ProcessBatch(List<TexeraTuple> batch,List<TexeraTuple> outputList)
-        {
-            int limit=batch.Count;
-            for(;currentIndex<limit;++currentIndex)
-            {
-                #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-                if(breakPointEnabled && outputList.Count+breakPointCurrent>=breakPointTarget)
+                if(processor != null)
                 {
-                    Pause();
+                    processor.Dispose();
                 }
-                #endif
-                if(isPaused)
+                if(producer != null)
+                {
+                    producer.Dispose();
+                }
+                await self.OnTaskFinished();
+            }
+        }
+        protected async Task ProcessBatch(List<TexeraTuple> batch,List<TexeraTuple> outputList)
+        {
+            while(processor.HasNext())
+            {
+                var output = processor.Next();
+                outputList.Add(output);
+                List<LocalBreakpointBase> reachedBreakpoints=null;
+                foreach(LocalBreakpointBase breakpoint in activeBreakpoints)
+                {
+                    breakpoint.Accept(output);
+                    if(breakpoint.IsTriggered)
+                    {
+                        if(reachedBreakpoints==null)
+                            reachedBreakpoints=new List<LocalBreakpointBase>{breakpoint};
+                        else
+                            reachedBreakpoints.Add(breakpoint);
+                    }
+                }
+                if(reachedBreakpoints!=null)
+                {
+                    await principalGrain.OnWorkerLocalBreakpointTriggered(self,reachedBreakpoints);
+                    await self.Pause();
+                }
+                if(currentStatus==ThreadStatus.Pausing)
                 {
                     return;
                 }
-                ProcessTuple(batch[currentIndex],outputList);
             }
-        }
-
-        protected virtual void ProcessTuple(TexeraTuple tuple, List<TexeraTuple> output)
-        {
-
+            int limit=batch.Count;
+            for(;currentIndex<limit;)
+            {
+                processor.Accept(batch[currentIndex++]);
+                while(processor.HasNext())
+                {
+                    var output = processor.Next();
+                    outputList.Add(output);
+                    List<LocalBreakpointBase> reachedBreakpoints=null;
+                    foreach(LocalBreakpointBase breakpoint in activeBreakpoints)
+                    {
+                        breakpoint.Accept(output);
+                        if(breakpoint.IsTriggered)
+                        {
+                            if(reachedBreakpoints==null)
+                                reachedBreakpoints=new List<LocalBreakpointBase>{breakpoint};
+                            else
+                                reachedBreakpoints.Add(breakpoint);
+                        }
+                    }
+                    if(reachedBreakpoints!=null)
+                    {
+                        await principalGrain.OnWorkerLocalBreakpointTriggered(self,reachedBreakpoints);
+                        await self.Pause();
+                    }
+                    if(currentStatus==ThreadStatus.Pausing)
+                    {
+                        return;
+                    }
+                }
+            }
         }
  
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
@@ -168,30 +250,13 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public void Process(PayloadMessage message)
+        public virtual void Process(PayloadMessage message)
         {
-            Action action=()=>
+            Action action=async ()=>
             {
-                if(isPaused)
+                if(currentStatus==ThreadStatus.Pausing)
                 {
-                    if(!pauseBySelf)
-                        principalGrain.OnTaskDidPaused();
-                    else
-                    {
-                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-                        int temp;
-                        if(breakPointEnabled)
-                        {
-                            lock(counterlock)
-                            {
-                                temp=breakPointCurrent;
-                                breakPointCurrent=0;
-                            }
-                            principalGrain.ReportCurrentValue(self,temp,version);
-                            breakPointEnabled=false;
-                        }
-                        #endif
-                    }
+                    await self.OnTaskDidPaused();
                     return;
                 }
                 #if (PROFILING_ENABLED)
@@ -219,42 +284,20 @@ namespace Engine.OperatorImplementation.Common
                     preprocessTime+=DateTime.UtcNow-start;
                     start=DateTime.UtcNow;
                     #endif
-                    BeforeProcessBatch(message);
                     List<TexeraTuple> outputList=new List<TexeraTuple>();
+                    string ext;
+                    Guid from = message.SenderIdentifer.GetPrimaryKey(out ext);
+                    processor.OnRegisterSource(from);
                     if(batch!=null)
                     {
-                        ProcessBatch(batch,outputList);
-                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-                        lock(counterlock)
-                        {
-                            breakPointCurrent+=outputList.Count;
-                        }
-                        #endif
+                        await ProcessBatch(batch,outputList);
                     }
-                    if(isPaused)
+                    if(currentStatus==ThreadStatus.Pausing)
                     {
-                        #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-                        if(pauseBySelf)
-                        {
-                            int temp;
-                            if(breakPointEnabled)
-                            {
-                                lock(counterlock)
-                                {
-                                    temp=breakPointCurrent;
-                                    breakPointCurrent=0;
-                                }
-                                principalGrain.ReportCurrentValue(self,temp,version);
-                                breakPointEnabled=false;
-                            }
-                        }
-                        #endif
-                        //if we not do so, the outputlist will be lost.
-                        MakePayloadMessagesThenSend(outputList);
-                        if(!pauseBySelf)
-                        {
-                            principalGrain.OnTaskDidPaused();
-                        }
+                        //if we do not do so, the outputlist will be lost.
+                        Console.WriteLine("Info: "+Utils.GetReadableName(self)+" paused while processing");
+                        await MakePayloadMessagesThenSend(outputList);
+                        await self.OnTaskDidPaused();
                         return;
                     }
                     batch=null;
@@ -263,81 +306,90 @@ namespace Engine.OperatorImplementation.Common
                     messageChecked=false;
                     if(isEnd)
                     {
-                        string ext;
-                        inputInfo[message.SenderIdentifer.GetPrimaryKey(out ext)]--;
-                        currentEndFlagCount--;
+                        unFinishedUpstream[from].Remove(message.SenderIdentifer);
+                        if(unFinishedUpstream[from].Count == 0)
+                        {
+                            unFinishedUpstream.Remove(from);
+                            processor.MarkSourceCompleted(from);
+                        }
                     }
-                    AfterProcessBatch(message);
                     #if (PROFILING_ENABLED)
                     processTime+=DateTime.UtcNow-start;
                     start=DateTime.UtcNow;
                     #endif
-                    MakePayloadMessagesThenSend(outputList);
+                    await MakePayloadMessagesThenSend(outputList);
                     #if (PROFILING_ENABLED)
                     sendingTime+=DateTime.UtcNow-start;
                     #endif
                 }
+                bool noMoreAction=false;
                 lock(actionQueue)
                 {
                     actionQueue.Dequeue();
-                    if(actionQueue.Count>0)
+                    noMoreAction=actionQueue.Count==0;
+                    if(!noMoreAction)
                     {
                         Task.Run(actionQueue.Peek());
                     }
-                    else if(isPaused && !pauseBySelf)
-                    {
-                        principalGrain.OnTaskDidPaused();
-                    }
+                }
+                if(noMoreAction && currentStatus==ThreadStatus.Pausing)
+                {
+                    await self.OnTaskDidPaused();
                 }
             };
             lock(actionQueue)
             {
                 actionQueue.Enqueue(action);
-                if(actionQueue.Count==1)
+                if(isActive && actionQueue.Count==1)
                 {
+                    currentStatus=ThreadStatus.Running;
                     Task.Run(action);
                 }
             }
             //return Task.CompletedTask;
         }
 
-        protected virtual List<TexeraTuple> MakeFinalOutputTuples()
-        {
-            return null;
-        }
 
-        protected virtual void Pause(bool bySelf=true)
+        public virtual Task Pause()
         {
-            pauseBySelf=bySelf;
+            #if (PROFILING_ENABLED)
             TimeSpan t = (DateTime.UtcNow - new DateTime(1970, 1, 1));
             Console.WriteLine(Utils.GetReadableName(self)+" receives the pause message at "+ (int)t.TotalSeconds);
-            lock(actionQueue)
+            #endif
+            if(currentStatus==ThreadStatus.Pausing)
             {
-                Console.WriteLine("Paused: "+Utils.GetReadableName(self)+" actionQueue.Count = "+actionQueue.Count);
+                return Task.CompletedTask;
+            }
+            else if(currentStatus==ThreadStatus.Paused || isFinished)
+            {
+                return OnTaskDidPaused();
             }
             foreach(ISendStrategy strategy in sendStrategies.Values)
             {
                 strategy.SetPauseFlag(true);
             }
-            isPaused=true;
+            currentStatus=ThreadStatus.Pausing;
             lock(actionQueue)
             {
-                if(actionQueue.Count==0 && !bySelf)
-                    principalGrain.OnTaskDidPaused();
+                if(actionQueue.Count==0)
+                    OnTaskDidPaused();
             }
+            return Task.CompletedTask;
         }
 
-        protected virtual void Resume()
+        public virtual Task Resume()
         {
-            lock(actionQueue)
-            {
-                Console.WriteLine("Resumed: "+Utils.GetReadableName(self) +" actionQueue.Count = "+actionQueue.Count+" isFinished = "+isFinished);
-            }
-            isPaused=false;
             if(isFinished)
             {
-                return;
+                Console.WriteLine("Info: " + Utils.GetReadableName(self)+" already finished! so Resume won't have any effect.");
+                return Task.CompletedTask;
             }
+            if(currentStatus!=ThreadStatus.Paused)
+            {
+                Console.WriteLine("ERROR: "+Utils.GetReadableName(self)+" invaild state when resume! state = "+currentStatus.ToString());
+                return Task.CompletedTask;
+            }
+            currentStatus=ThreadStatus.Idle;
             Task.Delay(100).ContinueWith((t)=>
             {
                 foreach(ISendStrategy strategy in sendStrategies.Values)
@@ -365,126 +417,192 @@ namespace Engine.OperatorImplementation.Common
             {
                 if(actionQueue.Count>0)
                 {
+                    currentStatus=ThreadStatus.Running;
                     Task.Run(actionQueue.Peek());
                 }
+                else if(!isFinished && unFinishedUpstream.Count == 0)
+                {
+                    Task.Run(async ()=>{await MakeLastPayloadMessageThenSend();});
+                }
             }
+            if(producer != null)
+            {
+                if(currentStatus==ThreadStatus.Idle && !isFinished)
+                {
+                    Console.WriteLine("Resume: "+Common.Utils.GetReadableName(self)+" restart scanning");
+                    Task.Run(()=>Generate());
+                }
+            }
+            Console.WriteLine("Resumed: "+Utils.GetReadableName(self));
+            return Task.CompletedTask;
         }
 
        
-        protected virtual void Start()
+        public async Task Start()
         {
-            currentEndFlagCount=-1;
-            Task.Run(()=>Generate());
+            string ext;
+            var t = self.GetPrimaryKey(out ext);
+            await this.producer.Initialize();
+            unFinishedUpstream[t]=new HashSet<IGrain>{self};
+            Console.WriteLine("Start: "+Utils.GetReadableName(self));
+            Task.Run(()=>{Generate();});
         }
 
-        public Task AddInputInformation(Pair<Guid,int> inputInfo)
+        public Task AddInputInformation(IWorkerGrain sender)
         {
-            currentEndFlagCount+=inputInfo.Second;
-            if(this.inputInfo.ContainsKey(inputInfo.First))
+            string ext;
+            Guid id = sender.GetPrimaryKey(out ext);
+            if(unFinishedUpstream.ContainsKey(id))
             {
-                this.inputInfo[inputInfo.First]+=inputInfo.Second;
+                unFinishedUpstream[id].Add(sender);
             }
             else
             {
-                this.inputInfo.Add(inputInfo.First,inputInfo.Second);
+                unFinishedUpstream[id] = new HashSet<IGrain>{sender};
             }
             return Task.CompletedTask;
         }
 
         public async void Generate()
         {
+            currentStatus=ThreadStatus.Running;
             while(true)
             {
+                if(!isActive || isFinished)
+                {
+                    if(currentStatus==ThreadStatus.Pausing)
+                    {
+                        await self.OnTaskDidPaused();
+                    }
+                    break;
+                }
                 #if (PROFILING_ENABLED)
                 DateTime start=DateTime.UtcNow;
                 #endif
-                List<TexeraTuple> outputList=await GenerateTuples();
+                List<TexeraTuple> outputList=new List<TexeraTuple>();
+                await GenerateTuples(outputList);
                 #if (PROFILING_ENABLED)
                 processTime+=DateTime.UtcNow-start;
                 start=DateTime.UtcNow;
                 #endif
-                MakePayloadMessagesThenSend(outputList);
+                await MakePayloadMessagesThenSend(outputList);
                 #if (PROFILING_ENABLED)
                 sendingTime+=DateTime.UtcNow-start;
                 #endif
-                if(isPaused || isFinished)
-                {
-                    break;
-                }
             }
         }
 
-        protected virtual Task<List<TexeraTuple>> GenerateTuples()
+        async Task GenerateTuples(List<TexeraTuple> outputList)
         {
-            return Task.FromResult(new List<TexeraTuple>());
+            int i=0;
+            while(i<1000 && producer.HasNext())
+            {
+                var output = await producer.NextAsync();
+                if(output.FieldList != null)
+                {
+                    outputList.Add(output);
+                    i++;
+                    List<LocalBreakpointBase> reachedBreakpoints=null;
+                    foreach(LocalBreakpointBase breakpoint in activeBreakpoints)
+                    {
+                        breakpoint.Accept(output);
+                        if(breakpoint.IsTriggered)
+                        {
+                            if(reachedBreakpoints==null)
+                                reachedBreakpoints=new List<LocalBreakpointBase>{breakpoint};
+                            else
+                                reachedBreakpoints.Add(breakpoint);
+                        }
+                    }
+                    if(reachedBreakpoints!=null)
+                    {
+                        await principalGrain.OnWorkerLocalBreakpointTriggered(self,reachedBreakpoints);
+                        await self.Pause();
+                    }
+                    if(currentStatus==ThreadStatus.Pausing)
+                    {
+                        return;
+                    }
+                }
+            }
+            if(!producer.HasNext())
+            {
+                unFinishedUpstream.Clear();
+            }
+        }
+
+        public Task SetSendStrategy(string id,ISendStrategy sendStrategy)
+        {
+            Console.WriteLine("Link: "+Utils.GetReadableName(self)+" "+sendStrategy);
+            foreach(var receiver in sendStrategy.GetReceivers())
+            {
+                receiver.AddInputInformation(self);
+            }
+            sendStrategies[id]=sendStrategy;
+            return Task.CompletedTask;
         }
 
         public Task OnTaskDidPaused()
         {
-            principalGrain.OnTaskDidPaused();
+            //Console.WriteLine("Info: "+Utils.GetReadableName(self)+" currentEndFlagCount: "+currentEndFlagCount);
+            currentStatus=ThreadStatus.Paused;
+            Console.WriteLine("Paused: "+Utils.GetReadableName(self));
+            principalGrain.OnWorkerDidPaused(self);
             return Task.CompletedTask;
         }
 
-
-        public Task SetSendStrategy(Guid operatorGuid,ISendStrategy sendStrategy)
+        public Task Deactivate()
         {
-            Console.WriteLine("Linking: "+Utils.GetReadableName(self)+" "+sendStrategy);
-            sendStrategies[operatorGuid]=sendStrategy;
+            DeactivateOnIdle();
             return Task.CompletedTask;
         }
-        public Task ReceiveControlMessage(Immutable<ControlMessage> message)
+
+        public Task OnTaskFinished()
         {
-            TimeSpan t = (DateTime.UtcNow - new DateTime(1970, 1, 1));
-            Console.WriteLine(Utils.GetReadableName(self)+" received control message at "+(int)t.TotalSeconds);
-            List<Pair<ControlMessage.ControlMessageType,object>> executeSequence = orderingEnforcer.PreProcess(message);
-            if(executeSequence!=null)
+            isFinished=true;
+            Console.WriteLine("Finish: "+Utils.GetReadableName(self));
+            principalGrain.OnWorkerFinished(self);
+            return Task.CompletedTask;
+        }
+
+        public Task<SiloAddress> Init(IPrincipalGrain principalGrain, ITupleProducer producer)
+        {
+            this.self = this.GrainReference.Cast<IWorkerGrain>();
+            Console.WriteLine("Init Start: "+Utils.GetReadableName(self));
+            this.principalGrain = principalGrain;
+            this.producer = producer;
+            Console.WriteLine("Init Finished: "+Utils.GetReadableName(self));
+            return Task.FromResult(localSiloDetails.SiloAddress);
+        }
+
+        public Task AddBreakpoint(LocalBreakpointBase breakpoint)
+        {
+            activeBreakpoints.Add(breakpoint);
+            return Task.CompletedTask;
+        }
+
+        public Task<LocalBreakpointBase> QueryBreakpoint(string id)
+        {
+            foreach(LocalBreakpointBase breakpoint in activeBreakpoints)
             {
-                orderingEnforcer.CheckStashed(ref executeSequence,message.Value.SenderIdentifer);
-                foreach(Pair<ControlMessage.ControlMessageType,object> pair in executeSequence)
+                if(breakpoint.id.Equals(id))
                 {
-                    switch(pair.First)
-                    {
-                        case ControlMessage.ControlMessageType.Pause:
-                            Pause(false);
-                            break;
-                        case ControlMessage.ControlMessageType.Resume:
-                            Resume();
-                            break;
-                        case ControlMessage.ControlMessageType.Start:
-                            Start();
-                            break;
-                        case ControlMessage.ControlMessageType.Deactivate:
-                            DeactivateOnIdle();
-                            break;
-                        case ControlMessage.ControlMessageType.addCallbackWorker:
-                            workerToActivate=(IWorkerGrain)pair.Second;
-                            break;
-                    }
+                    return Task.FromResult(breakpoint);
+                }
+            }
+            return Task.FromException<LocalBreakpointBase>(new KeyNotFoundException());
+        }
+
+        public Task RemoveBreakpoint(string id)
+        {
+            for(int i=activeBreakpoints.Count-1;i>=0;--i)
+            {
+                if(activeBreakpoints[i].id.Equals(id))
+                {
+                    activeBreakpoints.RemoveAt(i);
                 }
             }
             return Task.CompletedTask;
         }
-        
-#if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-        public Task SetTargetValue(int targetValue)
-        {
-            breakPointEnabled=true;
-            version++;
-            breakPointTarget=targetValue;
-            Console.WriteLine(Utils.GetReadableName(self)+" set breakpoint! target value = "+targetValue+" version = "+version);
-            return Task.CompletedTask;
-        }
-
-        public Task AskToReportCurrentValue()
-        {
-            if(breakPointEnabled==false)return Task.CompletedTask;
-            Console.WriteLine(Utils.GetReadableName(self)+" received AskToReport");
-            if(!isPaused)
-            {
-                Pause();
-            }
-            return Task.CompletedTask;
-        }
-#endif
     }
 }
