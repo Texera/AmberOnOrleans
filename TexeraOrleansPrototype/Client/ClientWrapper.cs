@@ -142,7 +142,7 @@ namespace OrleansClient
             //     grain.ReceivePayloadMessage(new Immutable<PayloadMessage>(new PayloadMessage("123",seq,null,seq==10)));
             var controllerGrain = client.GetGrain<IControllerGrain>(workflowID);
             RequestContext.Set("targetSilo",Constants.ClientIPAddress);
-            await controllerGrain.Init(controllerGrain,plan,true);
+            await controllerGrain.Init(controllerGrain,plan,false);
             var streamProvider = client.GetStreamProvider("SMSProvider");
             var so = new StreamObserver();
             var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflowID, "OutputStream");
