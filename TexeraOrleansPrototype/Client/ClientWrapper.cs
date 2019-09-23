@@ -11,7 +11,6 @@ using Orleans.Configuration;
 using Engine.Controller;
 using Engine.OperatorImplementation.Common;
 using Engine.OperatorImplementation.Operators;
-using Engine.WorkflowImplementation;
 using TexeraUtilities;
 using System.Threading;
 using System.Net;
@@ -52,7 +51,7 @@ namespace OrleansClient
                 Console.WriteLine(e);
             }
         }
-        private Dictionary<Guid,Workflow> IDToWorkflowEntry = new Dictionary<Guid,Workflow>();
+        private Dictionary<Guid,IControllerGrain> IDToWorkflowEntry = new Dictionary<Guid,IControllerGrain>();
         private const int initializeAttemptsBeforeFailing = 5;
         private int attempt = 0;
 
@@ -107,7 +106,7 @@ namespace OrleansClient
             return true;
         }
 
-        public async Task PauseWorkflow(Guid workflowID)
+        public Task PauseWorkflow(Guid workflowID)
         {
             if(IDToWorkflowEntry.ContainsKey(workflowID))
             {
@@ -117,6 +116,7 @@ namespace OrleansClient
             {
                 throw new Exception("Workflow Not Found");
             }
+            return Task.CompletedTask;
         }
 
         public async Task ResumeWorkflow(Guid workflowID)
@@ -131,68 +131,63 @@ namespace OrleansClient
             }
         }
 
-        public async Task<List<TexeraTuple>> DoClientWork(IClusterClient client, Workflow workflow)
+        public async Task<List<TexeraTuple>> DoClientWork(IClusterClient client, Guid workflowID, string plan)
         {
             // code for testing the correctness of sequnece number:
 
-            // IWorkerGrain grain=client.GetGrain<IWorkerGrain>(new Guid(),"2");
+            // IWorkerGrain grain=client.GetGrain<IWorkerGrain>(Guid.NewGuid(),"2");
             // await grain.Init(grain,null,null);
             // List<ulong> seqnum=new List<ulong>{0,1,3,2,4,10,9,8,7,5,4,6};
             // foreach(ulong seq in seqnum)
             //     grain.ReceivePayloadMessage(new Immutable<PayloadMessage>(new PayloadMessage("123",seq,null,seq==10)));
-
-            await workflow.Init(client);
+            var controllerGrain = client.GetGrain<IControllerGrain>(workflowID);
+            RequestContext.Set("targetSilo",Constants.ClientIPAddress);
+            await controllerGrain.Init(controllerGrain,plan,true);
             var streamProvider = client.GetStreamProvider("SMSProvider");
             var so = new StreamObserver();
-            var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflow.GetStreamGuid(), "OutputStream");
+            var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflowID, "OutputStream");
             var handle = await stream.SubscribeAsync(so);
-            int numEndGrains=0;
-            foreach(Operator o in workflow.EndOperators)
-            {
-                numEndGrains+=(await o.PrincipalGrain.GetOutputGrains()).Values.SelectMany(x=>x).Count();
-            }
-            so.SetNumEndFlags(numEndGrains);
-            instance.IDToWorkflowEntry[workflow.WorkflowID]=workflow;
-            Operator secondScan=null;
-            foreach(Operator op in workflow.StartOperators)
-            {
-                if(((ScanPredicate)op.Predicate).File.EndsWith("orders.tbl"))
-                    secondScan=op;
-            }
-            #if (GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED)
-            foreach(Operator op in workflow.AllOperators)
-            {
-                if(op is FilterOperator<DateTime>)
-                    await op.PrincipalGrain.SetBreakPoint(100000000);
-            }
-            #endif
+            so.SetNumEndFlags(await controllerGrain.GetNumberOfOutputGrains());
+            instance.IDToWorkflowEntry[workflowID]=controllerGrain;
+            // Operator secondScan=null;
+            // foreach(Operator op in workflow.StartOperators)
+            // {
+            //     if(((ScanPredicate)op.Predicate).File.EndsWith("orders.tbl"))
+            //         secondScan=op;
+            // }
+            // test count break point
+            // foreach(Operator op in workflow.AllOperators)
+            // {
+            //     if(op is FilterOperator<DateTime>)
+            //         await op.PrincipalGrain.SetCountBreakPoint(1000000);
+            // }
             await so.Start();
-            if(secondScan!=null)
-            {
-                foreach(Operator op in workflow.StartOperators)
-                {
-                    if(((ScanPredicate)op.Predicate).File.EndsWith("customer.tbl"))
-                    {
-                        await op.PrincipalGrain.ActivateWhenFinished(secondScan);
-                        await op.PrincipalGrain.Start();
-                    }
-                }
-            }
-            else
-            {
-                foreach(Operator op in workflow.StartOperators)
-                {
-                    await op.PrincipalGrain.Start();
-                }
-            }
-
+            await controllerGrain.Start();
+            // if(secondScan!=null)
+            // {
+            //     foreach(Operator op in workflow.StartOperators)
+            //     {
+            //         if(((ScanPredicate)op.Predicate).File.EndsWith("customer.tbl"))
+            //         {
+            //             await op.DelayPipeline(secondScan);
+            //             await op.PrincipalGrain.Start();
+            //         }
+            //     }
+            // }
+            // else
+            // {
+            //     foreach(Operator op in workflow.StartOperators)
+            //     {
+            //         await op.PrincipalGrain.Start();
+            //     }
+            // }
             while (!so.isFinished)
             {
 
             }
             await handle.UnsubscribeAsync();
-            await workflow.Deactivate();
-            instance.IDToWorkflowEntry.Remove(workflow.WorkflowID);
+            await controllerGrain.Deactivate();
+            instance.IDToWorkflowEntry.Remove(workflowID);
             return so.resultsToRet;
         }
     }

@@ -67,5 +67,9 @@ namespace Engine.OperatorImplementation.SendingSemantics
             
         }
 
+        public List<IWorkerGrain> GetReceivers()
+        {
+            return new List<IWorkerGrain>();
+        }
     }
 }

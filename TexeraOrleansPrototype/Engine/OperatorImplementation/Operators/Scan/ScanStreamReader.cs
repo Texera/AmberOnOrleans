@@ -55,6 +55,27 @@ class ScanStreamReader
         return 0;
     }
 
+
+    public async Task FillBuffer()
+    {
+        buffer_start=0;
+        #if (PROFILING_ENABLED)
+        DateTime start1=DateTime.UtcNow;
+        #endif
+        try
+        {
+            buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);    
+        }
+        catch(Exception e)
+        {
+            buffer_end=0;
+            throw e;
+        }
+        #if (PROFILING_ENABLED)
+        reading+=DateTime.UtcNow-start1;
+        #endif 
+    }
+
     public bool GetFile(ulong offset)
     {
         try
@@ -103,22 +124,7 @@ class ScanStreamReader
         {
             if(buffer_start>=buffer_end)
             {
-                buffer_start=0;
-                #if (PROFILING_ENABLED)
-                DateTime start1=DateTime.UtcNow;
-                #endif
-                try
-                {
-                    buffer_end=await file.BaseStream.ReadAsync(buffer,0,buffer_size);    
-                }
-                catch(Exception e)
-                {
-                    buffer_end=0;
-                    throw e;
-                }
-                #if (PROFILING_ENABLED)
-                reading+=DateTime.UtcNow-start1;
-                #endif 
+                await FillBuffer();
             }
             if(buffer_end==0)break;
             int i;
@@ -142,8 +148,12 @@ class ScanStreamReader
                 {
                     int length=i-buffer_start;
                     ByteCount+=(ulong)(length+1);
-                    charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
-                    fields.Add(sb.ToString());
+                    if(length>0)
+                    {
+                        charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
+                        sb.Append(charbuf,0,charbuf_length);
+                        fields.Add(sb.ToString());
+                    }
                     buffer_start=i+1;
                     sb.Length=0;
                     #if (PROFILING_ENABLED)
@@ -182,7 +192,7 @@ class ScanStreamReader
     public bool IsEOF()
     {
         return buffer_end==0;
-        // return file.EndOfStream;
+        //return file.EndOfStream;
     }
 
     #if (PROFILING_ENABLED)

@@ -18,6 +18,31 @@ using TexeraUtilities;
 namespace Engine.OperatorImplementation.Common
 {
 
+    //https://loune.net/2017/06/running-shell-bash-commands-in-net-core/
+    public static class ShellHelper
+    {
+        public static string Bash(this string cmd)
+        {
+            var escapedArgs = cmd.Replace("\"", "\\\"");
+            
+            var process = new Process()
+            {
+                StartInfo = new ProcessStartInfo
+                {
+                    FileName = "/bin/bash",
+                    Arguments = $"-c \"{escapedArgs}\"",
+                    RedirectStandardOutput = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true,
+                }
+            };
+            process.Start();
+            string result = process.StandardOutput.ReadToEnd();
+            process.WaitForExit();
+            return result;
+        }
+    }
+
     public static class StringExtensionMethods
     {
         public static int GetStableHashCode(this string str)
@@ -95,8 +120,6 @@ namespace Engine.OperatorImplementation.Common
             // return new OrderingGrainWithContinuousSending();
         }
 
-        public static readonly string[] OperatorTypes=new string[]{"Scan","Sort","SentimentAnalysis","Filter","GroupBy","HashJoin","HashRippleJoin","CrossRippleJoin","Count","KeywordSearch","Projection"}; 
-
         static public string GenerateURLForHDFSWebAPI(string filename,ulong offset)
         {
             StringBuilder sb=new StringBuilder();
@@ -104,6 +127,30 @@ namespace Engine.OperatorImplementation.Common
             sb.Append("?op=OPEN&offset=");
             sb.Append(offset);
             return sb.ToString();
+        }
+
+        static public List<string> ListFileNameFromHDFSDirectory(string dir)
+        {
+            StringBuilder sb=new StringBuilder();
+            sb.Append(dir);
+            sb.Append("?op=LISTSTATUS");
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(sb.ToString());
+            request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
+            HttpWebResponse response = (HttpWebResponse)request.GetResponse();
+            using (StreamReader Reader = new StreamReader(response.GetResponseStream()))
+            {
+                string str_response=Reader.ReadToEnd();
+                JObject obj =JObject.Parse(str_response);
+                List<string> res = new List<string>();
+                foreach(JObject o in (JArray)obj["FileStatuses"]["FileStatus"])
+                {
+                    if((string)o["type"]=="FILE")
+                    {
+                        res.Add((string)o["pathSuffix"]);
+                    }
+                }
+                return res;
+            }
         }
 
 
@@ -170,26 +217,12 @@ namespace Engine.OperatorImplementation.Common
             return t.IsFaulted && retryCount<Constants.MaxRetries;
         }
 
-
-        public static string GetOperatorTypeFromGrainClass(string grainClass)
-        {
-            foreach(string op in OperatorTypes)
-            {
-                if(grainClass.Contains(op))
-                {
-                    return op;
-                }
-            }
-            Console.WriteLine("Unknown Operator Found! Make sure to register it in Utils.cs");
-            return "Unknown";
-        }
-
         public static string GetReadableName(IGrain grain)
         {
-            string ext1,opType1;
+            string ext1;
             string guidPrefix=grain.GetPrimaryKey(out ext1).ToString().Substring(0,8);
-            opType1=Utils.GetOperatorTypeFromGrainClass(grain.GetType().Name);
-            return opType1+" "+guidPrefix+" "+ext1;
+            return guidPrefix+" "+ext1;
         }
+
     }
 }

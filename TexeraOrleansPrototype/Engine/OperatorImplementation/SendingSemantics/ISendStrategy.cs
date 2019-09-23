@@ -1,6 +1,4 @@
 using Orleans;
-using System.Threading.Tasks;
-using Engine.WorkflowImplementation;
 using System.Collections.Generic;
 using Engine.OperatorImplementation.Common;
 using System;
@@ -18,6 +16,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
         void RemoveAllReceivers();
         void SetPauseFlag(bool flag);
         void ResumeSending();
+        List<IWorkerGrain> GetReceivers();
         
     }
 }

@@ -6,7 +6,6 @@
 
   <PropertyGroup>
   <!--<DefineConstants>PROFILING_ENABLED</DefineConstants>-->
-  <!--<DefineConstants>GLOBAL_CONDITIONAL_BREAKPOINTS_ENABLED</DefineConstants>-->
   <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
   <ServerGarbageCollection>true</ServerGarbageCollection>
   <ConcurrentGarbageCollection>true</ConcurrentGarbageCollection>
@@ -29,6 +28,7 @@
     <PackageReference Include="MySql.Data" Version="8.0.13" />
     <PackageReference Include="Serialize.Linq" Version="1.7.3.1" />
     <PackageReference Include="SentimentAnalyzer" Version="1.0.4" />
+    <PackageReference Include="ConcurrentHashSet" Version="1.0.2" />
   </ItemGroup>
 
   <ItemGroup>
