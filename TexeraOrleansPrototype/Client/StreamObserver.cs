@@ -51,6 +51,7 @@ namespace OrleansClient
             IGrain sender=item.Value.SenderIdentifer;
             ulong seqNum=item.Value.SequenceNumber;
             bool isEnd=item.Value.IsEnd;
+            Console.WriteLine("stage 1");
             if(!currentSequenceNumber.ContainsKey(sender))
             {
                 currentSequenceNumber.Add(sender,0);
@@ -78,6 +79,7 @@ namespace OrleansClient
             }
             else
             {
+                Console.WriteLine("stage 2");
                 List<TexeraTuple> currentPayload=item.Value.Payload;
                 while(true)
                 {
@@ -96,6 +98,7 @@ namespace OrleansClient
                     else
                         break;
                 }
+                Console.WriteLine("stage 3");
                 if(isEnd)
                 {
                     currentEndFlags++;
