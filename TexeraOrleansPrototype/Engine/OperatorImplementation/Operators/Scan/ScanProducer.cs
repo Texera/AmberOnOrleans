@@ -19,6 +19,8 @@ namespace Engine.OperatorImplementation.Operators
         private ScanStreamReader reader;
         private string file;
         private char separator;
+        
+        private ulong outputCounter = 0;
 
         public ScanProducer(ulong start_byte, ulong end_byte,string file,char separator)
         {
@@ -52,6 +54,7 @@ namespace Engine.OperatorImplementation.Operators
 
         public void Dispose()
         {
+            Console.WriteLine("Produced: "+outputCounter+" tuples");
             reader.Close();
         }
 
@@ -59,6 +62,7 @@ namespace Engine.OperatorImplementation.Operators
         {
             Pair<TexeraTuple,ulong> res=await reader.ReadTuple();
             start+=res.Second;
+            outputCounter++;
             return res.First;
         }
     }

@@ -17,15 +17,17 @@ namespace Engine.OperatorImplementation.Operators
     {
         int count=0;
         bool flag=false;
+        int receivedCounter = 0;
 
         public void Accept(TexeraTuple tuple)
         {
             count++;
+            receivedCounter++;
         }
 
         public void Dispose()
         {
-            
+            Console.WriteLine("Received: "+receivedCounter+" tuples");
         }
 
         public bool HasNext()
