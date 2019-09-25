@@ -279,7 +279,9 @@ namespace Engine.OperatorImplementation.Common
                     }
                     if(!messageChecked)
                     {
-                        orderingEnforcer.CheckStashed(ref batch,ref isEnd, message.SenderIdentifer);
+                        string sender;
+                        message.SenderIdentifer.GetPrimaryKey(out sender);
+                        orderingEnforcer.CheckStashed(ref batch,ref isEnd, sender);
                         savedBatch=batch;
                         messageChecked=true;
                     }

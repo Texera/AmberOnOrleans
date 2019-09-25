@@ -13,8 +13,8 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 {
     public class OrderingGrainWithSequenceNumber : IOrderingEnforcer
     {
-        private Dictionary<IGrain,Dictionary<ulong, Pair<bool,List<TexeraTuple>>>> stashedPayloadMessages = new Dictionary<IGrain, Dictionary<ulong, Pair<bool, List<TexeraTuple>>>>();
-        public Dictionary<IGrain,ulong> inSequenceNumberMap=new Dictionary<IGrain, ulong>();
+        private Dictionary<string,Dictionary<ulong, Pair<bool,List<TexeraTuple>>>> stashedPayloadMessages = new Dictionary<string, Dictionary<ulong, Pair<bool, List<TexeraTuple>>>>();
+        public Dictionary<string,ulong> inSequenceNumberMap=new Dictionary<string, ulong>();
         private enum MessageStatus
         {
             Vaild,
@@ -29,7 +29,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             this.self = self;
         }
 
-        private MessageStatus CheckMessage(IGrain sender, ulong sequenceNum)
+        private MessageStatus CheckMessage(string sender, ulong sequenceNum)
         {
             if(!inSequenceNumberMap.ContainsKey(sender))
             {
@@ -39,7 +39,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             if(sequenceNum < currentSequenceNumber)
             {
                 // de-dup messages
-                Console.WriteLine(self+" Received duplicated message from "+Utils.GetReadableName(sender)+" with seqnum = "+sequenceNum+" current seqnum = "+currentSequenceNumber);
+                Console.WriteLine(self+" Received duplicated message from "+sender+" with seqnum = "+sequenceNum+" current seqnum = "+currentSequenceNumber);
                 return MessageStatus.Duplicated;
             }
             if (sequenceNum != currentSequenceNumber)
@@ -51,7 +51,8 @@ namespace Engine.OperatorImplementation.MessagingSemantics
 
         public bool PreProcess(PayloadMessage message)
         {
-            IGrain sender=message.SenderIdentifer;
+            string sender;
+            message.SenderIdentifer.GetPrimaryKey(out sender);
             ulong sequenceNum=message.SequenceNumber;
             switch(CheckMessage(sender,sequenceNum))
             {
@@ -76,7 +77,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             return false;
         }
 
-        public void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, IGrain sender)
+        public void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, string sender)
         {
             if(stashedPayloadMessages.ContainsKey(sender))
             {

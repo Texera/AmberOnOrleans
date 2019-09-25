@@ -13,6 +13,6 @@ namespace Engine.OperatorImplementation.MessagingSemantics
     public interface IOrderingEnforcer
     {
         bool PreProcess(PayloadMessage message);
-        void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, IGrain sender);
+        void CheckStashed(ref List<TexeraTuple> batchList, ref bool isEnd, string sender);
     }
 }
