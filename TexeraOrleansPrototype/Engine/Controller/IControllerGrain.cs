@@ -4,12 +4,13 @@ using System.Collections.Generic;
 using Engine.OperatorImplementation.Common;
 using System;
 using Engine.Breakpoint.GlobalBreakpoint;
+using Orleans.Runtime;
 
 namespace Engine.Controller
 {
     public interface IControllerGrain : IGrainWithGuidKey
     {
-        Task Init(IControllerGrain self, string plan,bool checkpointActivated);
+        Task<SiloAddress> Init(IControllerGrain self, string plan,bool checkpointActivated);
         Task Start();
         Task Pause();
         Task Resume();

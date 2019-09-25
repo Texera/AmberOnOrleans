@@ -14,6 +14,7 @@ using Engine.LinkSemantics;
 using Engine.Breakpoint.GlobalBreakpoint;
 using Engine.OperatorImplementation.FaultTolerance;
 using Orleans.Concurrency;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Engine.Controller
 {
@@ -33,14 +34,16 @@ namespace Engine.Controller
         private Dictionary<Guid,List<Guid>> forwardLinks = new Dictionary<Guid, List<Guid>>();
         private Dictionary<Guid,List<Guid>> backwardLinks = new Dictionary<Guid, List<Guid>>();
         private Dictionary<Guid, HashSet<Guid>> startDependencies = new Dictionary<Guid, HashSet<Guid>>();
+        private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
 
-        public async Task Init(IControllerGrain self,string plan,bool checkpointActivated = false)
+        public async Task<SiloAddress> Init(IControllerGrain self,string plan,bool checkpointActivated = false)
         {
             this.self = self;
             ApplyLogicalPlan(CompileLogicalPlan(plan,checkpointActivated));
             await InitOperators();
             var sinks = nodes.Keys.Where(x => nodeMetadata[x].GetType()!= typeof(HashBasedMaterializerOperator) && !forwardLinks.ContainsKey(x)).ToList();
             await LinkToObserver(sinks);
+            return localSiloDetails.SiloAddress;
         }
 
         private async Task LinkToObserver(List<Guid> ids)
