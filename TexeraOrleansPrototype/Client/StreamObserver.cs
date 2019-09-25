@@ -47,6 +47,7 @@ namespace OrleansClient
 
         public Task OnNextAsync(Immutable<PayloadMessage> item, StreamSequenceToken token = null)
         {
+            Console.WriteLine("Received message");
             IGrain sender=item.Value.SenderIdentifer;
             ulong seqNum=item.Value.SequenceNumber;
             bool isEnd=item.Value.IsEnd;

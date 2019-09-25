@@ -146,7 +146,7 @@ namespace OrleansClient
             Console.WriteLine("Placement: controller has been assigned at "+targetSilo.Endpoint);
             var streamProvider = client.GetStreamProvider("SMSProvider");
             var so = new StreamObserver();
-            var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(workflowID, "OutputStream");
+            var stream = streamProvider.GetStream<Immutable<PayloadMessage>>(controllerGrain.GetPrimaryKey(), "OutputStream");
             var handle = await stream.SubscribeAsync(so);
             so.SetNumEndFlags(await controllerGrain.GetNumberOfOutputGrains());
             instance.IDToWorkflowEntry[workflowID]=controllerGrain;
