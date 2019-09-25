@@ -37,7 +37,7 @@ namespace Engine.OperatorImplementation.Operators
                 },
                 new List<LinkStrategy>
                 {
-                    new RoundRobinLinking(firstLayer,secondLayer,Constants.BatchSize)
+                    new AllToOneLinking(firstLayer,secondLayer,Constants.BatchSize)
                 }
             );
         }
