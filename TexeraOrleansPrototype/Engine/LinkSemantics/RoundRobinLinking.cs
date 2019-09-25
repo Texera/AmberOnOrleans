@@ -23,6 +23,7 @@ namespace Engine.LinkSemantics
 
         public override async Task Link()
         {
+            Console.WriteLine($"RoundRobin Link {from.Layer.Values.SelectMany(x=>x).Count()} to {to.Layer.Values.SelectMany(x=>x).Count()}");
             List<IWorkerGrain> isolated=new List<IWorkerGrain>();
             foreach(var pair in to.Layer)
             {
