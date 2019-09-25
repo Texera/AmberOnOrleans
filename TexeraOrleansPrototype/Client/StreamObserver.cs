@@ -111,6 +111,7 @@ namespace OrleansClient
                     Console.WriteLine("Time usage: " + sw.Elapsed +"----- result tuples: "+resultsToRet.Count);
                 }
             }
+            Console.WriteLine("stage 4");
             return Task.CompletedTask;
         }
     }
