@@ -23,7 +23,6 @@ namespace Engine.LinkSemantics
 
         public override async Task Link()
         {
-            Console.WriteLine($"RoundRobin Link {from.Layer.Values.SelectMany(x=>x).Count()} to {to.Layer.Values.SelectMany(x=>x).Count()}");
             List<IWorkerGrain> isolated=new List<IWorkerGrain>();
             foreach(var pair in to.Layer)
             {
@@ -38,12 +37,12 @@ namespace Engine.LinkSemantics
                 if(to.Layer.ContainsKey(pair.Key))
                 {
                     strategy.AddReceivers(to.Layer[pair.Key],true);
+                    strategy.AddReceivers(isolated);
                 }
                 else
                 {
                     strategy.AddReceivers(to.Layer.Values.SelectMany(x=>x).ToList());
                 }
-                strategy.AddReceivers(isolated);
                 foreach(IWorkerGrain grain in pair.Value)
                 {
                     await grain.SetSendStrategy(id,strategy);
