@@ -536,15 +536,14 @@ namespace Engine.OperatorImplementation.Common
             }
         }
 
-        public Task SetSendStrategy(string id,ISendStrategy sendStrategy)
+        public async Task SetSendStrategy(string id,ISendStrategy sendStrategy)
         {
             Console.WriteLine("Link: "+Utils.GetReadableName(self)+" "+sendStrategy);
             foreach(var receiver in sendStrategy.GetReceivers())
             {
-                receiver.AddInputInformation(self);
+                await receiver.AddInputInformation(self);
             }
             sendStrategies[id]=sendStrategy;
-            return Task.CompletedTask;
         }
 
         public Task OnTaskDidPaused()
