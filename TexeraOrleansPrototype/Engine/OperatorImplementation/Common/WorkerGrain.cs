@@ -56,7 +56,7 @@ namespace Engine.OperatorImplementation.Common
         protected ITupleProducer producer = null;
         protected IPrincipalGrain principalGrain;
         protected IWorkerGrain self = null;
-        private IOrderingEnforcer orderingEnforcer = Utils.GetOrderingEnforcerInstance();
+        private IOrderingEnforcer orderingEnforcer;
         private Dictionary<string,ISendStrategy> sendStrategies = new Dictionary<string, ISendStrategy>();
         protected Dictionary<Guid, HashSet<IGrain>> unFinishedUpstream = new Dictionary<Guid,HashSet<IGrain>>();
         protected Queue<Action> actionQueue=new Queue<Action>();
@@ -75,6 +75,9 @@ namespace Engine.OperatorImplementation.Common
         {
             this.self = this.GrainReference.Cast<IWorkerGrain>();
             Console.WriteLine("Init Start: "+Utils.GetReadableName(self));
+            string ext;
+            this.GetPrimaryKey(out ext);
+            this.orderingEnforcer = new OrderingGrainWithSequenceNumber(ext);
             this.principalGrain = principalGrain;
             this.processor = processor;
             await this.processor.Initialize();

@@ -114,12 +114,6 @@ namespace Engine.OperatorImplementation.Common
 
     static public class Utils
     {
-        static public IOrderingEnforcer GetOrderingEnforcerInstance()
-        {
-            return new OrderingGrainWithSequenceNumber();
-            // return new OrderingGrainWithContinuousSending();
-        }
-
         static public string GenerateURLForHDFSWebAPI(string filename,ulong offset)
         {
             StringBuilder sb=new StringBuilder();

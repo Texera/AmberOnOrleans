@@ -22,6 +22,13 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             Ahead,
         }
 
+        private string self;
+
+        public OrderingGrainWithSequenceNumber(string self)
+        {
+            this.self = self;
+        }
+
         private MessageStatus CheckMessage(IGrain sender, ulong sequenceNum)
         {
             if(!inSequenceNumberMap.ContainsKey(sender))
@@ -32,7 +39,7 @@ namespace Engine.OperatorImplementation.MessagingSemantics
             if(sequenceNum < currentSequenceNumber)
             {
                 // de-dup messages
-                Console.WriteLine("Received duplicated message from "+Utils.GetReadableName(sender)+" with seqnum = "+sequenceNum);
+                Console.WriteLine(self+" Received duplicated message from "+Utils.GetReadableName(sender)+" with seqnum = "+sequenceNum+" current seqnum = "+currentSequenceNumber);
                 return MessageStatus.Duplicated;
             }
             if (sequenceNum != currentSequenceNumber)
