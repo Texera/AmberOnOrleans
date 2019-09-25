@@ -25,11 +25,11 @@ namespace Engine.LinkSemantics
 
         public override async Task Link()
         {
-            ISendStrategy strategy = new Shuffle(jsonLambda,batchSize);
             List<IWorkerGrain> receivers=to.Layer.Values.SelectMany(x=>x).ToList();
             List<IWorkerGrain> senders=from.Layer.Values.SelectMany(x=>x).ToList();
             foreach(var pair in from.Layer)
             {
+                ISendStrategy strategy = new Shuffle(jsonLambda,batchSize);
                 foreach(var receiver_pair in to.Layer)
                 {
                     if(receiver_pair.Key.Equals(pair.Key))
@@ -45,7 +45,6 @@ namespace Engine.LinkSemantics
                 {
                     await grain.SetSendStrategy(id,strategy);
                 }
-                strategy.RemoveAllReceivers();
             }
         }
     }

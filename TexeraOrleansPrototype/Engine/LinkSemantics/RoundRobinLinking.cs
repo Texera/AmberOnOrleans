@@ -23,7 +23,6 @@ namespace Engine.LinkSemantics
 
         public override async Task Link()
         {
-            ISendStrategy strategy = new RoundRobin(batchSize);
             List<IWorkerGrain> isolated=new List<IWorkerGrain>();
             foreach(var pair in to.Layer)
             {
@@ -34,24 +33,20 @@ namespace Engine.LinkSemantics
             }
             foreach(var pair in from.Layer)
             {
-                List<IWorkerGrain> receivers=null;
+                ISendStrategy strategy = new RoundRobin(batchSize);
                 if(to.Layer.ContainsKey(pair.Key))
                 {
-                    receivers=to.Layer[pair.Key];
-                    strategy.AddReceivers(receivers,true);
+                    strategy.AddReceivers(to.Layer[pair.Key],true);
                 }
                 else
                 {
-                    receivers=to.Layer.Values.SelectMany(x=>x).ToList();
-                    strategy.AddReceivers(receivers);
+                    strategy.AddReceivers(to.Layer.Values.SelectMany(x=>x).ToList());
                 }
                 strategy.AddReceivers(isolated);
-                receivers.AddRange(isolated);
                 foreach(IWorkerGrain grain in pair.Value)
                 {
                     await grain.SetSendStrategy(id,strategy);
                 }
-                strategy.RemoveAllReceivers();
             }
         }
     }
