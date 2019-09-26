@@ -67,7 +67,7 @@ namespace Engine.OperatorImplementation.Operators
                         }
                     }catch(Exception e)
                     {
-                        Console.WriteLine("ERROR: tuple = "+String.Join("|",tuple.FieldList)+"| faulted");
+                        Console.WriteLine("ERROR in HashJoin: "+String.Join(",",tuple.FieldList));
                     }
                 }
             }

@@ -28,13 +28,20 @@ namespace Engine.OperatorImplementation.Operators
         }
         public void Accept(TexeraTuple tuple)
         {
-            resultTuple = new TexeraTuple(new string[projectionIndexs.Count]);
-            int i=0;
-            foreach(int attr in projectionIndexs)
+            try
             {
-                resultTuple.FieldList[i++]=tuple.FieldList[attr];
+                resultTuple = new TexeraTuple(new string[projectionIndexs.Count]);
+                int i=0;
+                foreach(int attr in projectionIndexs)
+                {
+                    resultTuple.FieldList[i++]=tuple.FieldList[attr];
+                }
+                flag = true;
             }
-            flag = true;
+            catch(Exception e)
+            {
+                Console.WriteLine("ERROR in projection: "+String.Join(",",tuple.FieldList));
+            }
         }
 
         public void Dispose()

@@ -43,7 +43,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
                 }
             }catch(Exception e)
             {
-                Console.WriteLine("ERROR: "+String.Join(",",output[i].FieldList));
+                Console.WriteLine("ERROR in Shuffle: "+String.Join(",",output[i].FieldList));
             }
         }
 
