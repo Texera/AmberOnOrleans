@@ -129,7 +129,7 @@ namespace Engine.Controller
                             }
                             else
                             {
-                                var link = new HashBasedShuffleLinking(nodeMetadata[id].GetHashFunctionAsString(id),pair.Second,inputLayer,Constants.BatchSize);
+                                var link = new HashBasedShuffleLinking(nodeMetadata[id].GetHashFunctionAsString(prevID),pair.Second,inputLayer,Constants.BatchSize);
                                 await link.Link();
                                 nodeLinks.Add(link);   
                             }
