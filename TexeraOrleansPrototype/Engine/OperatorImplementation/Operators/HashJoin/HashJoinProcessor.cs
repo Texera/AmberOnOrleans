@@ -41,7 +41,6 @@ namespace Engine.OperatorImplementation.Operators
             if(isCurrentInnerTable)
             {
                 string source=tuple.FieldList[innerTableIndex];
-                Console.WriteLine("Source: "+source);
                 if(!hashTable.ContainsKey(source))
                     hashTable[source]=new List<string[]>{tuple.FieldList.RemoveAt(innerTableIndex)};
                 else
@@ -58,7 +57,6 @@ namespace Engine.OperatorImplementation.Operators
                     try
                     {
                         string field=tuple.FieldList[outerTableIndex];
-                        Console.WriteLine("Field: "+field);
                         if(hashTable.ContainsKey(field))
                         {
                             foreach(string[] f in hashTable[field])
