@@ -23,10 +23,13 @@ namespace Engine.OperatorImplementation.Operators
         bool isCurrentInnerTable=false;
         bool isInnerTableFinished=false;
         Guid innerTableGuid=Guid.Empty;
-        Queue<TexeraTuple> resultQueue;
+        bool flag = false;
         int receivedTupleCount = 0;
         int outputTupleCount = 0;
         int outputTupleCountNoMore = 0;
+        int currentIndex = 0;
+        List<string[]> currentEntry;
+        string[] currentTuple;
 
         public HashJoinProcessor(int InnerTableIndex, int OuterTableIndex, Guid InnerTableID)
         {
@@ -57,11 +60,10 @@ namespace Engine.OperatorImplementation.Operators
                     string field=tuple.FieldList[outerTableIndex];
                     if(hashTable.ContainsKey(field))
                     {
-                        foreach(string[] f in hashTable[field])
-                        {  
-                            resultQueue.Enqueue(new TexeraTuple(tuple.FieldList.FastConcat(f)));
-                            outputTupleCount++;
-                        }
+                        flag = true;
+                        currentIndex = 0;
+                        currentEntry = hashTable[field];
+                        currentTuple = tuple.FieldList;
                     }
                 }
             }
@@ -83,25 +85,24 @@ namespace Engine.OperatorImplementation.Operators
                 //     sb.AppendLine(((int)(entry.Key.ToCharArray()[0])).ToString());
                 // }
                 // Console.WriteLine(sb.ToString());
-                foreach(var tuple in otherTable)
-                {
-                    string field=tuple.FieldList[outerTableIndex];
-                    if(hashTable.ContainsKey(field))
-                    {
-                        foreach(string[] f in hashTable[field])
-                        {  
-                            resultQueue.Enqueue(new TexeraTuple(tuple.FieldList.FastConcat(f)));
-                            outputTupleCountNoMore++;
-                        }
-                    }
-                }
+                // foreach(var tuple in otherTable)
+                // {
+                //     string field=tuple.FieldList[outerTableIndex];
+                //     if(hashTable.ContainsKey(field))
+                //     {
+                //         foreach(string[] f in hashTable[field])
+                //         {  
+                //             resultQueue.Enqueue(new TexeraTuple(tuple.FieldList.FastConcat(f)));
+                //             outputTupleCountNoMore++;
+                //         }
+                //     }
+                // }
                 otherTable.Clear();
             }
         }
 
         public Task Initialize()
         {
-            resultQueue = new Queue<TexeraTuple>();
             hashTable=new Dictionary<string, List<string[]>>();
             otherTable=new List<TexeraTuple>();
             return Task.CompletedTask;
@@ -110,12 +111,19 @@ namespace Engine.OperatorImplementation.Operators
 
         public bool HasNext()
         {
-            return resultQueue.Count > 0;
+            return flag;
         }
  
         public TexeraTuple Next()
         {
-            return resultQueue.Dequeue();
+            var result = new TexeraTuple(currentTuple.FastConcat(currentEntry[currentIndex]));
+            outputTupleCount++;
+            currentIndex++;
+            if(currentIndex>=currentEntry.Count)
+            {
+                flag = false;
+            }
+            return result;
         }
 
         public void Dispose()
