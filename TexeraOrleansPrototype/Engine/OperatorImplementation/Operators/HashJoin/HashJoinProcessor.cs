@@ -30,6 +30,8 @@ namespace Engine.OperatorImplementation.Operators
         int currentIndex = 0;
         List<string[]> currentEntry;
         string[] currentTuple;
+        Queue<TexeraTuple> resultQueue;
+        bool end = false;
 
         public HashJoinProcessor(int InnerTableIndex, int OuterTableIndex, Guid InnerTableID)
         {
@@ -85,24 +87,26 @@ namespace Engine.OperatorImplementation.Operators
                 //     sb.AppendLine(((int)(entry.Key.ToCharArray()[0])).ToString());
                 // }
                 // Console.WriteLine(sb.ToString());
-                // foreach(var tuple in otherTable)
-                // {
-                //     string field=tuple.FieldList[outerTableIndex];
-                //     if(hashTable.ContainsKey(field))
-                //     {
-                //         foreach(string[] f in hashTable[field])
-                //         {  
-                //             resultQueue.Enqueue(new TexeraTuple(tuple.FieldList.FastConcat(f)));
-                //             outputTupleCountNoMore++;
-                //         }
-                //     }
-                // }
+                end = true;
+                foreach(var tuple in otherTable)
+                {
+                    string field=tuple.FieldList[outerTableIndex];
+                    if(hashTable.ContainsKey(field))
+                    {
+                        foreach(string[] f in hashTable[field])
+                        {  
+                            resultQueue.Enqueue(new TexeraTuple(tuple.FieldList.FastConcat(f)));
+                            outputTupleCountNoMore++;
+                        }
+                    }
+                }
                 otherTable.Clear();
             }
         }
 
         public Task Initialize()
         {
+            resultQueue = new Queue<TexeraTuple>();
             hashTable=new Dictionary<string, List<string[]>>();
             otherTable=new List<TexeraTuple>();
             return Task.CompletedTask;
@@ -111,11 +115,15 @@ namespace Engine.OperatorImplementation.Operators
 
         public bool HasNext()
         {
-            return flag;
+            return flag || (end && resultQueue.Count > 0);
         }
  
         public TexeraTuple Next()
         {
+            if(end && resultQueue.Count > 0)
+            {
+                return resultQueue.Dequeue();
+            }
             var result = new TexeraTuple(currentTuple.FastConcat(currentEntry[currentIndex]));
             outputTupleCount++;
             currentIndex++;
