@@ -52,7 +52,7 @@ namespace Engine.OperatorImplementation.Operators
 
         public void NoMore()
         {
-            flag = true;
+            flag = sortedTuples.Count > 0;
         }
 
         public Task Initialize()
