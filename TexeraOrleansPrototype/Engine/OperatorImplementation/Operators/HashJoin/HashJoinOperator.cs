@@ -50,9 +50,15 @@ namespace Engine.OperatorImplementation.Operators
         {
             int joinFieldIndex;
             if(from.Equals(InnerTableID))
+            {
+                Console.WriteLine(from+" use inner idx = "+InnerTableIndex);
                 joinFieldIndex=InnerTableIndex;
+            }
             else
+            {
+                Console.WriteLine(from+" use outer idx = "+OuterTableIndex);
                 joinFieldIndex=OuterTableIndex;
+            }
             Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[joinFieldIndex].GetStableHashCode();
             var serializer = new ExpressionSerializer(new JsonSerializer());
             return serializer.SerializeText(exp);
