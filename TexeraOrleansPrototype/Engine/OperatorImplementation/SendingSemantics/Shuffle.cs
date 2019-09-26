@@ -33,10 +33,17 @@ namespace Engine.OperatorImplementation.SendingSemantics
             }
             int limit=output.Count;
             int modlimit=outputRows.Count;
-            for(int i=0;i<limit;++i)
+            int i=0;
+            try
             {
-                int idx=NonNegativeModular(selector(output[i]),modlimit);
-                outputRows[idx].Enqueue(output[i]);
+                for(i=0;i<limit;++i)
+                {
+                    int idx=NonNegativeModular(selector(output[i]),modlimit);
+                    outputRows[idx].Enqueue(output[i]);
+                }
+            }catch(Exception e)
+            {
+                Console.WriteLine("ERROR: "+String.Join(",",output[i].FieldList));
             }
         }
 
