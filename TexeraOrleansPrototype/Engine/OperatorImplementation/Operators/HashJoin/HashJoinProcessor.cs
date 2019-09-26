@@ -54,20 +54,14 @@ namespace Engine.OperatorImplementation.Operators
                 }
                 else
                 {
-                    try
+                    string field=tuple.FieldList[outerTableIndex];
+                    if(hashTable.ContainsKey(field))
                     {
-                        string field=tuple.FieldList[outerTableIndex];
-                        if(hashTable.ContainsKey(field))
-                        {
-                            foreach(string[] f in hashTable[field])
-                            {  
-                                resultQueue.Enqueue(new TexeraTuple(tuple.FieldList.FastConcat(f)));
-                                outputTupleCount++;
-                            }
+                        foreach(string[] f in hashTable[field])
+                        {  
+                            resultQueue.Enqueue(new TexeraTuple(tuple.FieldList.FastConcat(f)));
+                            outputTupleCount++;
                         }
-                    }catch(Exception e)
-                    {
-                        Console.WriteLine("ERROR in HashJoin: "+String.Join(",",tuple.FieldList));
                     }
                 }
             }

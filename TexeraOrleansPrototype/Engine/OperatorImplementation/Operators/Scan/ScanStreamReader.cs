@@ -160,11 +160,22 @@ class ScanStreamReader
                     forloop+=DateTime.UtcNow-start;
                     DateTime start2=DateTime.UtcNow;
                     #endif
-                    var v=new Pair<TexeraTuple,ulong>(new TexeraTuple(fields.ToArray()),ByteCount);
-                    #if (PROFILING_ENABLED)
-                    generate+=DateTime.UtcNow-start2;
-                    #endif
-                    return v;
+                    if(fields.Count>0)
+                    {
+                        var v=new Pair<TexeraTuple,ulong>(new TexeraTuple(fields.ToArray()),ByteCount);
+                        #if (PROFILING_ENABLED)
+                        generate+=DateTime.UtcNow-start2;
+                        #endif
+                        return v;
+                    }
+                    else
+                    {
+                        var v=new Pair<TexeraTuple,ulong>(new TexeraTuple(null),ByteCount);
+                        #if (PROFILING_ENABLED)
+                        generate+=DateTime.UtcNow-start2;
+                        #endif
+                        return v;
+                    }
                 }
             }
             ByteCount+=(ulong)(buffer_end-buffer_start);

@@ -34,16 +34,10 @@ namespace Engine.OperatorImplementation.SendingSemantics
             int limit=output.Count;
             int modlimit=outputRows.Count;
             int i=0;
-            try
+            for(i=0;i<limit;++i)
             {
-                for(i=0;i<limit;++i)
-                {
-                    int idx=NonNegativeModular(selector(output[i]),modlimit);
-                    outputRows[idx].Enqueue(output[i]);
-                }
-            }catch(Exception e)
-            {
-                Console.WriteLine("ERROR in Shuffle: "+String.Join(",",output[i].FieldList));
+                int idx=NonNegativeModular(selector(output[i]),modlimit);
+                outputRows[idx].Enqueue(output[i]);
             }
         }
 
