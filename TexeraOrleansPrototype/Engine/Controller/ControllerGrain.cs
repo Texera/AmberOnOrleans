@@ -82,8 +82,47 @@ namespace Engine.Controller
             }
             else
             {
-                startDependencies[target]= new HashSet<Guid>{dependsOn};
+                startDependencies[target] = new HashSet<Guid>{dependsOn};
             }
+        }
+
+        private void AddStartDenpendency(List<Guid> targets, List<Guid> dependsOn)
+        {
+            foreach(Guid target in targets)
+            {
+                if(startDependencies.ContainsKey(target))
+                {
+                    startDependencies[target].UnionWith(dependsOn);
+                }
+                else
+                {
+                    startDependencies[target] = new HashSet<Guid>(dependsOn);
+                }
+            }  
+        }
+
+
+        private List<Guid> GetSource(Guid operatorID)
+        {
+            List<Guid> res = new List<Guid>();
+            List<Guid> frontier = new List<Guid>{operatorID};
+            while(frontier.Count > 0)
+            {
+                List<Guid> next = new List<Guid>();
+                foreach(Guid id in frontier)
+                {
+                    if(backwardLinks.ContainsKey(id))
+                    {
+                        next.AddRange(backwardLinks[id]);
+                    }
+                    else
+                    {
+                        res.Add(id);
+                    }
+                }
+                frontier = next;
+            }
+            return res;
         }
 
 
@@ -291,14 +330,14 @@ namespace Engine.Controller
                 {
                     int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
                     int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
-                    AddStartDenpendency(backwardLinks[operatorID][1],backwardLinks[operatorID][0]);
+                    AddStartDenpendency(GetSource(backwardLinks[operatorID][1]),GetSource(backwardLinks[operatorID][0]));
                     op = new CrossRippleJoinOperator(innerIndex,outerIndex,backwardLinks[operatorID][0]);
                 }
                 else if((string)operator1["operatorType"] == "HashRippleJoin")
                 {
                     int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
                     int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
-                    AddStartDenpendency(backwardLinks[operatorID][1],backwardLinks[operatorID][0]);
+                    AddStartDenpendency(GetSource(backwardLinks[operatorID][1]),GetSource(backwardLinks[operatorID][0]));
                     op = new HashRippleJoinOperator(innerIndex,outerIndex,backwardLinks[operatorID][0]);
                 }
                 else if((string)operator1["operatorType"] == "InsertionSort")
@@ -334,7 +373,7 @@ namespace Engine.Controller
                 {
                     int innerIndex=int.Parse(operator1["innerTableAttribute"].ToString().Replace("_c",""));
                     int outerIndex=int.Parse(operator1["outerTableAttribute"].ToString().Replace("_c",""));
-                    AddStartDenpendency(backwardLinks[operatorID][1],backwardLinks[operatorID][0]);
+                    AddStartDenpendency(GetSource(backwardLinks[operatorID][1]),GetSource(backwardLinks[operatorID][0]));
                     op = new HashJoinOperator(innerIndex,outerIndex,backwardLinks[operatorID][0]);
                 }
                 else if((string)operator1["operatorType"]=="SentimentAnalysis")
