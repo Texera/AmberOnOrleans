@@ -24,9 +24,6 @@ namespace Engine.OperatorImplementation.Operators
         bool isInnerTableFinished=false;
         Guid innerTableGuid=Guid.Empty;
         bool flag = false;
-        int receivedTupleCount = 0;
-        int outputTupleCount = 0;
-        int outputTupleCountNoMore = 0;
         int currentIndex = 0;
         List<string[]> currentEntry;
         string[] currentTuple;
@@ -42,7 +39,6 @@ namespace Engine.OperatorImplementation.Operators
 
         public void Accept(TexeraTuple tuple)
         {
-            receivedTupleCount++;
             if(isCurrentInnerTable)
             {
                 string source=tuple.FieldList[innerTableIndex];
@@ -78,35 +74,34 @@ namespace Engine.OperatorImplementation.Operators
 
         public void NoMore()
         {
-            if(otherTable.Count > 0)
-            {
-                // StringBuilder sb = new StringBuilder();
-                // foreach(var entry in hashTable)
-                // {
-                //     sb.AppendLine(entry.Key+": "+entry.Value.Count+ " hashCode: "+entry.Key.GetHashCode()+" length: "+entry.Key.Length);
-                //     sb.AppendLine(((int)(entry.Key.ToCharArray()[0])).ToString());
-                // }
-                // Console.WriteLine(sb.ToString());
-                end = true;
-                foreach(var tuple in otherTable)
-                {
-                    string field=tuple.FieldList[outerTableIndex];
-                    if(hashTable.ContainsKey(field))
-                    {
-                        foreach(string[] f in hashTable[field])
-                        {  
-                            resultQueue.Enqueue(new TexeraTuple(tuple.FieldList.FastConcat(f)));
-                            outputTupleCountNoMore++;
-                        }
-                    }
-                }
-                otherTable.Clear();
-            }
+            // if(otherTable.Count > 0)
+            // {
+            //     // StringBuilder sb = new StringBuilder();
+            //     // foreach(var entry in hashTable)
+            //     // {
+            //     //     sb.AppendLine(entry.Key+": "+entry.Value.Count+ " hashCode: "+entry.Key.GetHashCode()+" length: "+entry.Key.Length);
+            //     //     sb.AppendLine(((int)(entry.Key.ToCharArray()[0])).ToString());
+            //     // }
+            //     // Console.WriteLine(sb.ToString());
+            //     resultQueue = new Queue<TexeraTuple>();
+            //     end = true;
+            //     foreach(var tuple in otherTable)
+            //     {
+            //         string field=tuple.FieldList[outerTableIndex];
+            //         if(hashTable.ContainsKey(field))
+            //         {
+            //             foreach(string[] f in hashTable[field])
+            //             {  
+            //                 resultQueue.Enqueue(new TexeraTuple(tuple.FieldList.FastConcat(f)));
+            //             }
+            //         }
+            //     }
+            //     otherTable.Clear();
+            // }
         }
 
         public Task Initialize()
         {
-            resultQueue = new Queue<TexeraTuple>();
             hashTable=new Dictionary<string, List<string[]>>();
             otherTable=new List<TexeraTuple>();
             return Task.CompletedTask;
@@ -115,17 +110,17 @@ namespace Engine.OperatorImplementation.Operators
 
         public bool HasNext()
         {
-            return flag || (end && resultQueue.Count > 0);
+            return flag;
+            // || (end && resultQueue.Count > 0);
         }
  
         public TexeraTuple Next()
         {
-            if(end && resultQueue.Count > 0)
-            {
-                return resultQueue.Dequeue();
-            }
+            // if(end && resultQueue.Count > 0)
+            // {
+            //     return resultQueue.Dequeue();
+            // }
             var result = new TexeraTuple(currentTuple.FastConcat(currentEntry[currentIndex]));
-            outputTupleCount++;
             currentIndex++;
             if(currentIndex>=currentEntry.Count)
             {
@@ -136,7 +131,6 @@ namespace Engine.OperatorImplementation.Operators
 
         public void Dispose()
         {
-            Console.WriteLine("received: "+receivedTupleCount+" tuples, output: "+outputTupleCount+" tuples, output2: "+outputTupleCountNoMore+" tuples");
             hashTable=null;
             otherTable=null;
         }
