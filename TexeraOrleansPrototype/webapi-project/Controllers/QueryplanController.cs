@@ -13,7 +13,7 @@ using Engine.OperatorImplementation.Common;
 using Engine.OperatorImplementation.Operators;
 using Microsoft.AspNetCore.WebUtilities;
 using TexeraUtilities;
-using Microsoft.AspNetCore.Mvc.Newtonsoft.Json;
+using Newtonsoft.Json;
 
 namespace webapi.Controllers
 {
@@ -24,7 +24,7 @@ namespace webapi.Controllers
 
         [HttpPost]
         [Route("api/queryplan/execute")]
-        public async IActionResult Execute([FromBody]string logicalPlanJson)
+        public async Task<IActionResult> Execute([FromBody]string logicalPlanJson)
         {
             
             if(client == null)
