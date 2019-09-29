@@ -14,7 +14,7 @@ namespace TexeraUtilities
         public static string WebHDFSEntry = "http://34.68.182.10:9870/webhdfs/v1/";
         public static int MaxRetries = 60;
         public static int BatchSize = 400;
-        public static int DefaultNumGrainsInOneLayer=2;
+        public static int DefaultNumGrainsInOneLayer=10;
         public static string ConnectionString 
         {
             get
