@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using System.Text;
 using Orleans;
 using Orleans.Hosting;
 using OrleansClient;
@@ -12,6 +13,7 @@ using Engine.OperatorImplementation.Common;
 using Engine.OperatorImplementation.Operators;
 using Microsoft.AspNetCore.WebUtilities;
 using TexeraUtilities;
+using Microsoft.AspNetCore.Mvc.Newtonsoft.Json;
 
 namespace webapi.Controllers
 {
@@ -22,7 +24,7 @@ namespace webapi.Controllers
 
         [HttpPost]
         [Route("api/queryplan/execute")]
-        public IActionResult Execute([FromBody]string logicalPlanJson)
+        public async IActionResult Execute([FromBody]string logicalPlanJson)
         {
             
             if(client == null)
@@ -30,7 +32,7 @@ namespace webapi.Controllers
                 client = ClientWrapper.Instance.client;
             }
             string json;
-            using (var streamReader = new HttpRequestStreamReader(request.Body, Encoding.UTF8))
+            using (var streamReader = new HttpRequestStreamReader(Request.Body, Encoding.UTF8))
             using (var jsonReader = new JsonTextReader(streamReader))
             {
                 json = await JObject.LoadAsync(jsonReader);       
