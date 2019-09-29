@@ -140,8 +140,8 @@ namespace OrleansClient
             // List<ulong> seqnum=new List<ulong>{0,1,3,2,4,10,9,8,7,5,4,6};
             // foreach(ulong seq in seqnum)
             //     grain.ReceivePayloadMessage(new Immutable<PayloadMessage>(new PayloadMessage("123",seq,null,seq==10)));
-            var controllerGrain = client.GetGrain<IControllerGrain>(workflowID);
             RequestContext.Set("targetSilo",Constants.ClientIPAddress);
+            var controllerGrain = client.GetGrain<IControllerGrain>(workflowID);
             var targetSilo = await controllerGrain.Init(controllerGrain,plan,true);
             Console.WriteLine("Placement: controller has been assigned at "+targetSilo.Endpoint);
             var streamProvider = client.GetStreamProvider("SMSProvider");
