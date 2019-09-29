@@ -30,12 +30,10 @@ namespace webapi.Controllers
         //Post api/pause
         [HttpPost]
         [Route("api/pause")]
-        public Task<HttpResponseMessage> PostPause()
+        public Task<HttpResponseMessage> PostPause([FromBody] object json)
         {
             Console.WriteLine("action: pause");
-            Stream req = Request.Body;
-            string json = new StreamReader(req).ReadToEnd();
-            JObject o = JObject.Parse(json);
+            JObject o = (JObject)json;
             Guid workflowID;
             if(!Guid.TryParse(o["workflowID"].ToString().Substring(16),out workflowID))
             {
@@ -57,13 +55,10 @@ namespace webapi.Controllers
         //Post api/pause
         [HttpPost]
         [Route("api/resume")]
-        public async Task<HttpResponseMessage> PostResume()
+        public async Task<HttpResponseMessage> PostResume([FromBody] object json)
         {
             Console.WriteLine("action: resume");
-            Stream req = Request.Body;
-            //req.Seek(0, System.IO.SeekOrigin.Begin);
-            string json = new StreamReader(req).ReadToEnd();
-            JObject o = JObject.Parse(json);
+            JObject o = (JObject)json;
             Guid workflowID;
             if(!Guid.TryParse(o["workflowID"].ToString().Substring(16),out workflowID))
             {

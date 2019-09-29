@@ -57,7 +57,7 @@ namespace Engine.OperatorImplementation.FaultTolerance
                 sws[i].Close();
                 string pathName = currentDir+"/"+id+"/"+idx+"_"+i+".tmp";
                 //put local file to HDFS
-                string dirName = "/tmp/"+id+"/"+i;
+                string dirName = "/amber-tmp/"+id+"/"+i;
                 ("chmod 777 "+pathName).Bash();
                 ("/home/sheng/hadoop-3.0.0/bin/hdfs dfs -put "+pathName+" "+dirName).Bash();
             }

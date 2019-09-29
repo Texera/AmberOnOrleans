@@ -390,7 +390,7 @@ namespace Engine.Controller
                 }
                 else if((string)operator1["operatorType"]=="HashBasedFolderScan")
                 {
-                    op = new HashBasedFolderScanOperator(Constants.WebHDFSEntry+"/tmp/"+operator1["folderRoot"],Constants.DefaultNumGrainsInOneLayer);
+                    op = new HashBasedFolderScanOperator(Constants.WebHDFSEntry+"/amber-tmp/"+operator1["folderRoot"],Constants.DefaultNumGrainsInOneLayer);
                 }
 
                 if(op!=null)
