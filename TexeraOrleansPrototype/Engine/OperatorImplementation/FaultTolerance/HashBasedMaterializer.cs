@@ -59,7 +59,7 @@ namespace Engine.OperatorImplementation.FaultTolerance
                 //put local file to HDFS
                 string dirName = "/amber-tmp/"+id+"/"+i;
                 ("chmod 777 "+pathName).Bash();
-                ("/home/sheng/hadoop-3.0.0/bin/hdfs dfs -put "+pathName+" "+dirName).Bash();
+                ("./hdfs dfs -put "+pathName+" "+dirName).Bash();
             }
             return;
         }
