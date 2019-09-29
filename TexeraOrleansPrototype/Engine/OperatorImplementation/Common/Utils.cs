@@ -153,6 +153,7 @@ namespace Engine.OperatorImplementation.Common
             StringBuilder sb=new StringBuilder();
             sb.Append(filename);
             sb.Append("?op=GETFILESTATUS");
+            Console.WriteLine("Query: "+ sb.ToString());
             HttpWebRequest request = (HttpWebRequest)WebRequest.Create(sb.ToString());
             request.AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate;
             HttpWebResponse response = (HttpWebResponse)request.GetResponse();
