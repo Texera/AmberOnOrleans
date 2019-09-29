@@ -26,12 +26,6 @@ namespace webapi
         {
             services.AddMvc(option => option.EnableEndpointRouting = false).AddNewtonsoftJson();
 
-            // kestrel
-            services.Configure<KestrelServerOptions>(options =>
-            {
-                options.AllowSynchronousIO = true;
-            });
-
             // IIS
             services.Configure<IISServerOptions>(options =>
             {
