@@ -35,6 +35,7 @@ namespace Engine.OperatorImplementation.Operators
             this.innerTableIndex = InnerTableIndex;
             this.outerTableIndex = OuterTableIndex;
             this.innerTableGuid = InnerTableID;
+            Console.WriteLine("HashJoin: innerIdx = "+innerTableIndex+" outerIdx = "+outerTableIndex+" innerGuid = "+InnerTableID);
         }
 
         public void Accept(TexeraTuple tuple)
