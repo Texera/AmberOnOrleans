@@ -148,10 +148,13 @@ class ScanStreamReader
                 {
                     int length=i-buffer_start;
                     ByteCount+=(ulong)(length+1);
-                    if(length>0)
+                    if(length > 0)
                     {
                         charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
                         sb.Append(charbuf,0,charbuf_length);
+                    }
+                    if(sb.Length > 0)
+                    {
                         fields.Add(sb.ToString());
                     }
                     buffer_start=i+1;
