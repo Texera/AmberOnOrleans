@@ -58,8 +58,8 @@ namespace Engine.OperatorImplementation.FaultTolerance
                 string pathName = currentDir+"/"+id+"/"+idx+"_"+i+".tmp";
                 //put local file to HDFS
                 string dirName = "/amber-tmp/"+id+"/"+i;
-                ("chmod 777 "+pathName).Bash();
-                ("hdfs dfs -put "+pathName+" "+dirName).Bash();
+                ("chmod 777 "+pathName).Bash(); 
+                ("hadoop fs -cp file://"+pathName+" hdfs://10.138.0.2:8020"+dirName).Bash();
             }
             return;
         }
