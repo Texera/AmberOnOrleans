@@ -68,6 +68,7 @@ namespace Engine.OperatorImplementation.FaultTolerance
                 await reader.FillBuffer();
             }
             Pair<TexeraTuple,ulong> res=await reader.ReadTuple();
+            Console.WriteLine("Tuple: "+String.Join(",",res.First.FieldList));
             return res.First;
         }
     }

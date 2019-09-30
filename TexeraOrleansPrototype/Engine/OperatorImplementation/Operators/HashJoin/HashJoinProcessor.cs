@@ -40,8 +40,6 @@ namespace Engine.OperatorImplementation.Operators
 
         public void Accept(TexeraTuple tuple)
         {
-            Console.WriteLine("Tuple: "+String.Join(",",tuple.FieldList));
-
             if(isCurrentInnerTable)
             {
                 string source=tuple.FieldList[innerTableIndex];
