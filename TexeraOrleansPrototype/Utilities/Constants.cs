@@ -10,7 +10,7 @@ namespace TexeraUtilities
 {
     static public class Constants
     {
-        public static string ClientIPAddress="10.128.0.9";
+        public static string ClientIPAddress="10.128.0.2";
         public static string WebHDFSEntry = "http://10.138.0.2:9870/webhdfs/v1/";
         public static int MaxRetries = 60;
         public static int BatchSize = 400;
