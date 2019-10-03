@@ -80,7 +80,7 @@ namespace OrleansClient
                         services.AddSingletonKeyedService<Type, IPlacementDirector, WorkerGrainPlacementDirector>(typeof(WorkerGrainPlacement));
                     })
                     .ConfigureLogging(logging => logging.AddConsole())
-                    .Configure<ClientMessagingOptions>(options => options.ResponseTimeout=new TimeSpan(0,4,0));
+                    .Configure<ClientMessagingOptions>(options => options.ResponseTimeout=new TimeSpan(0,10,0));
 
             client = clientBuilder.Build();
 
