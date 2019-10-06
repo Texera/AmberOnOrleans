@@ -129,7 +129,7 @@ namespace Engine.Controller
         private async Task InitOperators()
         {
             //topological ordering
-            var current = nodeMetadata.Keys.Where(x => !backwardLinks.ContainsKey(x)).ToList();
+            var current = nodeMetadata.Keys.Where(x => !backwardLinks.ContainsKey(x) && !startDependencies.ContainsKey(x)).ToList();
             while(current.Count > 0)
             {
                 foreach(var id in current)
@@ -203,7 +203,7 @@ namespace Engine.Controller
                 {
                     string operatorType = (string)op["operatorType"];
                     string currentID = (string)op["operatorID"];
-                    if(operatorType == "HashRippleJoin" || operatorType == "HashJoin")
+                    if(operatorType == "HashRippleJoin" || operatorType == "HashJoin" || operatorType == "GroupByFinal")
                     {
                         var linksToDelete = new List<JToken>();
                         //search for input links
@@ -363,6 +363,11 @@ namespace Engine.Controller
                     int groupByIndex=int.Parse(operator1["groupByAttribute"].ToString().Replace("_c",""));
                     int aggregationIndex=int.Parse(operator1["aggregationAttribute"].ToString().Replace("_c",""));
                     op=new GroupByOperator(groupByIndex,aggregationIndex,operator1["aggregationFunction"].ToString());
+                }
+                else if((string)operator1["operatorType"] == "GroupByFinal")
+                {
+                    AddStartDenpendency(operatorID,backwardLinks[operatorID][0]);
+                    op=new GroupByFinalOperator(operator1["aggregationFunction"].ToString());
                 }
                 else if((string)operator1["operatorType"] == "Projection")
                 {

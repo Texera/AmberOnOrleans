@@ -61,21 +61,15 @@ namespace Engine.OperatorImplementation.Operators
         public override Pair<List<WorkerLayer>, List<LinkStrategy>> GenerateTopology()
         {
             var firstLayer = new ProcessorWorkerLayer("groupby.main",Constants.DefaultNumGrainsInOneLayer,(i)=>new GroupByProcessor(GroupByIndex,Aggregation,AggregationIndex),null);
-            var secondLayer = new ProcessorWorkerLayer("groupby.final",Constants.DefaultNumGrainsInOneLayer,(i)=>new GroupByFinalProcessor(Aggregation),null);
-            Expression<Func<TexeraTuple,int>> exp=tuple=>tuple.FieldList[0].GetStableHashCode();
-            var serializer = new ExpressionSerializer(new JsonSerializer());
-            var hashFunc = serializer.SerializeText(exp);
-
             return new Pair<List<WorkerLayer>,List<LinkStrategy>>
             (
                 new List<WorkerLayer>
                 {
-                    firstLayer,
-                    secondLayer
+                    firstLayer
                 },
                 new List<LinkStrategy>
                 {
-                    new HashBasedShuffleLinking(hashFunc,firstLayer,secondLayer,Constants.BatchSize)
+
                 }
             );
         }
