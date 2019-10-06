@@ -21,10 +21,12 @@ namespace Engine.OperatorImplementation.FaultTolerance
     {
         private StreamWriter sws;
         private Guid id;
+        private int idx;
 
-        public LocalMaterializer(Guid id)
+        public LocalMaterializer(Guid id, int idx)
         {
             this.id = id;
+            this.idx = idx;
         }
 
         public void Accept(TexeraTuple tuple)
@@ -46,7 +48,7 @@ namespace Engine.OperatorImplementation.FaultTolerance
         public Task Initialize()
         {
             string currentDir = Environment.CurrentDirectory;
-            string pathName = currentDir+"/"+id+".tmp";
+            string pathName = currentDir+"/"+id+"-"+idx+".tmp";
             sws = new StreamWriter(pathName, false, new UTF8Encoding(false), 65536);
             return Task.CompletedTask;
         }

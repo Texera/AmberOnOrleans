@@ -193,72 +193,94 @@ namespace Engine.Controller
         private JObject CompileLogicalPlan(string plan, bool checkpointActivated)
         {
             JObject res = JObject.Parse(plan);
-            if(checkpointActivated)
+            JArray operators = (JArray)res["operators"];
+            JArray links =(JArray)res["links"];
+            JArray operatorsToAdd = new JArray();
+            JArray linksToAdd = new JArray(); 
+            foreach(JObject op in operators)
             {
-                JArray operators = (JArray)res["operators"];
-                JArray links =(JArray)res["links"];
-                JArray operatorsToAdd = new JArray();
-                JArray linksToAdd = new JArray(); 
-                foreach(JObject op in operators)
+                string operatorType = (string)op["operatorType"];
+                string currentID = (string)op["operatorID"];
+                if(operatorType == "HashRippleJoin" || operatorType == "HashJoin" || operatorType == "GroupByFinal")
                 {
-                    string operatorType = (string)op["operatorType"];
-                    string currentID = (string)op["operatorID"];
-                    if(operatorType == "HashRippleJoin" || operatorType == "HashJoin" || operatorType == "GroupByFinal")
+                    var linksToDelete = new List<JToken>();
+                    //search for input links
+                    for(int i=0;i<links.Count;++i)
                     {
-                        var linksToDelete = new List<JToken>();
-                        //search for input links
-                        for(int i=0;i<links.Count;++i)
+                        var link = links[i];
+                        if(((string)link["destination"]).Equals(currentID))
                         {
-                            var link = links[i];
-                            if(((string)link["destination"]).Equals(currentID))
+                            //create new links
+                            string inputID = (string)link["origin"];
+                            Guid materializerID = Guid.NewGuid(); 
+                            Guid scanID = Guid.NewGuid();
+                            //set start dependency
+                            AddStartDenpendency(scanID,materializerID);
+                            var link1 = new JObject
                             {
-                                //create new links
-                                string inputID = (string)link["origin"];
-                                Guid materializerID = Guid.NewGuid(); 
-                                Guid scanID = Guid.NewGuid();
-                                //set start dependency
-                                AddStartDenpendency(scanID,materializerID);
-                                var link1 = new JObject
-                                {
-                                    ["origin"]=inputID,
-                                    ["destination"]="operator-"+materializerID.ToString()
-                                };
-                                var link2 = new JObject
-                                {
-                                    ["origin"]="operator-"+scanID.ToString(),
-                                    ["destination"]=currentID
-                                };
-                                linksToAdd.Add(link1);
-                                linksToAdd.Add(link2);
-                                //create materializer operator
-                                JObject materializer = new JObject
+                                ["origin"]=inputID,
+                                ["destination"]="operator-"+materializerID.ToString()
+                            };
+                            var link2 = new JObject
+                            {
+                                ["origin"]="operator-"+scanID.ToString(),
+                                ["destination"]=currentID
+                            };
+                            linksToAdd.Add(link1);
+                            linksToAdd.Add(link2);
+                            //create materializer operator
+                            JObject materializer=null;
+                            if(checkpointActivated)
+                            {
+                                materializer = new JObject
                                 {
                                     ["operatorType"]="HashBasedMaterializer",
                                     ["operatorID"]="operator-"+materializerID.ToString(),
                                     ["hasherID"]=currentID,
                                     ["inputID"]="operator-"+scanID.ToString(),
                                 };
-                                operatorsToAdd.Add(materializer);
-                                //create scan operator
-                                JObject scan = new JObject
+                            }
+                            else
+                            {
+                                materializer = new JObject
+                                {
+                                    ["operatorType"]="LocalMaterializer",
+                                    ["operatorID"]="operator-"+materializerID.ToString()
+                                };
+                            }
+                            operatorsToAdd.Add(materializer);
+                            //create scan operator
+                            JObject scan=null;
+                            if(checkpointActivated)
+                            {
+                                scan = new JObject
                                 {
                                     ["operatorType"]="HashBasedFolderScan",
                                     ["operatorID"]="operator-"+scanID.ToString(),
                                     ["folderRoot"]=materializerID.ToString()
                                 };
-                                operatorsToAdd.Add(scan);
-                                linksToDelete.Add(link);
                             }
-                        }
-                        foreach(var link in linksToDelete)
-                        {
-                            link.Remove();
+                            else
+                            {
+                                scan = new JObject
+                                {
+                                    ["operatorType"]="LocalScanSource",
+                                    ["operatorID"]="operator-"+scanID.ToString(),
+                                    ["fileName"]=materializerID.ToString()
+                                };
+                            }
+                            operatorsToAdd.Add(scan);
+                            linksToDelete.Add(link);
                         }
                     }
+                    foreach(var link in linksToDelete)
+                    {
+                        link.Remove();
+                    }
                 }
-                links.Merge(linksToAdd);
-                operators.Merge(operatorsToAdd);
             }
+            links.Merge(linksToAdd);
+            operators.Merge(operatorsToAdd);
             return res;
         }
 
@@ -299,6 +321,14 @@ namespace Engine.Controller
                 {
                     //example path to HDFS through WebHDFS API: "http://localhost:50070/webhdfs/v1/input/very_large_input.csv"
                     op = new ScanOperator((string)operator1["tableName"]);
+                }
+                else if((string)operator1["operatorType"]=="LocalScanSource")
+                {
+                    op = new LocalFileScanOperator((string)operator1["fileName"]);
+                }
+                else if((string)operator1["operatorType"]=="LocalMaterializer")
+                {
+                    op = new LocalMaterializerOperator(operatorID);
                 }
                 else if((string)operator1["operatorType"] == "KeywordMatcher")
                 {
@@ -366,7 +396,6 @@ namespace Engine.Controller
                 }
                 else if((string)operator1["operatorType"] == "GroupByFinal")
                 {
-                    AddStartDenpendency(operatorID,backwardLinks[operatorID][0]);
                     op=new GroupByFinalOperator(operator1["aggregationFunction"].ToString());
                 }
                 else if((string)operator1["operatorType"] == "Projection")

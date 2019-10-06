@@ -10,12 +10,12 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.FaultTolerance
 {
-    public class LocalMaterializerOperator : Operator
+    public class LocalFileScanOperator : Operator
     {
-        private Guid id;
-        public LocalMaterializerOperator(Guid id) : base()
+        private string file;
+        public LocalFileScanOperator(string file) : base()
         {
-            this.id = id;
+            this.file = file;
         }
 
         public override void AssignBreakpoint(List<WorkerLayer> layers, Dictionary<IWorkerGrain, WorkerState> states, GlobalBreakpointBase breakpoint)
@@ -29,11 +29,11 @@ namespace Engine.OperatorImplementation.FaultTolerance
             (
                 new List<WorkerLayer>
                 {
-                    new ProcessorWorkerLayer("local_materializer.main",Constants.DefaultNumGrainsInOneLayer,(i)=>new LocalMaterializer(id,i),null)
+                    new ProducerWorkerLayer("local_scan.main",Constants.DefaultNumGrainsInOneLayer,(i)=>new HashBasedFolderScanProducer(file+"-"+i+".tmp",'|'),null)
                 },
                 new List<LinkStrategy>
                 {
-
+                    
                 }
             );
         }
