@@ -41,7 +41,7 @@ namespace Engine.Controller
             this.self = self;
             ApplyLogicalPlan(CompileLogicalPlan(plan,checkpointActivated));
             await InitOperators();
-            var sinks = nodes.Keys.Where(x => nodeMetadata[x].GetType()!= typeof(HashBasedMaterializerOperator) && !forwardLinks.ContainsKey(x)).ToList();
+            var sinks = nodes.Keys.Where(x => nodeMetadata[x].GetType()!= typeof(HashBasedMaterializerOperator) && nodeMetadata[x].GetType()!= typeof(LocalMaterializerOperator) && !forwardLinks.ContainsKey(x)).ToList();
             await LinkToObserver(sinks);
             return localSiloDetails.SiloAddress;
         }
@@ -129,7 +129,7 @@ namespace Engine.Controller
         private async Task InitOperators()
         {
             //topological ordering
-            var current = nodeMetadata.Keys.Where(x => !backwardLinks.ContainsKey(x) && !startDependencies.ContainsKey(x)).ToList();
+            var current = nodeMetadata.Keys.Where(x => !backwardLinks.ContainsKey(x)).ToList();
             while(current.Count > 0)
             {
                 foreach(var id in current)
