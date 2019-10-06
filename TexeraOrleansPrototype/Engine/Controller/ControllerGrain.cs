@@ -43,6 +43,14 @@ namespace Engine.Controller
             await InitOperators();
             var sinks = nodes.Keys.Where(x => nodeMetadata[x].GetType()!= typeof(HashBasedMaterializerOperator) && nodeMetadata[x].GetType()!= typeof(LocalMaterializerOperator) && !forwardLinks.ContainsKey(x)).ToList();
             await LinkToObserver(sinks);
+            foreach(var pair in startDependencies)
+            {
+                Console.WriteLine("ID: "+pair.Key);
+                foreach(var id in pair.Value)
+                {
+                    Console.WriteLine("\tdepends on: "+id);
+                }
+            }
             return localSiloDetails.SiloAddress;
         }
 
