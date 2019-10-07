@@ -29,7 +29,7 @@ namespace Engine.OperatorImplementation.FaultTolerance
             (
                 new List<WorkerLayer>
                 {
-                    new ProducerWorkerLayer("local_scan.main",Constants.DefaultNumGrainsInOneLayer,(i)=>new HashBasedFolderScanProducer(file+"-"+i+".tmp",'|'),null)
+                    new ProducerWorkerLayer("local_scan.main",Constants.DefaultNumGrainsInOneLayer,(i)=>new LocalFileScanProducer(file+"-"+i+".tmp",'|'),null)
                 },
                 new List<LinkStrategy>
                 {
