@@ -184,6 +184,7 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Start()
         {
+            Console.WriteLine("Principal: "+Utils.GetReadableName(self) + " starting");
             foreach(WorkerLayer layer in grainLayers)
             {
                 List<Task> taskList=new List<Task>();
@@ -193,6 +194,7 @@ namespace Engine.OperatorImplementation.Common
                 }
                 await Task.WhenAll(taskList);
             }
+            Console.WriteLine("Principal: "+Utils.GetReadableName(self) + " started");
         }
 
         public async Task OnWorkerDidPaused(IWorkerGrain sender)

@@ -28,6 +28,7 @@ namespace Engine.OperatorImplementation.FaultTolerance
         public async Task Initialize()
         {
             string currentDir = Environment.CurrentDirectory;
+            Console.WriteLine("Getting: "+currentDir+"/"+file);
             reader = new ScanStreamReader(currentDir+"/"+file,separator);
             if(!reader.GetFile(0))
                 throw new Exception("unable to get file");
