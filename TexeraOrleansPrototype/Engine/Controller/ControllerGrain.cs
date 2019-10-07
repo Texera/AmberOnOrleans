@@ -546,6 +546,7 @@ namespace Engine.Controller
                 {
                     pair.Value.Remove(id);
                 }
+                Console.WriteLine(pair.Value.Count);
                 if(pair.Value.Count == 0)
                 {
                     itemToDelete.Add(pair.Key);
