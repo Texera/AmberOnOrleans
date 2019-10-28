@@ -140,7 +140,7 @@ class ScanStreamReader
                 {
                     int length=i-buffer_start;
                     ByteCount+=(ulong)(length+1);
-                    if(idxes!=null && idxes.Contains(idx))
+                    if(idxes==null || idxes.Contains(idx))
                     {
                         charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
                         sb.Append(charbuf,0,charbuf_length);
@@ -154,7 +154,7 @@ class ScanStreamReader
                 {
                     int length=i-buffer_start;
                     ByteCount+=(ulong)(length+1);
-                    if(idxes != null && idxes.Contains(idx))
+                    if(idxes == null || idxes.Contains(idx))
                     {
                         if(length > 0)
                         {
@@ -191,7 +191,7 @@ class ScanStreamReader
                 }
             }
             ByteCount+=(ulong)(buffer_end-buffer_start);
-            if(idxes != null && idxes.Contains(idx))
+            if(idxes == null || idxes.Contains(idx))
             {
                 charbuf_length=decoder.GetChars(buffer,buffer_start,buffer_end-buffer_start,charbuf,0);
                 sb.Append(charbuf,0,charbuf_length);
