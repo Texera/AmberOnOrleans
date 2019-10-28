@@ -329,7 +329,20 @@ namespace Engine.Controller
                 if((string)operator1["operatorType"] == "ScanSource")
                 {
                     //example path to HDFS through WebHDFS API: "http://localhost:50070/webhdfs/v1/input/very_large_input.csv"
-                    op = new ScanOperator((string)operator1["tableName"]);
+                    HashSet<int> idxes = null;
+                    if(((string)operator1["tableName"]).Contains("customer"))
+                    {
+                        idxes = new HashSet<int>{0};
+                    }
+                    else if(((string)operator1["tableName"]).Contains("orders"))
+                    {
+                        idxes = new HashSet<int>{0,1};
+                    }
+                    else if(((string)operator1["tableName"]).Contains("lineitem"))
+                    {
+                        idxes = new HashSet<int>{3,7,9};
+                    }
+                    op = new ScanOperator((string)operator1["tableName"],idxes);
                 }
                 else if((string)operator1["operatorType"]=="LocalScanSource")
                 {

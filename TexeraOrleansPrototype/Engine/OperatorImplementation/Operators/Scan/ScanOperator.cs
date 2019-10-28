@@ -35,7 +35,8 @@ namespace Engine.OperatorImplementation.Operators
         }
         public char Separator;
         bool filesize_init=false;
-        public ScanOperator(string file)
+        private HashSet<int> idxes;
+        public ScanOperator(string file,HashSet<int> idxes)
         {
             if(file == null)
             {
@@ -48,7 +49,6 @@ namespace Engine.OperatorImplementation.Operators
                 File = file;
                 fileSize=0;
                 filesize_init=false;
-                
             }
             if(file.EndsWith(".tbl"))
                 Separator='|';
@@ -56,6 +56,7 @@ namespace Engine.OperatorImplementation.Operators
                 Separator=',';
             else 
                 Separator='\0';
+            this.idxes = idxes;
         }
 
         public override Pair<List<WorkerLayer>, List<LinkStrategy>> GenerateTopology()
@@ -64,7 +65,7 @@ namespace Engine.OperatorImplementation.Operators
             ulong num_grains=(ulong)Constants.DefaultNumGrainsInOneLayer;
             ulong partition=filesize/num_grains;
 
-             return new Pair<List<WorkerLayer>,List<LinkStrategy>>
+            return new Pair<List<WorkerLayer>,List<LinkStrategy>>
             (
                 new List<WorkerLayer>
                 {
@@ -73,8 +74,7 @@ namespace Engine.OperatorImplementation.Operators
                         ulong idx =(ulong)i;
                         ulong start_byte=idx*partition;
                         ulong end_byte=num_grains-1==idx?filesize:(idx+1)*partition;
-                        return new ScanProducer(start_byte,end_byte,File,Separator);
-
+                        return new ScanProducer(start_byte,end_byte,File,Separator,idxes);
                     },null)
                 },
                 new List<LinkStrategy>

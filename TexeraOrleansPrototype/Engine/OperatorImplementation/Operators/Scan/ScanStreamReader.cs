@@ -29,11 +29,12 @@ class ScanStreamReader
     private Decoder decoder;
     private List<String> fields=new List<string>();
     private char delimiter;
-
-    public ScanStreamReader(string path,char delimiter)
+    private HashSet<int> idxes;
+    public ScanStreamReader(string path,char delimiter,HashSet<int> idxes)
     {
-        file_path=path;
-        this.delimiter=delimiter;
+        file_path = path;
+        this.delimiter = delimiter;
+        this.idxes = idxes;
     }
 
 
@@ -128,6 +129,7 @@ class ScanStreamReader
             }
             if(buffer_end==0)break;
             int i;
+            int idx = 0;
             int charbuf_length;
             #if (PROFILING_ENABLED)
             start=DateTime.UtcNow;
@@ -138,27 +140,34 @@ class ScanStreamReader
                 {
                     int length=i-buffer_start;
                     ByteCount+=(ulong)(length+1);
-                    charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
-                    sb.Append(charbuf,0,charbuf_length);
-                    fields.Add(sb.ToString());
-                    sb.Length=0;
+                    if(idxes.Contains(idx))
+                    {
+                        charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
+                        sb.Append(charbuf,0,charbuf_length);
+                        fields.Add(sb.ToString());
+                        sb.Length=0;
+                    }
+                    idx++;
                     buffer_start=i+1;
                 }
                 else if(buffer[i]=='\n')
                 {
                     int length=i-buffer_start;
                     ByteCount+=(ulong)(length+1);
-                    if(length > 0)
+                    if(idxes.Contains(idx))
                     {
-                        charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
-                        sb.Append(charbuf,0,charbuf_length);
+                        if(length > 0)
+                        {
+                            charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
+                            sb.Append(charbuf,0,charbuf_length);
+                        }
+                        if(sb.Length > 0)
+                        {
+                            fields.Add(sb.ToString());
+                        }
+                        buffer_start=i+1;
+                        sb.Length=0;
                     }
-                    if(sb.Length > 0)
-                    {
-                        fields.Add(sb.ToString());
-                    }
-                    buffer_start=i+1;
-                    sb.Length=0;
                     #if (PROFILING_ENABLED)
                     forloop+=DateTime.UtcNow-start;
                     DateTime start2=DateTime.UtcNow;
@@ -182,8 +191,11 @@ class ScanStreamReader
                 }
             }
             ByteCount+=(ulong)(buffer_end-buffer_start);
-            charbuf_length=decoder.GetChars(buffer,buffer_start,buffer_end-buffer_start,charbuf,0);
-            sb.Append(charbuf,0,charbuf_length);
+            if(idxes.Contains(idx))
+            {
+                charbuf_length=decoder.GetChars(buffer,buffer_start,buffer_end-buffer_start,charbuf,0);
+                sb.Append(charbuf,0,charbuf_length);
+            }
             buffer_start=buffer_end;
         }
         #if (PROFILING_ENABLED)

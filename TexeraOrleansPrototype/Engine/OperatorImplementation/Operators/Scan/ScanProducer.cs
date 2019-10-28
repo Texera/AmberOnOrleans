@@ -19,21 +19,22 @@ namespace Engine.OperatorImplementation.Operators
         private ScanStreamReader reader;
         private string file;
         private char separator;
-        
+        private HashSet<int> idxes;
         private ulong outputCounter = 0;
 
-        public ScanProducer(ulong start_byte, ulong end_byte,string file,char separator)
+        public ScanProducer(ulong start_byte, ulong end_byte,string file,char separator,HashSet<int> idxes)
         {
             start=start_byte;
             end=end_byte;
             original_start=start;
             this.file = file;
             this.separator = separator;
+            this.idxes = idxes;
         }
 
         public async Task Initialize()
         {
-            reader=new ScanStreamReader(file,separator);
+            reader=new ScanStreamReader(file,separator,idxes);
             if(!reader.GetFile(start))
                 throw new Exception("unable to get file");
             if(start!=0)
