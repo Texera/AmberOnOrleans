@@ -29,8 +29,8 @@ class ScanStreamReader
     private Decoder decoder;
     private List<String> fields=new List<string>();
     private char delimiter;
-    private HashSet<int> idxes;
-    public ScanStreamReader(string path,char delimiter,HashSet<int> idxes)
+    private HashSet<int> idxes=null;
+    public ScanStreamReader(string path,char delimiter,HashSet<int> idxes=null)
     {
         file_path = path;
         this.delimiter = delimiter;
@@ -140,7 +140,7 @@ class ScanStreamReader
                 {
                     int length=i-buffer_start;
                     ByteCount+=(ulong)(length+1);
-                    if(idxes.Contains(idx))
+                    if(idxes!=null && idxes.Contains(idx))
                     {
                         charbuf_length=decoder.GetChars(buffer,buffer_start,length,charbuf,0);
                         sb.Append(charbuf,0,charbuf_length);
@@ -154,7 +154,7 @@ class ScanStreamReader
                 {
                     int length=i-buffer_start;
                     ByteCount+=(ulong)(length+1);
-                    if(idxes.Contains(idx))
+                    if(idxes != null && idxes.Contains(idx))
                     {
                         if(length > 0)
                         {
@@ -191,7 +191,7 @@ class ScanStreamReader
                 }
             }
             ByteCount+=(ulong)(buffer_end-buffer_start);
-            if(idxes.Contains(idx))
+            if(idxes != null && idxes.Contains(idx))
             {
                 charbuf_length=decoder.GetChars(buffer,buffer_start,buffer_end-buffer_start,charbuf,0);
                 sb.Append(charbuf,0,charbuf_length);
