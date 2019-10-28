@@ -37,7 +37,7 @@ namespace Engine.OperatorImplementation.Operators
             (
                 new List<WorkerLayer>
                 {
-                    new ProcessorWorkerLayer("hash_join.main",Constants.DefaultNumGrainsInOneLayer,(i)=>new HashJoinProcessor(InnerTableIndex,OuterTableIndex,InnerTableID),null)
+                    new ProcessorWorkerLayer("hash_join.main",Constants.DefaultNumGrainsInOneLayer+10,(i)=>new HashJoinProcessor(InnerTableIndex,OuterTableIndex,InnerTableID),null)
                 },
                 new List<LinkStrategy>
                 {
