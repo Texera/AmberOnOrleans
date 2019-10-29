@@ -165,9 +165,9 @@ class ScanStreamReader
                         {
                             fields.Add(sb.ToString());
                         }
-                        buffer_start=i+1;
                         sb.Length=0;
                     }
+                    buffer_start=i+1;
                     #if (PROFILING_ENABLED)
                     forloop+=DateTime.UtcNow-start;
                     DateTime start2=DateTime.UtcNow;
