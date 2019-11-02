@@ -157,16 +157,17 @@ namespace Engine.Controller
                         List<Guid> prevIDs = new List<Guid>();
                         foreach(var prevID in backwardLinks[id])
                         {
-                            if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
-                            {
-                                await nodes[prevID].Pause();
-                                nodesKeepedTuples.Add(nodes[prevID]);
-                            }
                             var t = await nodes[prevID].GetOutputLayer();
                             prevIDs.Add(prevID);
                             prev.Add(new Pair<Operator,WorkerLayer>(nodeMetadata[prevID],t));
                         }
                         await principal.Init(self,nodeMetadata[id],prev);
+                        if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
+                        {
+                            principal.Pause();
+                            await Task.Delay(1000);
+                            nodesKeepedTuples.Add(principal);
+                        }
                         var inputLayer = await principal.GetInputLayer();
                         for(int i=0;i<prev.Count;++i)
                         {
