@@ -211,7 +211,7 @@ namespace Engine.OperatorImplementation.Common
                 {
                     Console.WriteLine("Principal: "+Utils.GetReadableName(self)+" paused");
                     stateTransitioning = false;
-                    await controllerGrain.OnPrincipalPaused(self);
+                    controllerGrain.OnPrincipalPaused(self);
                     //query breakpoints
                     foreach(var id in triggeredBreakpointIDs)
                     {

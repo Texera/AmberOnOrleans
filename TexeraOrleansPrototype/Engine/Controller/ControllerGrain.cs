@@ -165,7 +165,6 @@ namespace Engine.Controller
                         if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
                         {
                             principal.Pause();
-                            await Task.Delay(1000);
                             nodesKeepedTuples.Add(principal);
                         }
                         var inputLayer = await principal.GetInputLayer();
@@ -453,12 +452,12 @@ namespace Engine.Controller
         }
 
 
-        public async Task Pause()
+        public Task Pause()
         {
             if(performingAction)
             {
                 Console.WriteLine("one action is performing, please wait...");
-                return;
+                return Task.CompletedTask;
             }
             performingAction=true;
             currentRepliedPrincipals=0;
@@ -466,9 +465,9 @@ namespace Engine.Controller
             foreach(IPrincipalGrain o in nodes.Values)
             {
                 isPrincipalPaused[o]=false;
-                await o.Pause();
+                o.Pause();
             }
-            return;
+            return Task.CompletedTask;
         }
 
         public Task OnTaskDidPaused()
