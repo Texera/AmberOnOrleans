@@ -557,7 +557,7 @@ namespace Engine.Controller
                     timer.Stop();
                     Console.WriteLine("Stage[working]("+String.Join(',',stageContains)+") took "+timer.Elapsed);
                     timer.Restart();
-                    await sender.Resume();
+                    await nodes[nextId].Resume();
                     //Console.WriteLine(nodeMetadata[id].GetType().Name + "released all tuples");
                     timer.Stop();
                     Console.WriteLine("Stage[release tuple]("+String.Join(',',stageContains)+") took "+timer.Elapsed);
