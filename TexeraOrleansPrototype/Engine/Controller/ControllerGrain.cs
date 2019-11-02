@@ -36,7 +36,7 @@ namespace Engine.Controller
         private Dictionary<Guid,List<Guid>> backwardLinks = new Dictionary<Guid, List<Guid>>();
         private Dictionary<Guid, HashSet<Guid>> startDependencies = new Dictionary<Guid, HashSet<Guid>>();
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
-        private HashSet<IPrincipalGrain> nodesKeepedTuples = new HashSet<IPrincipalGrain>(); 
+        private Dictionary<IPrincipalGrain,int> nodesKeepedTuples = new Dictionary<IPrincipalGrain, int>(); 
         private Stopwatch timer = new Stopwatch();
         private List<String> stageContains = new List<string>();
 
@@ -165,7 +165,7 @@ namespace Engine.Controller
                         if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
                         {
                             principal.Pause();
-                            nodesKeepedTuples.Add(principal);
+                            nodesKeepedTuples.Add(principal,backwardLinks[id].Count);
                         }
                         var inputLayer = await principal.GetInputLayer();
                         for(int i=0;i<prev.Count;++i)
@@ -547,17 +547,23 @@ namespace Engine.Controller
             Guid id = sender.GetPrimaryKey();
             var itemToDelete = new List<Guid>();
             stageContains.Add(nodeMetadata[id].GetType().Name);
-            if(nodesKeepedTuples.Contains(sender))
+            if(forwardLinks.ContainsKey(id))
+            foreach(Guid nextId in forwardLinks[id])
+            if(nodesKeepedTuples.ContainsKey(nodes[nextId]))
             {
-                timer.Stop();
-                Console.WriteLine("Stage[working]("+String.Join(',',stageContains)+") took "+timer.Elapsed);
-                timer.Restart();
-                await sender.Resume();
-                //Console.WriteLine(nodeMetadata[id].GetType().Name + "released all tuples");
-                timer.Stop();
-                Console.WriteLine("Stage[release tuple]("+String.Join(',',stageContains)+") took "+timer.Elapsed);
-                stageContains.Clear();
-                timer.Restart();
+                nodesKeepedTuples[nodes[nextId]]--;
+                if(nodesKeepedTuples[nodes[nextId]]==0)
+                {
+                    timer.Stop();
+                    Console.WriteLine("Stage[working]("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                    timer.Restart();
+                    await sender.Resume();
+                    //Console.WriteLine(nodeMetadata[id].GetType().Name + "released all tuples");
+                    timer.Stop();
+                    Console.WriteLine("Stage[release tuple]("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                    stageContains.Clear();
+                    timer.Restart();
+                }
             }
             if(nodeMetadata[id].GetType().Name.Contains("Sort"))
             {
