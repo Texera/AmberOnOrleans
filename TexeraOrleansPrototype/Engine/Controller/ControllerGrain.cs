@@ -15,6 +15,7 @@ using Engine.Breakpoint.GlobalBreakpoint;
 using Engine.OperatorImplementation.FaultTolerance;
 using Orleans.Concurrency;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 
 namespace Engine.Controller
 {
@@ -35,12 +36,15 @@ namespace Engine.Controller
         private Dictionary<Guid,List<Guid>> backwardLinks = new Dictionary<Guid, List<Guid>>();
         private Dictionary<Guid, HashSet<Guid>> startDependencies = new Dictionary<Guid, HashSet<Guid>>();
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
+        private HashSet<IPrincipalGrain> nodesKeepedTuples = new HashSet<IPrincipalGrain>(); 
+        private Stopwatch timer = new Stopwatch();
+        private List<String> stageContains = new List<string>();
 
         public async Task<SiloAddress> Init(IControllerGrain self,string plan,bool checkpointActivated = false)
         {
             this.self = self;
             ApplyLogicalPlan(CompileLogicalPlan(plan,checkpointActivated));
-            await InitOperators();
+            await InitOperators(checkpointActivated);
             var sinks = nodes.Keys.Where(x => nodeMetadata[x].GetType()!= typeof(HashBasedMaterializerOperator) && nodeMetadata[x].GetType()!= typeof(LocalMaterializerOperator) && !forwardLinks.ContainsKey(x)).ToList();
             await LinkToObserver(sinks);
             Console.WriteLine("# of sinks: "+numberOfOutputGrains);
@@ -135,7 +139,7 @@ namespace Engine.Controller
         }
 
 
-        private async Task InitOperators()
+        private async Task InitOperators(bool checkpointActivated)
         {
             //topological ordering
             var current = nodeMetadata.Keys.Where(x => !backwardLinks.ContainsKey(x)).ToList();
@@ -153,6 +157,11 @@ namespace Engine.Controller
                         List<Guid> prevIDs = new List<Guid>();
                         foreach(var prevID in backwardLinks[id])
                         {
+                            if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
+                            {
+                                await nodes[prevID].Pause();
+                                nodesKeepedTuples.Add(nodes[prevID]);
+                            }
                             var t = await nodes[prevID].GetOutputLayer();
                             prevIDs.Add(prevID);
                             prev.Add(new Pair<Operator,WorkerLayer>(nodeMetadata[prevID],t));
@@ -221,26 +230,26 @@ namespace Engine.Controller
                         {
                             //create new links
                             string inputID = (string)link["origin"];
-                            Guid materializerID = Guid.NewGuid(); 
-                            Guid scanID = Guid.NewGuid();
-                            //set start dependency
-                            AddStartDenpendency(scanID,materializerID);
-                            var link1 = new JObject
-                            {
-                                ["origin"]=inputID,
-                                ["destination"]="operator-"+materializerID.ToString()
-                            };
-                            var link2 = new JObject
-                            {
-                                ["origin"]="operator-"+scanID.ToString(),
-                                ["destination"]=currentID
-                            };
-                            linksToAdd.Add(link1);
-                            linksToAdd.Add(link2);
                             //create materializer operator
-                            JObject materializer=null;
                             if(checkpointActivated)
                             {
+                                Guid materializerID = Guid.NewGuid(); 
+                                Guid scanID = Guid.NewGuid();
+                                //set start dependency
+                                AddStartDenpendency(scanID,materializerID);
+                                var link1 = new JObject
+                                {
+                                    ["origin"]=inputID,
+                                    ["destination"]="operator-"+materializerID.ToString()
+                                };
+                                var link2 = new JObject
+                                {
+                                    ["origin"]="operator-"+scanID.ToString(),
+                                    ["destination"]=currentID
+                                };
+                                linksToAdd.Add(link1);
+                                linksToAdd.Add(link2);
+                                JObject materializer=null;
                                 materializer = new JObject
                                 {
                                     ["operatorType"]="HashBasedMaterializer",
@@ -248,38 +257,17 @@ namespace Engine.Controller
                                     ["hasherID"]=currentID,
                                     ["inputID"]="operator-"+scanID.ToString(),
                                 };
-                            }
-                            else
-                            {
-                                materializer = new JObject
-                                {
-                                    ["operatorType"]="LocalMaterializer",
-                                    ["operatorID"]="operator-"+materializerID.ToString()
-                                };
-                            }
-                            operatorsToAdd.Add(materializer);
-                            //create scan operator
-                            JObject scan=null;
-                            if(checkpointActivated)
-                            {
+                                operatorsToAdd.Add(materializer);
+                                JObject scan=null;
                                 scan = new JObject
                                 {
                                     ["operatorType"]="HashBasedFolderScan",
                                     ["operatorID"]="operator-"+scanID.ToString(),
                                     ["folderRoot"]=materializerID.ToString()
                                 };
+                                operatorsToAdd.Add(scan);
+                                linksToDelete.Add(link);
                             }
-                            else
-                            {
-                                scan = new JObject
-                                {
-                                    ["operatorType"]="LocalScanSource",
-                                    ["operatorID"]="operator-"+scanID.ToString(),
-                                    ["fileName"]=materializerID.ToString()
-                                };
-                            }
-                            operatorsToAdd.Add(scan);
-                            linksToDelete.Add(link);
                         }
                     }
                     foreach(var link in linksToDelete)
@@ -341,6 +329,9 @@ namespace Engine.Controller
                     else if(((string)operator1["tableName"]).Contains("lineitem"))
                     {
                         idxes = new HashSet<int>{3,7,9};
+                    }else if(((string)operator1["tableName"]).Contains("large_input"))
+                    {
+                        idxes = new HashSet<int>{0,1};
                     }
                     op = new ScanOperator((string)operator1["tableName"],idxes);
                 }
@@ -520,6 +511,7 @@ namespace Engine.Controller
                 Console.WriteLine("Controller: Starting "+ OperatorImplementation.Common.Utils.GetReadableName(nodes[id]));
                 nodes[id].Start();
             }
+            timer.Start();
             return Task.CompletedTask;
         }
 
@@ -549,11 +541,29 @@ namespace Engine.Controller
             return Task.CompletedTask;
         }
 
-        public Task OnPrincipalCompleted(IPrincipalGrain sender)
+        public async Task OnPrincipalCompleted(IPrincipalGrain sender)
         {
             Console.WriteLine("Controller: "+sender.GetPrimaryKey()+" completed!");
             Guid id = sender.GetPrimaryKey();
             var itemToDelete = new List<Guid>();
+            stageContains.Add(nodeMetadata[id].GetType().Name);
+            if(nodesKeepedTuples.Contains(sender))
+            {
+                timer.Stop();
+                Console.WriteLine("Stage[working]("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                timer.Restart();
+                await sender.Resume();
+                //Console.WriteLine(nodeMetadata[id].GetType().Name + "released all tuples");
+                timer.Stop();
+                Console.WriteLine("Stage[release tuple]("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                stageContains.Clear();
+                timer.Restart();
+            }
+            if(nodeMetadata[id].GetType().Name.Contains("Sort"))
+            {
+                timer.Stop();
+                Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+            }
             foreach(var pair in startDependencies)
             {
                 if(pair.Value.Contains(id))
@@ -562,15 +572,18 @@ namespace Engine.Controller
                 }
                 if(pair.Value.Count == 0)
                 {
+                    //timer.Stop();
+                    //Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                    //stageContains.Clear();
                     itemToDelete.Add(pair.Key);
-                    nodes[pair.Key].Start();
+                    await nodes[pair.Key].Start();
+                    timer.Restart();
                 }
             }
             foreach(var item in itemToDelete)
             {
                 startDependencies.Remove(item);
             }
-            return Task.CompletedTask;
         }
 
         public async Task SetBreakpoint(Guid operatorID, GlobalBreakpointBase breakpoint)
