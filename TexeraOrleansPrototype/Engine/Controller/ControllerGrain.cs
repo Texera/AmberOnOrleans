@@ -57,6 +57,11 @@ namespace Engine.Controller
                     Console.WriteLine("\tdepends on: "+id);
                 }
             }
+            foreach(IPrincipalGrain principal in nodesStashedTuples)
+            {
+                await principal.StashOutput();
+                Console.WriteLine("Stashing output of "+principal.GetPrimaryKey());
+            }
             return localSiloDetails.SiloAddress;
         }
 
@@ -160,8 +165,6 @@ namespace Engine.Controller
                         {
                             if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
                             {
-                                await nodes[prevID].StashOutput();
-                                Console.WriteLine("Stashing output of "+prevID);
                                 nodesStashedTuples.Add(nodes[prevID]);
                             }
                             var t = await nodes[prevID].GetOutputLayer();
