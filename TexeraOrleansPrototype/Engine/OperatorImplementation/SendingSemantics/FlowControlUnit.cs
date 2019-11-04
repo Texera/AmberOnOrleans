@@ -44,6 +44,7 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public override void SetPauseFlag(bool flag)
         {
+            Console.WriteLine("flowControlUnit's pause flag = "+flag.ToString());
             isPaused=flag;
         }
 
