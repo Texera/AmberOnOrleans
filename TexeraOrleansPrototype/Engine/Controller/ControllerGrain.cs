@@ -161,6 +161,7 @@ namespace Engine.Controller
                             if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
                             {
                                 await nodes[prevID].StashOutput();
+                                Console.WriteLine("Stashing output of "+prevID);
                                 nodesStashedTuples.Add(nodes[prevID]);
                             }
                             var t = await nodes[prevID].GetOutputLayer();
@@ -563,6 +564,7 @@ namespace Engine.Controller
             if(nodesStashedTuples.Contains(sender))
             {
                 sender.ReleaseOutput();
+                Console.WriteLine("Releasing output of "+id);
             }
             if(nodeMetadata[id].GetType().Name.Contains("Sort"))
             {
@@ -612,6 +614,7 @@ namespace Engine.Controller
             if(nodesKeepedTuples.Contains(sender))
             {
                 timer.Stop();
+                Console.WriteLine(OperatorImplementation.Common.Utils.GetReadableName(sender)+" received all inputs");
                 Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
                 stageContains.Clear();
                 sender.Resume();
