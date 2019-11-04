@@ -27,7 +27,7 @@ class ScanStreamReader
     #endif
     
     private Decoder decoder;
-    private List<String> fields=new List<string>();
+    private List<string> fields=new List<string>();
     private char delimiter;
     private HashSet<int> idxes=null;
     public ScanStreamReader(string path,char delimiter,HashSet<int> idxes=null)
