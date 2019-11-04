@@ -553,6 +553,13 @@ namespace Engine.Controller
             Guid id = sender.GetPrimaryKey();
             var itemToDelete = new List<Guid>();
             stageContains.Add(nodeMetadata[id].GetType().Name);
+            if(nodeMetadata[id].GetType() == typeof(ScanOperator))
+            {
+                timer.Stop();
+                Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                stageContains.Clear();
+                timer.Restart();
+            }
             if(nodesStashedTuples.Contains(sender))
             {
                 sender.ReleaseOutput();
