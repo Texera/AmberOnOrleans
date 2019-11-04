@@ -36,7 +36,8 @@ namespace Engine.Controller
         private Dictionary<Guid,List<Guid>> backwardLinks = new Dictionary<Guid, List<Guid>>();
         private Dictionary<Guid, HashSet<Guid>> startDependencies = new Dictionary<Guid, HashSet<Guid>>();
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
-        private Dictionary<IPrincipalGrain,int> nodesKeepedTuples = new Dictionary<IPrincipalGrain, int>(); 
+        private HashSet<IPrincipalGrain> nodesKeepedTuples = new HashSet<IPrincipalGrain>(); 
+        private HashSet<IPrincipalGrain> nodesStashedTuples = new HashSet<IPrincipalGrain>();
         private Stopwatch timer = new Stopwatch();
         private List<String> stageContains = new List<string>();
 
@@ -157,6 +158,11 @@ namespace Engine.Controller
                         List<Guid> prevIDs = new List<Guid>();
                         foreach(var prevID in backwardLinks[id])
                         {
+                            if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
+                            {
+                                await nodes[prevID].StashOutput();
+                                nodesStashedTuples.Add(nodes[prevID]);
+                            }
                             var t = await nodes[prevID].GetOutputLayer();
                             prevIDs.Add(prevID);
                             prev.Add(new Pair<Operator,WorkerLayer>(nodeMetadata[prevID],t));
@@ -165,7 +171,7 @@ namespace Engine.Controller
                         if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
                         {
                             principal.Pause();
-                            nodesKeepedTuples.Add(principal,backwardLinks[id].Count);
+                            nodesKeepedTuples.Add(principal);
                         }
                         var inputLayer = await principal.GetInputLayer();
                         for(int i=0;i<prev.Count;++i)
@@ -547,23 +553,9 @@ namespace Engine.Controller
             Guid id = sender.GetPrimaryKey();
             var itemToDelete = new List<Guid>();
             stageContains.Add(nodeMetadata[id].GetType().Name);
-            if(forwardLinks.ContainsKey(id))
-            foreach(Guid nextId in forwardLinks[id])
-            if(nodesKeepedTuples.ContainsKey(nodes[nextId]))
+            if(nodesStashedTuples.Contains(sender))
             {
-                nodesKeepedTuples[nodes[nextId]]--;
-                if(nodesKeepedTuples[nodes[nextId]]==0)
-                {
-                    timer.Stop();
-                    Console.WriteLine("Stage[working]("+String.Join(',',stageContains)+") took "+timer.Elapsed);
-                    timer.Restart();
-                    await nodes[nextId].Resume();
-                    //Console.WriteLine(nodeMetadata[id].GetType().Name + "released all tuples");
-                    timer.Stop();
-                    Console.WriteLine("Stage[release tuple]("+String.Join(',',stageContains)+") took "+timer.Elapsed);
-                    stageContains.Clear();
-                    timer.Restart();
-                }
+                sender.ReleaseOutput();
             }
             if(nodeMetadata[id].GetType().Name.Contains("Sort"))
             {
@@ -578,9 +570,9 @@ namespace Engine.Controller
                 }
                 if(pair.Value.Count == 0)
                 {
-                    //timer.Stop();
-                    //Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
-                    //stageContains.Clear();
+                    timer.Stop();
+                    Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                    stageContains.Clear();
                     itemToDelete.Add(pair.Key);
                     await nodes[pair.Key].Start();
                     timer.Restart();
@@ -606,6 +598,19 @@ namespace Engine.Controller
         public Task<int> GetNumberOfOutputGrains()
         {
             return Task.FromResult(numberOfOutputGrains);
+        }
+
+        public Task OnPrincipalReceivedAllBatches(IPrincipalGrain sender)
+        {
+            if(nodesKeepedTuples.Contains(sender))
+            {
+                timer.Stop();
+                Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                stageContains.Clear();
+                sender.Resume();
+                timer.Restart();
+            }
+            return Task.CompletedTask;
         }
     }
 }

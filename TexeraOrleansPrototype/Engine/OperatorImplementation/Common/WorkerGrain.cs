@@ -51,6 +51,8 @@ namespace Engine.OperatorImplementation.Common
         }
 
         protected bool isFinished=false;
+        protected int endflags = 0;
+        protected int targetflags = 0;
         protected ThreadStatus currentStatus=ThreadStatus.Idle;
         protected ITupleProcessor processor = null;
         protected ITupleProducer producer = null;
@@ -63,7 +65,6 @@ namespace Engine.OperatorImplementation.Common
         protected int currentIndex=0;
         protected bool messageChecked=false;
         protected List<TexeraTuple> savedBatch=null;
-
         #if (PROFILING_ENABLED)
         protected TimeSpan processTime=new TimeSpan(0,0,0);
         protected TimeSpan sendingTime=new TimeSpan(0,0,0);
@@ -243,12 +244,28 @@ namespace Engine.OperatorImplementation.Common
  
         public Task ReceivePayloadMessage(Immutable<PayloadMessage> message)
         {
+            if(message.Value.IsEnd)
+            {
+                endflags++;
+                if(endflags == targetflags)
+                {
+                    principalGrain.OnWorkerReceivedAllBatches(self);
+                }
+            }
             Process(message.Value);
             return Task.CompletedTask;
         }
 
         public Task ReceivePayloadMessage(PayloadMessage message)
         {
+            if(message.IsEnd)
+            {
+                endflags++;
+                if(endflags == targetflags)
+                {
+                    principalGrain.OnWorkerReceivedAllBatches(self);
+                }
+            }
             Process(message);
             return Task.CompletedTask;
         }
@@ -463,6 +480,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 unFinishedUpstream[id] = new HashSet<IGrain>{sender};
             }
+            targetflags++;
             return Task.CompletedTask;
         }
 
@@ -603,6 +621,25 @@ namespace Engine.OperatorImplementation.Common
                 {
                     activeBreakpoints.RemoveAt(i);
                 }
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task StashOutput()
+        {
+            foreach(ISendStrategy sendStrategy in sendStrategies.Values)
+            {
+                sendStrategy.SetPauseFlag(true);
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task ReleaseOutput()
+        {
+            foreach(ISendStrategy sendStrategy in sendStrategies.Values)
+            {
+                sendStrategy.SetPauseFlag(false);
+                sendStrategy.ResumeSending();
             }
             return Task.CompletedTask;
         }

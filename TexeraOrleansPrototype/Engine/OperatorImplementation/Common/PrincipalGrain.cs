@@ -33,6 +33,8 @@ namespace Engine.OperatorImplementation.Common
             UserResume,
         }
         private Queue<ControlMessageType> controlMessageQueue=new Queue<ControlMessageType>();
+
+        int flags = 0;
         private const int waitingThreshold = 100;
         private List<WorkerLayer> grainLayers = new List<WorkerLayer>();
         private List<LinkStrategy> links = new List<LinkStrategy>();
@@ -284,6 +286,40 @@ namespace Engine.OperatorImplementation.Common
             {
                 triggeredBreakpointIDs.Add(bp.id);
                 savedBreakpoints[bp.id].Accept(sender,bp);
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task OnWorkerReceivedAllBatches(IWorkerGrain sender)
+        {
+            flags++;
+            if(flags == workerStates.Count)
+            {
+                controllerGrain.OnPrincipalReceivedAllBatches(self);
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task StashOutput()
+        {
+            foreach(WorkerLayer layer in grainLayers)
+            {
+                foreach(IWorkerGrain grain in layer.Layer.Values.SelectMany(x=>x))
+                {
+                    grain.StashOutput();
+                }
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task ReleaseOutput()
+        {
+            foreach(WorkerLayer layer in grainLayers)
+            {
+                foreach(IWorkerGrain grain in layer.Layer.Values.SelectMany(x=>x))
+                {
+                    grain.ReleaseOutput();
+                }
             }
             return Task.CompletedTask;
         }

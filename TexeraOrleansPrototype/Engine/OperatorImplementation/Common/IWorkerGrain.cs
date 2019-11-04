@@ -23,6 +23,8 @@ namespace Engine.OperatorImplementation.Common
         #region Used by all operators
         Task<SiloAddress> Init(IPrincipalGrain principalGrain, ITupleProcessor processor);
         Task<SiloAddress> Init(IPrincipalGrain principalGrain, ITupleProducer producer);
+        Task StashOutput();
+        Task ReleaseOutput();
         Task SetSendStrategy(string id, ISendStrategy sendStrategy);
         Task AddInputInformation(IWorkerGrain sender);
         Task OnTaskDidPaused();

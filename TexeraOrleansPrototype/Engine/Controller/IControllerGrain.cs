@@ -21,5 +21,6 @@ namespace Engine.Controller
         Task SetBreakpoint(Guid operatorID,GlobalBreakpointBase breakpoint);
         Task OnBreakpointTriggered(string report);
         Task<int> GetNumberOfOutputGrains();
+        Task OnPrincipalReceivedAllBatches(IPrincipalGrain sender);
     }
 }
