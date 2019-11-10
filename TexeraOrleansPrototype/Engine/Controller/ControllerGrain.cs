@@ -190,7 +190,7 @@ namespace Engine.Controller
                             }
                             else if(nodeMetadata[id].IsStaged(pair.First))
                             {
-                                var link = new RoundRobinLinking(pair.Second,inputLayer,Constants.BatchSize);
+                                var link = new OneToOneLinking(pair.Second,inputLayer,Constants.BatchSize);
                                 await link.Link();
                                 nodeLinks.Add(link);
                             }
