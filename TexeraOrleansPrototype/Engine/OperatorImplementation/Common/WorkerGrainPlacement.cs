@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Orleans.Placement;
 using Orleans.Runtime;
 using Orleans.Runtime.Placement;
+using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.Common
 {
@@ -27,6 +28,10 @@ namespace Engine.OperatorImplementation.Common
         public Task<SiloAddress> OnAddActivation(PlacementStrategy strategy, PlacementTarget target, IPlacementContext context)
         {
             var silos = context.GetCompatibleSilos(target).OrderBy(x=>x).ToArray();
+            if(Constants.DefaultNumGrainsInOneLayer == 0)
+            {
+                Constants.DefaultNumGrainsInOneLayer = silos.Length-1;
+            }
             var targetSilo=RequestContext.Get("targetSilo");
             if(targetSilo!=null)
             {
@@ -43,6 +48,7 @@ namespace Engine.OperatorImplementation.Common
             {
                 silos=silos.Where(x=>!x.Endpoint.Address.ToString().Equals(excludeSilo)).ToArray();
             }
+            
             object index = RequestContext.Get("grainIndex");
             if(index==null)
             {

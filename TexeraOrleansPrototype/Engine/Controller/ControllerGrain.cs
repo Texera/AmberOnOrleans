@@ -188,6 +188,12 @@ namespace Engine.Controller
                                 await link.Link();
                                 nodeLinks.Add(link);
                             }
+                            else if(nodeMetadata[id].GetType().Name.Contains("Sort"))
+                            {
+                                var link = new AllToOneLinking(pair.Second,inputLayer,Constants.BatchSize);
+                                await link.Link();
+                                nodeLinks.Add(link);
+                            }
                             else if(nodeMetadata[id].IsStaged(pair.First))
                             {
                                 var link = new OneToOneLinking(pair.Second,inputLayer,Constants.BatchSize);
