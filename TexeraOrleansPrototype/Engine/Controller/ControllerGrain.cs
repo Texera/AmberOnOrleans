@@ -344,7 +344,7 @@ namespace Engine.Controller
                     }
                     else if(((string)operator1["tableName"]).Contains("lineitem"))
                     {
-                        idxes = null;
+                        idxes = new HashSet<int>{4,8,10};
                     }else if(((string)operator1["tableName"]).Contains("large_input"))
                     {
                         idxes = new HashSet<int>{0,1};
