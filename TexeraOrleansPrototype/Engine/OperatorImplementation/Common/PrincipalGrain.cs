@@ -312,16 +312,18 @@ namespace Engine.OperatorImplementation.Common
             return Task.CompletedTask;
         }
 
-        public Task ReleaseOutput()
+        public async Task ReleaseOutput()
         {
+            List<Task> taskList = new List<Task>();
             foreach(WorkerLayer layer in grainLayers)
             {
                 foreach(IWorkerGrain grain in layer.Layer.Values.SelectMany(x=>x))
                 {
-                    grain.ReleaseOutput();
+                    taskList.Add(grain.ReleaseOutput());
                 }
             }
-            return Task.CompletedTask;
+            await Task.WhenAll(taskList);
+            //return Task.CompletedTask;
         }
     }
 }

@@ -57,11 +57,11 @@ namespace Engine.Controller
                     Console.WriteLine("\tdepends on: "+id);
                 }
             }
-            foreach(IPrincipalGrain principal in nodesStashedTuples)
-            {
-                await principal.StashOutput();
-                Console.WriteLine("Stashing output of "+principal.GetPrimaryKey());
-            }
+            // foreach(IPrincipalGrain principal in nodesStashedTuples)
+            // {
+            //     await principal.StashOutput();
+            //     Console.WriteLine("Stashing output of "+principal.GetPrimaryKey());
+            // }
             return localSiloDetails.SiloAddress;
         }
 
@@ -570,11 +570,11 @@ namespace Engine.Controller
                 stageContains.Clear();
                 timer.Restart();
             }
-            if(nodesStashedTuples.Contains(sender))
-            {
-                sender.ReleaseOutput();
-                Console.WriteLine("Releasing output of "+id);
-            }
+            // if(nodesStashedTuples.Contains(sender))
+            // {
+            //     //Console.WriteLine("Releasing output of "+id);
+            //     //await sender.ReleaseOutput();
+            // }
             if(nodeMetadata[id].GetType().Name.Contains("Sort"))
             {
                 timer.Stop();
