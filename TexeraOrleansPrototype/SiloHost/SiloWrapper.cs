@@ -72,7 +72,7 @@ namespace SiloHost
                 })
                 .ConfigureEndpoints(siloPort: 11111, gatewayPort: 30000)
                 .ConfigureLogging(logging => logging.SetMinimumLevel(LogLevel.Critical).AddConsole())
-                .Configure<SiloMessagingOptions>(options => { options.ResponseTimeout = new TimeSpan(0,4,0); });
+                .Configure<SiloMessagingOptions>(options => { options.ResponseTimeout = new TimeSpan(1,0,0); });
 
             var host = siloBuilder.Build();
             await host.StartAsync();
