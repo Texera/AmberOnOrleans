@@ -229,6 +229,18 @@ namespace Engine.Controller
             JObject res = JObject.Parse(plan);
             JArray operators = (JArray)res["operators"];
             JArray links =(JArray)res["links"];
+            Dictionary<string,string> mapping=new Dictionary<string, string>();
+            foreach (JObject operator1 in operators)
+            {
+                var tmp = "operator-"+Guid.NewGuid().ToString();
+                mapping[operator1["operatorID"].ToString()] = tmp;
+                operator1["operatorID"] = tmp;
+            }
+            foreach(JObject link in links)
+            {
+                link["origin"] = mapping[link["origin"].ToString()];
+                link["destination"] = mapping[link["destination"].ToString()];
+            }
             JArray operatorsToAdd = new JArray();
             JArray linksToAdd = new JArray(); 
             foreach(JObject op in operators)
