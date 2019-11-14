@@ -121,6 +121,7 @@ class ScanStreamReader
         sb.Length=0;
         fields.Clear();
         ulong ByteCount=0;
+        int idx = 0;
         while(true)
         {
             if(buffer_start>=buffer_end)
@@ -129,7 +130,6 @@ class ScanStreamReader
             }
             if(buffer_end==0)break;
             int i;
-            int idx = 0;
             int charbuf_length;
             #if (PROFILING_ENABLED)
             start=DateTime.UtcNow;
