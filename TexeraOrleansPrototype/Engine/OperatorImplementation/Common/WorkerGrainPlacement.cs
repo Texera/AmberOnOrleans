@@ -30,7 +30,7 @@ namespace Engine.OperatorImplementation.Common
             var silos = context.GetCompatibleSilos(target).OrderBy(x=>x).ToArray();
             if(Constants.DefaultNumGrainsInOneLayer == 0)
             {
-                Constants.DefaultNumGrainsInOneLayer = 5*(silos.Length-1);
+                Constants.DefaultNumGrainsInOneLayer = 6*(silos.Length-1);
             }
             var targetSilo=RequestContext.Get("targetSilo");
             if(targetSilo!=null)
