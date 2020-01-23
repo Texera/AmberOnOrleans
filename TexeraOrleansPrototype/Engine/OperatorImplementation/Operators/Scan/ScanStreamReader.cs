@@ -95,7 +95,7 @@ class ScanStreamReader
                 if(file.BaseStream.CanSeek)
                     file.BaseStream.Seek((long)offset,SeekOrigin.Begin);
             }
-            decoder=file.CurrentEncoding.GetDecoder();
+            decoder = file.CurrentEncoding.GetDecoder();
             if(Enum.TryParse<FileType>(file_path.Substring(file_path.LastIndexOf(".")+1),out file_type))
             {
                 if(!Enum.IsDefined(typeof(FileType),file_type))
