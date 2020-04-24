@@ -15,6 +15,7 @@ using Engine.Breakpoint.GlobalBreakpoint;
 using Engine.OperatorImplementation.FaultTolerance;
 using Orleans.Concurrency;
 using Microsoft.Extensions.DependencyInjection;
+using System.Diagnostics;
 
 namespace Engine.Controller
 {
@@ -35,14 +36,32 @@ namespace Engine.Controller
         private Dictionary<Guid,List<Guid>> backwardLinks = new Dictionary<Guid, List<Guid>>();
         private Dictionary<Guid, HashSet<Guid>> startDependencies = new Dictionary<Guid, HashSet<Guid>>();
         private ILocalSiloDetails localSiloDetails => this.ServiceProvider.GetRequiredService<ILocalSiloDetails>();
+        private HashSet<IPrincipalGrain> nodesKeepedTuples = new HashSet<IPrincipalGrain>(); 
+        private HashSet<IPrincipalGrain> nodesStashedTuples = new HashSet<IPrincipalGrain>();
+        private Stopwatch timer = new Stopwatch();
+        private List<String> stageContains = new List<string>();
 
         public async Task<SiloAddress> Init(IControllerGrain self,string plan,bool checkpointActivated = false)
         {
             this.self = self;
             ApplyLogicalPlan(CompileLogicalPlan(plan,checkpointActivated));
-            await InitOperators();
-            var sinks = nodes.Keys.Where(x => nodeMetadata[x].GetType()!= typeof(HashBasedMaterializerOperator) && !forwardLinks.ContainsKey(x)).ToList();
+            await InitOperators(checkpointActivated);
+            var sinks = nodes.Keys.Where(x => nodeMetadata[x].GetType()!= typeof(HashBasedMaterializerOperator) && nodeMetadata[x].GetType()!= typeof(LocalMaterializerOperator) && !forwardLinks.ContainsKey(x)).ToList();
             await LinkToObserver(sinks);
+            Console.WriteLine("# of sinks: "+numberOfOutputGrains);
+            foreach(var pair in startDependencies)
+            {
+                Console.WriteLine("ID: "+pair.Key);
+                foreach(var id in pair.Value)
+                {
+                    Console.WriteLine("\tdepends on: "+id);
+                }
+            }
+            // foreach(IPrincipalGrain principal in nodesStashedTuples)
+            // {
+            //     await principal.StashOutput();
+            //     Console.WriteLine("Stashing output of "+principal.GetPrimaryKey());
+            // }
             return localSiloDetails.SiloAddress;
         }
 
@@ -126,7 +145,7 @@ namespace Engine.Controller
         }
 
 
-        private async Task InitOperators()
+        private async Task InitOperators(bool checkpointActivated)
         {
             //topological ordering
             var current = nodeMetadata.Keys.Where(x => !backwardLinks.ContainsKey(x)).ToList();
@@ -144,11 +163,20 @@ namespace Engine.Controller
                         List<Guid> prevIDs = new List<Guid>();
                         foreach(var prevID in backwardLinks[id])
                         {
+                            if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
+                            {
+                                nodesStashedTuples.Add(nodes[prevID]);
+                            }
                             var t = await nodes[prevID].GetOutputLayer();
                             prevIDs.Add(prevID);
                             prev.Add(new Pair<Operator,WorkerLayer>(nodeMetadata[prevID],t));
                         }
                         await principal.Init(self,nodeMetadata[id],prev);
+                        if(!checkpointActivated && (nodeMetadata[id].GetType() == typeof(HashJoinOperator) || nodeMetadata[id].GetType() == typeof(GroupByFinalOperator)))
+                        {
+                            principal.Pause();
+                            nodesKeepedTuples.Add(principal);
+                        }
                         var inputLayer = await principal.GetInputLayer();
                         for(int i=0;i<prev.Count;++i)
                         {
@@ -160,9 +188,15 @@ namespace Engine.Controller
                                 await link.Link();
                                 nodeLinks.Add(link);
                             }
+                            else if(nodeMetadata[id].GetType().Name.Contains("Sort"))
+                            {
+                                var link = new AllToOneLinking(pair.Second,inputLayer,Constants.BatchSize);
+                                await link.Link();
+                                nodeLinks.Add(link);
+                            }
                             else if(nodeMetadata[id].IsStaged(pair.First))
                             {
-                                var link = new RoundRobinLinking(pair.Second,inputLayer,Constants.BatchSize);
+                                var link = new OneToOneLinking(pair.Second,inputLayer,Constants.BatchSize);
                                 await link.Link();
                                 nodeLinks.Add(link);
                             }
@@ -193,27 +227,40 @@ namespace Engine.Controller
         private JObject CompileLogicalPlan(string plan, bool checkpointActivated)
         {
             JObject res = JObject.Parse(plan);
-            if(checkpointActivated)
+            JArray operators = (JArray)res["operators"];
+            JArray links =(JArray)res["links"];
+            Dictionary<string,string> mapping=new Dictionary<string, string>();
+            foreach (JObject operator1 in operators)
             {
-                JArray operators = (JArray)res["operators"];
-                JArray links =(JArray)res["links"];
-                JArray operatorsToAdd = new JArray();
-                JArray linksToAdd = new JArray(); 
-                foreach(JObject op in operators)
+                var tmp = "operator-"+Guid.NewGuid().ToString();
+                mapping[operator1["operatorID"].ToString()] = tmp;
+                operator1["operatorID"] = tmp;
+            }
+            foreach(JObject link in links)
+            {
+                link["origin"] = mapping[link["origin"].ToString()];
+                link["destination"] = mapping[link["destination"].ToString()];
+            }
+            JArray operatorsToAdd = new JArray();
+            JArray linksToAdd = new JArray(); 
+            foreach(JObject op in operators)
+            {
+                string operatorType = (string)op["operatorType"];
+                string currentID = (string)op["operatorID"];
+                if(operatorType == "HashRippleJoin" || operatorType == "HashJoin" || operatorType == "GroupByFinal")
                 {
-                    string operatorType = (string)op["operatorType"];
-                    string currentID = (string)op["operatorID"];
-                    if(operatorType == "HashRippleJoin" || operatorType == "HashJoin")
+                    var linksToDelete = new List<JToken>();
+                    //search for input links
+                    for(int i=0;i<links.Count;++i)
                     {
-                        var linksToDelete = new List<JToken>();
-                        //search for input links
-                        for(int i=0;i<links.Count;++i)
+                        var link = links[i];
+                        if(((string)link["destination"]).Equals(currentID))
                         {
-                            var link = links[i];
-                            if(((string)link["destination"]).Equals(currentID))
+                            //create new links
+                            string inputID = (string)link["origin"];
+                            //create materializer operator
+                            if(checkpointActivated)
                             {
-                                //create new links
-                                string inputID = (string)link["origin"];
                                 Guid materializerID = Guid.NewGuid(); 
                                 Guid scanID = Guid.NewGuid();
                                 //set start dependency
@@ -230,8 +277,8 @@ namespace Engine.Controller
                                 };
                                 linksToAdd.Add(link1);
                                 linksToAdd.Add(link2);
-                                //create materializer operator
-                                JObject materializer = new JObject
+                                JObject materializer=null;
+                                materializer = new JObject
                                 {
                                     ["operatorType"]="HashBasedMaterializer",
                                     ["operatorID"]="operator-"+materializerID.ToString(),
@@ -239,8 +286,8 @@ namespace Engine.Controller
                                     ["inputID"]="operator-"+scanID.ToString(),
                                 };
                                 operatorsToAdd.Add(materializer);
-                                //create scan operator
-                                JObject scan = new JObject
+                                JObject scan=null;
+                                scan = new JObject
                                 {
                                     ["operatorType"]="HashBasedFolderScan",
                                     ["operatorID"]="operator-"+scanID.ToString(),
@@ -250,15 +297,15 @@ namespace Engine.Controller
                                 linksToDelete.Add(link);
                             }
                         }
-                        foreach(var link in linksToDelete)
-                        {
-                            link.Remove();
-                        }
+                    }
+                    foreach(var link in linksToDelete)
+                    {
+                        link.Remove();
                     }
                 }
-                links.Merge(linksToAdd);
-                operators.Merge(operatorsToAdd);
             }
+            links.Merge(linksToAdd);
+            operators.Merge(operatorsToAdd);
             return res;
         }
 
@@ -298,7 +345,31 @@ namespace Engine.Controller
                 if((string)operator1["operatorType"] == "ScanSource")
                 {
                     //example path to HDFS through WebHDFS API: "http://localhost:50070/webhdfs/v1/input/very_large_input.csv"
-                    op = new ScanOperator((string)operator1["tableName"]);
+                    HashSet<int> idxes = null;
+                    if(((string)operator1["tableName"]).Contains("customer"))
+                    {
+                        idxes = new HashSet<int>{0};
+                    }
+                    else if(((string)operator1["tableName"]).Contains("orders"))
+                    {
+                        idxes = new HashSet<int>{0,1};
+                    }
+                    else if(((string)operator1["tableName"]).Contains("lineitem"))
+                    {
+                        idxes = new HashSet<int>{4,8,10};
+                    }else if(((string)operator1["tableName"]).Contains("large_input"))
+                    {
+                        idxes = new HashSet<int>{0,1};
+                    }
+                    op = new ScanOperator((string)operator1["tableName"],idxes);
+                }
+                else if((string)operator1["operatorType"]=="LocalScanSource")
+                {
+                    op = new LocalFileScanOperator((string)operator1["fileName"]);
+                }
+                else if((string)operator1["operatorType"]=="LocalMaterializer")
+                {
+                    op = new LocalMaterializerOperator(operatorID);
                 }
                 else if((string)operator1["operatorType"] == "KeywordMatcher")
                 {
@@ -364,6 +435,10 @@ namespace Engine.Controller
                     int aggregationIndex=int.Parse(operator1["aggregationAttribute"].ToString().Replace("_c",""));
                     op=new GroupByOperator(groupByIndex,aggregationIndex,operator1["aggregationFunction"].ToString());
                 }
+                else if((string)operator1["operatorType"] == "GroupByFinal")
+                {
+                    op=new GroupByFinalOperator(operator1["aggregationFunction"].ToString());
+                }
                 else if((string)operator1["operatorType"] == "Projection")
                 {
                     List<int> projectionIndexs=operator1["projectionAttributes"].ToString().Split(",").Select(x=>int.Parse(x.Replace("_c",""))).ToList();
@@ -405,12 +480,12 @@ namespace Engine.Controller
         }
 
 
-        public async Task Pause()
+        public Task Pause()
         {
             if(performingAction)
             {
                 Console.WriteLine("one action is performing, please wait...");
-                return;
+                return Task.CompletedTask;
             }
             performingAction=true;
             currentRepliedPrincipals=0;
@@ -418,9 +493,9 @@ namespace Engine.Controller
             foreach(IPrincipalGrain o in nodes.Values)
             {
                 isPrincipalPaused[o]=false;
-                await o.Pause();
+                o.Pause();
             }
-            return;
+            return Task.CompletedTask;
         }
 
         public Task OnTaskDidPaused()
@@ -464,6 +539,7 @@ namespace Engine.Controller
                 Console.WriteLine("Controller: Starting "+ OperatorImplementation.Common.Utils.GetReadableName(nodes[id]));
                 nodes[id].Start();
             }
+            timer.Start();
             return Task.CompletedTask;
         }
 
@@ -493,11 +569,29 @@ namespace Engine.Controller
             return Task.CompletedTask;
         }
 
-        public Task OnPrincipalCompleted(IPrincipalGrain sender)
+        public async Task OnPrincipalCompleted(IPrincipalGrain sender)
         {
             Console.WriteLine("Controller: "+sender.GetPrimaryKey()+" completed!");
             Guid id = sender.GetPrimaryKey();
             var itemToDelete = new List<Guid>();
+            stageContains.Add(nodeMetadata[id].GetType().Name);
+            if(nodeMetadata[id].GetType() == typeof(ScanOperator))
+            {
+                timer.Stop();
+                Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                stageContains.Clear();
+                timer.Restart();
+            }
+            // if(nodesStashedTuples.Contains(sender))
+            // {
+            //     //Console.WriteLine("Releasing output of "+id);
+            //     //await sender.ReleaseOutput();
+            // }
+            if(nodeMetadata[id].GetType().Name.Contains("Sort"))
+            {
+                timer.Stop();
+                Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+            }
             foreach(var pair in startDependencies)
             {
                 if(pair.Value.Contains(id))
@@ -506,15 +600,18 @@ namespace Engine.Controller
                 }
                 if(pair.Value.Count == 0)
                 {
+                    timer.Stop();
+                    Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                    stageContains.Clear();
                     itemToDelete.Add(pair.Key);
-                    nodes[pair.Key].Start();
+                    await nodes[pair.Key].Start();
+                    timer.Restart();
                 }
             }
             foreach(var item in itemToDelete)
             {
                 startDependencies.Remove(item);
             }
-            return Task.CompletedTask;
         }
 
         public async Task SetBreakpoint(Guid operatorID, GlobalBreakpointBase breakpoint)
@@ -531,6 +628,20 @@ namespace Engine.Controller
         public Task<int> GetNumberOfOutputGrains()
         {
             return Task.FromResult(numberOfOutputGrains);
+        }
+
+        public Task OnPrincipalReceivedAllBatches(IPrincipalGrain sender)
+        {
+            if(nodesKeepedTuples.Contains(sender))
+            {
+                timer.Stop();
+                Console.WriteLine(OperatorImplementation.Common.Utils.GetReadableName(sender)+" received all inputs");
+                Console.WriteLine("Stage("+String.Join(',',stageContains)+") took "+timer.Elapsed);
+                stageContains.Clear();
+                sender.Resume();
+                timer.Restart();
+            }
+            return Task.CompletedTask;
         }
     }
 }

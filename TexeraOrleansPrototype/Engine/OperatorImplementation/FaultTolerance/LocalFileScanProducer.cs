@@ -9,43 +9,35 @@ using Orleans.Concurrency;
 using Engine.OperatorImplementation.Common;
 using TexeraUtilities;
 using Orleans.Runtime;
+using System.Linq;
 
-namespace Engine.OperatorImplementation.Operators
+namespace Engine.OperatorImplementation.FaultTolerance
 {
-    public class ScanProducer : ITupleProducer
+    public class LocalFileScanProducer : ITupleProducer
     {
-        private ulong original_start=0;
-        private ulong start,end;
         private ScanStreamReader reader;
-        private string file;
         private char separator;
-        private HashSet<int> idxes;
-        private ulong outputCounter = 0;
+        private string file;
 
-        public ScanProducer(ulong start_byte, ulong end_byte,string file,char separator,HashSet<int> idxes)
+        public LocalFileScanProducer(string file,char separator)
         {
-            start=start_byte;
-            end=end_byte;
-            original_start=start;
             this.file = file;
             this.separator = separator;
-            this.idxes = idxes;
         }
 
         public async Task Initialize()
         {
-            reader=new ScanStreamReader(file,separator,idxes);
-            if(!reader.GetFile(start))
+            string currentDir = Environment.CurrentDirectory;
+            Console.WriteLine("Getting: "+currentDir+"/"+file);
+            reader = new ScanStreamReader(currentDir+"/"+file,separator);
+            if(!reader.GetFile(0))
                 throw new Exception("unable to get file");
-            if(start!=0)
-                start+=await reader.TrySkipFirst();
-            else
-                await reader.FillBuffer();
+            await reader.FillBuffer();
         }
 
         public bool HasNext()
         {
-            return start<=end && !reader.IsEOF();
+            return !reader.IsEOF();
         }
 
         public TexeraTuple Next()
@@ -55,15 +47,12 @@ namespace Engine.OperatorImplementation.Operators
 
         public void Dispose()
         {
-            Console.WriteLine("Produced: "+outputCounter+" tuples");
             reader.Close();
         }
 
         public async Task<TexeraTuple> NextAsync()
         {
             Pair<TexeraTuple,ulong> res=await reader.ReadTuple();
-            start+=res.Second;
-            outputCounter++;
             return res.First;
         }
     }

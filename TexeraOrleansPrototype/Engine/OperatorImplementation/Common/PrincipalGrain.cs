@@ -33,6 +33,8 @@ namespace Engine.OperatorImplementation.Common
             UserResume,
         }
         private Queue<ControlMessageType> controlMessageQueue=new Queue<ControlMessageType>();
+
+        int flags = 0;
         private const int waitingThreshold = 100;
         private List<WorkerLayer> grainLayers = new List<WorkerLayer>();
         private List<LinkStrategy> links = new List<LinkStrategy>();
@@ -184,6 +186,7 @@ namespace Engine.OperatorImplementation.Common
 
         public virtual async Task Start()
         {
+            Console.WriteLine("Principal: "+Utils.GetReadableName(self) + " starting");
             foreach(WorkerLayer layer in grainLayers)
             {
                 List<Task> taskList=new List<Task>();
@@ -193,6 +196,7 @@ namespace Engine.OperatorImplementation.Common
                 }
                 await Task.WhenAll(taskList);
             }
+            Console.WriteLine("Principal: "+Utils.GetReadableName(self) + " started");
         }
 
         public async Task OnWorkerDidPaused(IWorkerGrain sender)
@@ -200,16 +204,16 @@ namespace Engine.OperatorImplementation.Common
             if(workerStates[sender]!=WorkerState.Completed)
             {
                 workerStates[sender] = WorkerState.Paused;
-                Console.WriteLine("Principal: "+Utils.GetReadableName(sender) + " paused ");
-                foreach(var pair in workerStates)
-                {
-                    Console.WriteLine(Utils.GetReadableName(pair.Key)+": "+pair.Value);
-                }
+                //Console.WriteLine("Principal: "+Utils.GetReadableName(sender) + " paused ");
+                // foreach(var pair in workerStates)
+                // {
+                //     Console.WriteLine(Utils.GetReadableName(pair.Key)+": "+pair.Value);
+                // }
                 if(workerStates.Values.Where(x => x != WorkerState.Completed).All(x => x==WorkerState.Paused))
                 {
                     Console.WriteLine("Principal: "+Utils.GetReadableName(self)+" paused");
                     stateTransitioning = false;
-                    await controllerGrain.OnPrincipalPaused(self);
+                    controllerGrain.OnPrincipalPaused(self);
                     //query breakpoints
                     foreach(var id in triggeredBreakpointIDs)
                     {
@@ -284,6 +288,42 @@ namespace Engine.OperatorImplementation.Common
                 savedBreakpoints[bp.id].Accept(sender,bp);
             }
             return Task.CompletedTask;
+        }
+
+        public Task OnWorkerReceivedAllBatches(IWorkerGrain sender)
+        {
+            flags++;
+            if(flags == workerStates.Count)
+            {
+                controllerGrain.OnPrincipalReceivedAllBatches(self);
+            }
+            return Task.CompletedTask;
+        }
+
+        public Task StashOutput()
+        {
+            foreach(WorkerLayer layer in grainLayers)
+            {
+                foreach(IWorkerGrain grain in layer.Layer.Values.SelectMany(x=>x))
+                {
+                    grain.StashOutput();
+                }
+            }
+            return Task.CompletedTask;
+        }
+
+        public async Task ReleaseOutput()
+        {
+            List<Task> taskList = new List<Task>();
+            foreach(WorkerLayer layer in grainLayers)
+            {
+                foreach(IWorkerGrain grain in layer.Layer.Values.SelectMany(x=>x))
+                {
+                    taskList.Add(grain.ReleaseOutput());
+                }
+            }
+            await Task.WhenAll(taskList);
+            //return Task.CompletedTask;
         }
     }
 }

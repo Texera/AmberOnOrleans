@@ -21,6 +21,8 @@ namespace Engine.OperatorImplementation.Common
         Task Pause();
         Task Resume();
         Task Deactivate();
+        Task StashOutput();
+        Task ReleaseOutput();
         Task Init(IControllerGrain controllerGrain, Operator op, List<Pair<Operator,WorkerLayer>> prev);
         Task<WorkerLayer> GetInputLayer();
         Task<WorkerLayer> GetOutputLayer();
@@ -28,5 +30,6 @@ namespace Engine.OperatorImplementation.Common
         Task OnWorkerLocalBreakpointTriggered(IWorkerGrain sender, List<LocalBreakpointBase> breakpoint);
         Task OnWorkerDidPaused(IWorkerGrain sender);
         Task OnWorkerFinished(IWorkerGrain sender);
+        Task OnWorkerReceivedAllBatches(IWorkerGrain sender);
     }
 }
