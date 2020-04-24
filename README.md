@@ -19,7 +19,9 @@ sudo ng build
 ```
 
 ## Amber Requirements:
-dotnet-sdk 3.0
+1. Install dotnet-sdk 3.0
+2. Install MySQL and create a user with username "orleansbackend" and password "orleans-0519-2019" (this can be changed at Constants.cs)
+3. Create a mysql database called 'orleans'. Then, run the scripts [MySQL-Main.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Shared/MySQL-Main.sql), [MySQL-Clustering.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Orleans.Clustering.AdoNet/MySQL-Clustering.sql) to create the necessary tables and insert entries in the database.
 
 ## Run Amber:
 ### Start Client:
