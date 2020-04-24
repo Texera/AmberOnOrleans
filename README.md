@@ -10,6 +10,7 @@ sudo apt-get install nodejs
 Clone this repo then do the following:
 ```
 cd TexeraOrleansBackend/TexeraOrleansPrototype/texera/core/new-gui
+git checkout henry-orleans-demo
 npm install
 sudo npm audit fix
 sudo npm install -g @angular/cli
