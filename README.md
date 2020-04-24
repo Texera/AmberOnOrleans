@@ -24,17 +24,17 @@ sudo ng build
 3. Create a mysql database called 'orleans'. Then, run the scripts [MySQL-Main.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Shared/MySQL-Main.sql), [MySQL-Clustering.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Orleans.Clustering.AdoNet/MySQL-Clustering.sql) to create the necessary tables and insert entries in the database.
 
 ## Run Amber:
-### Start Client:
-Open terminal and enter:
-```
-cd TexeraOrleansBackend/TexeraOrleansPrototype/webapi-project
-sudo dotnet run
-```
 ### Start Silo:
-Open another terminal and enter:
+Open terminal and enter:
 ```
 cd TexeraOrleansBackend/TexeraOrleansPrototype/SiloHost
 sudo dotnet run -c Release
+```
+### Start Client:
+Open another terminal and enter:
+```
+cd TexeraOrleansBackend/TexeraOrleansPrototype/webapi-project
+sudo dotnet run
 ```
 ### Create workflow through Web GUI
 Go to `http://localhost:7070`, choose operators from left panel and link them together. Click the "Run" button in upper-right corner to  run the workflow. 
