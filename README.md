@@ -31,8 +31,8 @@ FLUSH PRIVILEGES;
 ```
 4. Run the scripts [MySQL-Main.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Shared/MySQL-Main.sql), [MySQL-Clustering.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Orleans.Clustering.AdoNet/MySQL-Clustering.sql) to create the necessary tables and insert entries in the database.
 
-## Run Amber:
-### 1.Start MySql Server
+## Run Amber on your local machine:
+### 1.Start MySql Server on local
 ### 2.Start Silo:
 Open terminal and enter:
 ```
