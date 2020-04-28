@@ -8,7 +8,7 @@ sudo apt-get install nodejs
 ```
 
 ## Nodejs installation(Windows):
-Download [nodejs](https://nodejs.org/en/) and install it.
+Download [node](https://nodejs.org/en/)(LTS 11.7.0) and install it.
 
 ## Frontend installation:
 Clone this repo then do the following:
