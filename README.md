@@ -13,6 +13,9 @@ Download [node](https://nodejs.org/en/)(LTS version) and install it.
 ## Frontend installation:
 Clone this repo then do the following:
 ```
+cd OrleansExp/TexeraOrleansPrototype/texera
+git submodule init
+git submodule update
 cd OrleansExp/TexeraOrleansPrototype/texera/core/new-gui
 git checkout henry-orleans-demo
 npm install -g @angular/cli
