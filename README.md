@@ -13,8 +13,6 @@ Download [node](https://nodejs.org/en/)(LTS version) and install it.
 ## Frontend installation:
 Clone this repo then do the following:
 ```
-cd OrleansExp/
-git checkout frontend-integrated
 cd OrleansExp/TexeraOrleansPrototype/texera/core/new-gui
 npm install
 npm run build
