@@ -20,7 +20,7 @@ npm run build
 
 ## Amber Requirements:
 1. Install dotnet-sdk 3.0
-2. Install MySQL and login as admin. Using the following command to create a user with username "orleansbackend" and password "orleans-0519-2019" (this can be changed at Constants.cs)
+2. Install MySQL and login as admin. Using the following command to create a user with username "orleansbackend" and password "orleans-0519-2019" (this can be changed at [Constants.cs](https://github.com/Hiseen/OrleansExp/blob/master/TexeraOrleansPrototype/Utilities/Constants.cs))
 ```
 CREATE USER 'orleansbackend'@'%' IDENTIFIED BY 'orleans-0519-2019';
 ```
