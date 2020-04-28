@@ -13,15 +13,11 @@ Download [node](https://nodejs.org/en/)(LTS version) and install it.
 ## Frontend installation:
 Clone this repo then do the following:
 ```
-cd OrleansExp/TexeraOrleansPrototype/texera
-git submodule init
-git submodule update
+cd OrleansExp/
+git checkout frontend-integrated
 cd OrleansExp/TexeraOrleansPrototype/texera/core/new-gui
-git checkout henry-orleans-demo
-npm install -g @angular/cli
-npm install node-sass
 npm install
-ng build
+npm run build
 ```
 
 ## Amber Requirements:
@@ -30,11 +26,12 @@ ng build
 ```
 CREATE USER 'orleansbackend'@'%' IDENTIFIED BY 'orleans-0519-2019';
 ```
-3. Create a mysql database called 'orleans' and grant all privileges by using the following commands.
+3. Create a mysql database called 'amberorleans' and grant all privileges by using the following commands.
 ```
-CREATE DATABASE orleans;
-GRANT ALL PRIVILEGES ON orleans. * TO 'orleansbackend'@'%';
+CREATE DATABASE amberorleans;
+GRANT ALL PRIVILEGES ON amberorleans. * TO 'orleansbackend'@'%';
 FLUSH PRIVILEGES;
+USE amberorleans;
 ```
 4. Run the scripts [MySQL-Main.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Shared/MySQL-Main.sql), [MySQL-Clustering.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Orleans.Clustering.AdoNet/MySQL-Clustering.sql) to create the necessary tables and insert entries in the database.
 
@@ -44,13 +41,13 @@ FLUSH PRIVILEGES;
 Open terminal and enter:
 ```
 cd OrleansExp/TexeraOrleansPrototype/SiloHost
-sudo dotnet run -c Release
+dotnet run -c Release
 ```
 ### 3.Start Client:
 Open another terminal and enter:
 ```
 cd TexeraOrleansBackend/TexeraOrleansPrototype/webapi-project
-sudo dotnet run
+dotnet run
 ```
 ### 4.Create workflow through Web GUI
 This is a step-by-step guide for creating and runnning Workflow TPC-H W1 in [Amber paper](http://www.vldb.org/pvldb/vol13/p740-kumar.pdf).
