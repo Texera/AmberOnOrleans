@@ -19,7 +19,7 @@ namespace TexeraUtilities
         {
             get
             {
-                return "server="+ClientIPAddress+";uid=orleansbackend;pwd=orleans-0519-2019;database=amberorleans;SslMode=none";
+                return "server="+ClientIPAddress+";uid=orleansbackend;pwd=orleans-0519-2019;database=amberorleans;SslMode=required";
             }
         }
     }
