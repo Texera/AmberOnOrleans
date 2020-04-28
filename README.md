@@ -46,6 +46,40 @@ cd TexeraOrleansBackend/TexeraOrleansPrototype/webapi-project
 sudo dotnet run
 ```
 ### 4.Create workflow through Web GUI
-Go to `http://localhost:7070`, choose operators from left panel and link them together. Click the "Run" button in upper-right corner to  run the workflow. 
+This is a step-by-step guide for creating and runnning Workflow TPC-H W1 in [Amber paper](http://www.vldb.org/pvldb/vol13/p740-kumar.pdf).
+Download 1G TPC-H sample dataset from https://drive.google.com/drive/folders/1FC47Kh_xvb8Zact-boFIElKmzz00Ouqx to your local machine.
+Go to `http://localhost:7070`, you can see a web GUI for Amber:
+![web GUI](http://drive.google.com/uc?export=view&id=15_-lT_asJ6YzePln4tVvvNrGRnoqK7Th)
 
+Drag Source -> Scan operator from left panel and drop it on the canvas:
+![Scan](http://drive.google.com/uc?export=view&id=1OJ-MsaK5ISMuyzuWuXjX_W5KpzyVc_yX)
+
+Then, drag and drop Utilities -> Comparison, LocalGroupBy, GlobalGroupBy and Sort -> Sort respectively. They will automatically be linked with the previous operator. Your workflow should look like this:
+![W1](http://drive.google.com/uc?export=view&id=1mvv7J6QVYEXHEQKYQRmuGwrn1pBy6mMo)
+
+You can specifiy properties for each operator on the right panel. Each operator should have the following properties:
+
+Scan:
+
+![Scan properties](http://drive.google.com/uc?export=view&id=1qf2q8eEglarhQ1mr3ajF5L6DNHQLtcrX)
+
+Comparison:
+
+![Comparison properties](http://drive.google.com/uc?export=view&id=1lBGkUF4tIyry5zqkQVgvogRgZoHCQgZP)
+
+LocalGroupBy:
+
+![LocalGroupBy properties](http://drive.google.com/uc?export=view&id=1C_EYg2g6S9FT_xFI_Su5CGYWfuXVFgYi)
+
+GlobalGroupBy:
+
+![GlobalGroupBy properties](http://drive.google.com/uc?export=view&id=1YFiRbyXZzszDGM2e8sY3JN8Uzmiha1Ms)
+
+Sort:
+
+![Sort properties](http://drive.google.com/uc?export=view&id=1QzqOalYv4oMBMnx23orl6gMlMtn1MY-v)
+
+Click the "Run" button in upper-right corner to run the workflow. After completion, the following result will pop up from the bottom:
+
+![result](http://drive.google.com/uc?export=view&id=1HG7cnoXKgXdpjYFX4r2DZkuga8JaFP19)
 
