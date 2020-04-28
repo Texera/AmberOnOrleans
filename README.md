@@ -1,20 +1,24 @@
 # Amber Prototype based on Orleans
 
-## Frontend installation(Linux): 
-Before cloning the repo:
+## Nodejs installation(Linux): 
 ```
 sudo apt-get install curl software-properties-common
 curl -sL https://deb.nodesource.com/setup_12.x | sudo bash -
 sudo apt-get install nodejs
 ```
+
+## Nodejs installation(Windows):
+Download [nodejs](https://nodejs.org/en/) and install it.
+
+## Frontend installation:
 Clone this repo then do the following:
 ```
 cd OrleansExp/TexeraOrleansPrototype/texera/core/new-gui
 git checkout henry-orleans-demo
 npm install -g @angular/cli
-npm install --save-dev  --unsafe-perm node-sass
+npm install node-sass
 npm install
-sudo ng build
+ng build
 ```
 
 ## Amber Requirements:
