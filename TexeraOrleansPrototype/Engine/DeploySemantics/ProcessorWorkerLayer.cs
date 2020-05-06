@@ -12,6 +12,8 @@ using System.Linq;
 
 namespace Engine.DeploySemantics
 {
+    //Worker actors who process data. 
+    //These do not include actors that scan data from its source
     public class ProcessorWorkerLayer : WorkerLayer
     {
         private int numWorkers;

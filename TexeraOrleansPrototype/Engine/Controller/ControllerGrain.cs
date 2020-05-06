@@ -19,6 +19,7 @@ using System.Diagnostics;
 
 namespace Engine.Controller
 {
+    //Controller actor of a workflow
     [WorkerGrainPlacement]
     public class ControllerGrain : Grain, IControllerGrain
     {
