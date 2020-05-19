@@ -45,13 +45,13 @@ USE amberorleans;
 ### 2.Start Silo:
 Open terminal and enter:
 ```
-cd OrleansExp/TexeraOrleansPrototype/SiloHost
+cd OrleansExp/AmberOrleansPrototype/SiloHost
 dotnet run -c Release
 ```
 ### 3.Start Client:
 Open another terminal and enter:
 ```
-cd TexeraOrleansBackend/TexeraOrleansPrototype/webapi-project
+cd OrleansExp/AmberOrleansPrototype/webapi-project
 dotnet run
 ```
 ### 4.Create workflow through Web GUI
