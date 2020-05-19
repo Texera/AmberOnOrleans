@@ -92,3 +92,28 @@ Click the "Run" button in upper-right corner to run the workflow. After completi
 
 ![result](http://drive.google.com/uc?export=view&id=1HG7cnoXKgXdpjYFX4r2DZkuga8JaFP19)
 
+
+## Run Amber on a cluster:
+### 1.Clone this repo:
+on one cluster machine (name it A) which installed MySql Server and do the following change at [Constants.cs](https://github.com/Hiseen/OrleansExp/blob/master/TexeraOrleansPrototype/Utilities/Constants.cs):
+```
+public static string ClientIPAddress = <Current Machine's IP address>;
+...
+public volatile static int DefaultNumGrainsInOneLayer = <# of Machines in the cluster - 1>;
+```
+### 2.Start MySql Server on machine A
+### 3.Copy the edited repo to all other machines in the cluster.
+### 4.Start Silos:
+Open terminal and enter on all other machines in the cluster:
+```
+cd OrleansExp/AmberOrleansPrototype/SiloHost
+dotnet run -c Release
+```
+### 4.Start Client(After silos get online):
+Open terminal and enter on machine A:
+```
+cd OrleansExp/AmberOrleansPrototype/webapi-project
+dotnet run
+```
+### 5.Follow from step 4 of the tutorial above on machine A
+
