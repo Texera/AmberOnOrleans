@@ -19,7 +19,7 @@
 ### Build Frontend
 Clone this repo then do the following:
 ```
-cd OrleansExp/TexeraOrleansPrototype/texera/core/new-gui
+cd OrleansExp/AmberOrleansPrototype/texera/core/new-gui
 npm install
 npm run build
 ```
