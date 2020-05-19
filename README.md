@@ -1,16 +1,22 @@
 # Amber Prototype based on Orleans
 
-## Nodejs installation(Linux): 
-```
-sudo apt-get install curl software-properties-common
-curl -sL https://deb.nodesource.com/setup_12.x | sudo bash -
-sudo apt-get install nodejs
-```
 
-## Nodejs installation(Windows):
-Download [node](https://nodejs.org/en/)(LTS version) and install it.
+## Install Frontend
 
-## Frontend installation:
+### Install Node JS
+
+- For Windows / Mac
+
+  Download and install the latest LTS version of [NodeJS](https://nodejs.org/en/)
+
+- For Linux
+  ```
+  sudo apt-get install curl software-properties-common
+  curl -sL https://deb.nodesource.com/setup_12.x | sudo bash -
+  sudo apt-get install nodejs
+  ```
+
+### Build Frontend
 Clone this repo then do the following:
 ```
 cd OrleansExp/TexeraOrleansPrototype/texera/core/new-gui
@@ -18,8 +24,9 @@ npm install
 npm run build
 ```
 
-## Amber Requirements:
-1. Install dotnet-sdk 3.0
+## Install Amber
+
+1. Install [dotnet-sdk 3.0](https://dotnet.microsoft.com/download)
 2. Install MySQL and login as admin. Using the following command to create a user with username "orleansbackend" and password "orleans-0519-2019" (this can be changed at [Constants.cs](https://github.com/Hiseen/OrleansExp/blob/master/TexeraOrleansPrototype/Utilities/Constants.cs))
 ```
 CREATE USER 'orleansbackend'@'%' IDENTIFIED BY 'orleans-0519-2019';
@@ -31,10 +38,10 @@ GRANT ALL PRIVILEGES ON amberorleans. * TO 'orleansbackend'@'%';
 FLUSH PRIVILEGES;
 USE amberorleans;
 ```
-4. Run the scripts [MySQL-Main.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Shared/MySQL-Main.sql), [MySQL-Clustering.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Orleans.Clustering.AdoNet/MySQL-Clustering.sql) to create the necessary tables and insert entries in the database.
+4. Run the scripts [MySQL-Main.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Shared/MySQL-Main.sql), [MySQL-Clustering.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Orleans.Clustering.AdoNet/MySQL-Clustering.sql) to create the necessary tables and insert entries in the database. 
 
 ## Run Amber on your local machine:
-### 1.Start MySql Server on local
+### 1.Start MySql Server on local machine
 ### 2.Start Silo:
 Open terminal and enter:
 ```
