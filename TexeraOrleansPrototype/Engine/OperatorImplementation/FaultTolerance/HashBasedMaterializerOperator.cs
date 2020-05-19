@@ -21,10 +21,10 @@ namespace Engine.OperatorImplementation.FaultTolerance
             this.numBuckets = numBuckets;
             this.serializedHashFunc = serializedHashFunc;
             string dirName = "/amber-tmp/"+id;
-            ("hadoop fs -mkdir hdfs://10.138.0.2:8020"+dirName).Bash();
+            ("hadoop fs -mkdir "+Constants.HDFSAddress+dirName).Bash();
             for(int i=0;i<numBuckets;++i)
             {
-                ("hadoop fs -mkdir hdfs://10.138.0.2:8020"+dirName+"/"+i).Bash();
+                ("hadoop fs -mkdir "+Constants.HDFSAddress+dirName+"/"+i).Bash();
             }
         }
 

@@ -6,6 +6,7 @@ using TexeraUtilities;
 
 namespace Engine.OperatorImplementation.SendingSemantics
 {
+    //Dictates the sending strategy of tuples produced by an actor
     public interface ISendStrategy
     {
         void Enqueue(List<TexeraTuple> output);

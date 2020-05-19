@@ -14,7 +14,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
     public class FlowControlUnit: SendingUnit
     {
         static readonly TimeSpan okTime=new TimeSpan(0,0,0,5); 
-        //static readonly int WindowSizeLimit=4;
         int ssthreshold = 4;
         int windowSize = 2;
         bool isPaused=false;
@@ -44,7 +43,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public override void SetPauseFlag(bool flag)
         {
-            //Console.WriteLine("flowControlUnit's pause flag = "+flag.ToString());
             isPaused=flag;
         }
 
@@ -77,7 +75,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
             {
                 messagesOnTheWay[message.SequenceNumber]=DateTime.UtcNow;
             }
-            //Console.WriteLine(Utils.GetReadableName(message.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver)+" windowSize = "+windowSize);
             receiver.ReceivePayloadMessage(message).ContinueWith((t) => 
             {
                 if (Utils.IsTaskFaultedAndStillNeedRetry(t,retryCount))
@@ -110,10 +107,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
                         {
                             windowSize = windowSize + 1;
                         }
-                        // if(windowSize>WindowSizeLimit)
-                        // {
-                        //     windowSize=WindowSizeLimit;
-                        // }
                     }
                     else
                     {

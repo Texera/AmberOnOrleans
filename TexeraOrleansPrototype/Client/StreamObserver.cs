@@ -13,6 +13,7 @@ using Orleans;
 
 namespace OrleansClient
 {
+    //Observes the results of the workflow
     public class StreamObserver : IAsyncObserver<Immutable<PayloadMessage>>
     {
         public List<TexeraTuple> resultsToRet = new List<TexeraTuple>();

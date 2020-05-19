@@ -15,11 +15,6 @@ namespace Engine.OperatorImplementation.Common
     public interface IWorkerGrain : IGrainWithGuidCompoundKey
     {
 
-        #region used by operators that have subsequent operators
-        // Task AddNextGrain(Guid nextOperatorGuid, IWorkerGrain grain);
-        // Task AddNextGrainList(Guid nextOperatorGuid, List<IWorkerGrain> grains);
-        #endregion
-
         #region Used by all operators
         Task<SiloAddress> Init(IPrincipalGrain principalGrain, ITupleProcessor processor);
         Task<SiloAddress> Init(IPrincipalGrain principalGrain, ITupleProducer producer);

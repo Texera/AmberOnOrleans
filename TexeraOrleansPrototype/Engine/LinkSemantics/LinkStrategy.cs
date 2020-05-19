@@ -11,6 +11,7 @@ using Engine.DeploySemantics;
 
 namespace Engine.LinkSemantics
 {
+    //Links actors of consecutive operators.
     public abstract class LinkStrategy
     {
 
@@ -25,6 +26,8 @@ namespace Engine.LinkSemantics
             this.batchSize = batchSize;
         }
 
+        //Link() function defines which worker actors of the next operator should be a receiver for an actor of the current operator.
+        //Thus, Link() actually defines the SendStrategy() for each actor.
         public abstract Task Link();
     }
     
