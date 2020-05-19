@@ -115,5 +115,5 @@ Open terminal and enter on machine A:
 cd OrleansExp/AmberOrleansPrototype/webapi-project
 dotnet run
 ```
-### 5.Follow from step 4 of the tutorial above on machine A
+### 5.On machine A, follow from step 4 of the tutorial above
 
