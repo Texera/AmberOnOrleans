@@ -47,7 +47,6 @@ class ScanStreamReader
             case FileType.tbl:
             case FileType.txt:
             Pair<TexeraTuple,ulong> res=await ReadTuple();
-            //Console.WriteLine("Skip: "+res);
             return res.Second;
             default:
             //not implemented
@@ -218,7 +217,6 @@ class ScanStreamReader
     public bool IsEOF()
     {
         return buffer_end==0;
-        //return file.EndOfStream;
     }
 
     #if (PROFILING_ENABLED)

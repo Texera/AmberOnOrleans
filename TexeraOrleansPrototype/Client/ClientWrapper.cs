@@ -69,7 +69,7 @@ namespace OrleansClient
                     .Configure<ClusterOptions>(options =>
                     {
                         options.ClusterId = "dev";
-                        options.ServiceId = "TexeraOrleansPrototype";
+                        options.ServiceId = "AmberOrleansPrototype";
                     })
                     .Configure<GatewayOptions>(options =>
                     {
