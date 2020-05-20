@@ -48,6 +48,7 @@ Open terminal and enter:
 cd OrleansExp/AmberOrleansPrototype/SiloHost
 dotnet run -c Release
 ```
+Make sure you see "Silo Started!" before proceeding to step 3.
 ### 3.Start Client:
 Open another terminal and enter:
 ```
@@ -109,6 +110,7 @@ Open terminal and enter on all other machines in the cluster:
 cd OrleansExp/AmberOrleansPrototype/SiloHost
 dotnet run -c Release
 ```
+Make sure you see "Silo Started!" on all the machines before proceeding to step 4.
 ### 4.Start Client(After silos get online):
 Open terminal and enter on machine A:
 ```
