@@ -57,7 +57,7 @@ namespace webapi
 
         public static IWebHost BuildWebHost() =>
             WebHost.CreateDefaultBuilder()
-                .UseWebRoot("../texera/core/new-gui/dist")
+                .UseWebRoot("../Frontend/dist")
                 .UseStartup<Startup>()
                 .UseUrls("http://*:7070")
                 .Build();
