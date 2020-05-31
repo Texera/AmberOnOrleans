@@ -19,7 +19,7 @@
 ### Build Frontend
 Clone this repo then do the following:
 ```
-cd OrleansExp/AmberOrleansPrototype/texera/core/new-gui
+cd AmberOnOrleans/Frontend
 npm install
 npm run build
 ```
@@ -45,14 +45,14 @@ USE amberorleans;
 ### 2.Start Silo:
 Open terminal and enter:
 ```
-cd OrleansExp/AmberOrleansPrototype/SiloHost
+cd AmberOnOrleans/SiloHost
 dotnet run -c Release
 ```
 Make sure you see "Silo Started!" before proceeding to step 3.
 ### 3.Start Client:
 Open another terminal and enter:
 ```
-cd OrleansExp/AmberOrleansPrototype/webapi-project
+cd AmberOnOrleans/WebAPI
 dotnet run
 ```
 ### 4.Create workflow through Web GUI
@@ -107,14 +107,14 @@ public volatile static int DefaultNumGrainsInOneLayer = <# of Machines in the cl
 ### 4.Start Silos:
 Open terminal and enter on all other machines in the cluster:
 ```
-cd OrleansExp/AmberOrleansPrototype/SiloHost
+cd AmberOnOrleans/SiloHost
 dotnet run -c Release
 ```
 Make sure you see "Silo Started!" on all the machines before proceeding to step 4.
 ### 4.Start Client(After silos get online):
 Open terminal and enter on machine A:
 ```
-cd OrleansExp/AmberOrleansPrototype/webapi-project
+cd AmberOnOrleans/WebAPI
 dotnet run
 ```
 ### 5.On machine A, follow from step 4 of the tutorial above
