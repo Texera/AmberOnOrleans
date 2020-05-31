@@ -7,7 +7,7 @@
 
 - For Windows / Mac
 
-  Download and install the latest LTS version of [NodeJS](https://nodejs.org/en/)
+  Download and install the latest LTS version of [NodeJS](https://nodejs.org/en/) (Version 12)
 
 - For Linux
   ```
@@ -23,6 +23,7 @@ cd AmberOnOrleans/Frontend
 npm install
 npm run build
 ```
+Running `npm install` will take a long time, usually 5 to 10 minutes. You can ignore the vulnerabilities warnings in the end.
 
 ## Install Amber
 
