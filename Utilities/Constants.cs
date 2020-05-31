@@ -11,6 +11,7 @@ namespace TexeraUtilities
     static public class Constants
     {
         public static string ClientIPAddress="localhost";
+        public static string HDFSAddress = "hdfs://10.138.0.2:8020"; //for storing checkpoint data if checkpointing is enabled (default = False)
         public static string WebHDFSEntry = "http://localhost:9870/webhdfs/v1/";
         public static int MaxRetries = 60;
         public static int BatchSize = 400;

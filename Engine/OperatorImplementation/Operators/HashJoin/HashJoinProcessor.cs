@@ -75,30 +75,7 @@ namespace Engine.OperatorImplementation.Operators
 
         public void NoMore()
         {
-            // if(otherTable.Count > 0)
-            // {
-            //     // StringBuilder sb = new StringBuilder();
-            //     // foreach(var entry in hashTable)
-            //     // {
-            //     //     sb.AppendLine(entry.Key+": "+entry.Value.Count+ " hashCode: "+entry.Key.GetHashCode()+" length: "+entry.Key.Length);
-            //     //     sb.AppendLine(((int)(entry.Key.ToCharArray()[0])).ToString());
-            //     // }
-            //     // Console.WriteLine(sb.ToString());
-            //     resultQueue = new Queue<TexeraTuple>();
-            //     end = true;
-            //     foreach(var tuple in otherTable)
-            //     {
-            //         string field=tuple.FieldList[outerTableIndex];
-            //         if(hashTable.ContainsKey(field))
-            //         {
-            //             foreach(string[] f in hashTable[field])
-            //             {  
-            //                 resultQueue.Enqueue(new TexeraTuple(tuple.FieldList.FastConcat(f)));
-            //             }
-            //         }
-            //     }
-            //     otherTable.Clear();
-            // }
+           
         }
 
         public Task Initialize()
@@ -112,15 +89,11 @@ namespace Engine.OperatorImplementation.Operators
         public bool HasNext()
         {
             return flag;
-            // || (end && resultQueue.Count > 0);
+           
         }
  
         public TexeraTuple Next()
         {
-            // if(end && resultQueue.Count > 0)
-            // {
-            //     return resultQueue.Dequeue();
-            // }
             var result = new TexeraTuple(currentTuple.FastConcat(currentEntry[currentIndex]));
             currentIndex++;
             if(currentIndex>=currentEntry.Count)

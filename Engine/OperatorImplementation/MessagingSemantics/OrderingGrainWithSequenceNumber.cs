@@ -11,6 +11,7 @@ using Engine.OperatorImplementation.Common;
 
 namespace Engine.OperatorImplementation.MessagingSemantics
 {
+    //Ensures FIFO and exactly once delivery between two actors
     public class OrderingGrainWithSequenceNumber : IOrderingEnforcer
     {
         private Dictionary<IGrain,Dictionary<ulong, Pair<bool,List<TexeraTuple>>>> stashedPayloadMessages = new Dictionary<IGrain, Dictionary<ulong, Pair<bool, List<TexeraTuple>>>>();
@@ -59,7 +60,6 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     inSequenceNumberMap[sender]++;
                     return true;
                 case MessageStatus.Ahead:
-                    //Console.WriteLine("expected "+inSequenceNumberMap[sender]+" but get "+sequenceNum);
                     if(!stashedPayloadMessages.ContainsKey(sender))
                     {
                         stashedPayloadMessages[sender]=new Dictionary<ulong, Pair<bool, List<TexeraTuple>>>();
@@ -70,7 +70,6 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     }
                     break;
                 case MessageStatus.Duplicated:
-                    //Console.WriteLine("expected "+inSequenceNumberMap[sender]+" but get "+sequenceNum+" duplicated");
                     break;
             }
             return false;
@@ -85,7 +84,6 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                     inSequenceNumberMap[sender]=0;
                 }
                 ulong currentSequenceNumber=inSequenceNumberMap[sender];
-                //Console.WriteLine("check seqnum "+currentSequenceNumber+" from stashed");
                 Dictionary<ulong, Pair<bool,List<TexeraTuple>>> currentMap=stashedPayloadMessages[sender];
                 while(currentMap.ContainsKey(currentSequenceNumber))
                 {
@@ -100,7 +98,6 @@ namespace Engine.OperatorImplementation.MessagingSemantics
                         batchList.AddRange(pair.Second);
                     }
                     currentMap.Remove(currentSequenceNumber);
-                    //Console.WriteLine("extract seqnum "+currentSequenceNumber+" from stashed");
                     currentSequenceNumber++;
                     inSequenceNumberMap[sender]++;
                 }

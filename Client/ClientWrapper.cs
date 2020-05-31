@@ -69,7 +69,7 @@ namespace OrleansClient
                     .Configure<ClusterOptions>(options =>
                     {
                         options.ClusterId = "dev";
-                        options.ServiceId = "TexeraOrleansPrototype";
+                        options.ServiceId = "AmberOrleansPrototype";
                     })
                     .Configure<GatewayOptions>(options =>
                     {
@@ -133,13 +133,6 @@ namespace OrleansClient
 
         public async Task<List<TexeraTuple>> DoClientWork(IClusterClient client, Guid workflowID, string plan)
         {
-            // code for testing the correctness of sequnece number:
-
-            // IWorkerGrain grain=client.GetGrain<IWorkerGrain>(Guid.NewGuid(),"2");
-            // await grain.Init(grain,null,null);
-            // List<ulong> seqnum=new List<ulong>{0,1,3,2,4,10,9,8,7,5,4,6};
-            // foreach(ulong seq in seqnum)
-            //     grain.ReceivePayloadMessage(new Immutable<PayloadMessage>(new PayloadMessage("123",seq,null,seq==10)));
             RequestContext.Set("targetSilo",Constants.ClientIPAddress);
             var deployGrain = client.GetGrain<IDeployGrain>(workflowID);
             var controllerGrain = await deployGrain.Init(workflowID,plan,false);
@@ -149,38 +142,8 @@ namespace OrleansClient
             var handle = await stream.SubscribeAsync(so);
             so.SetNumEndFlags(await controllerGrain.GetNumberOfOutputGrains());
             instance.IDToWorkflowEntry[workflowID]=controllerGrain;
-            // Operator secondScan=null;
-            // foreach(Operator op in workflow.StartOperators)
-            // {
-            //     if(((ScanPredicate)op.Predicate).File.EndsWith("orders.tbl"))
-            //         secondScan=op;
-            // }
-            // test count break point
-            // foreach(Operator op in workflow.AllOperators)
-            // {
-            //     if(op is FilterOperator<DateTime>)
-            //         await op.PrincipalGrain.SetCountBreakPoint(1000000);
-            // }
             await so.Start();
             await controllerGrain.Start();
-            // if(secondScan!=null)
-            // {
-            //     foreach(Operator op in workflow.StartOperators)
-            //     {
-            //         if(((ScanPredicate)op.Predicate).File.EndsWith("customer.tbl"))
-            //         {
-            //             await op.DelayPipeline(secondScan);
-            //             await op.PrincipalGrain.Start();
-            //         }
-            //     }
-            // }
-            // else
-            // {
-            //     foreach(Operator op in workflow.StartOperators)
-            //     {
-            //         await op.PrincipalGrain.Start();
-            //     }
-            // }
             while (!so.isFinished)
             {
 

@@ -59,14 +59,11 @@ namespace SiloHost
                 .Configure<ClusterOptions>(options =>
                 {
                     options.ClusterId = "dev";
-                    options.ServiceId = "TexeraOrleansPrototype";
+                    options.ServiceId = "AmberOrleansPrototype";
                 })
                 .ConfigureServices(services => 
                 {
-                    // services.Configure<SchedulingOptions>(options =>
-                    // {
-                    //     options.MaxActiveThreads = 2;
-                    // });
+    
                     services.AddSingletonNamedService<PlacementStrategy, WorkerGrainPlacement>(nameof(WorkerGrainPlacement));
                     services.AddSingletonKeyedService<Type, IPlacementDirector, WorkerGrainPlacementDirector>(typeof(WorkerGrainPlacement));
                 })

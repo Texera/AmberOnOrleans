@@ -15,6 +15,8 @@ using Engine.Breakpoint.GlobalBreakpoint;
 
 namespace Engine.OperatorImplementation.Common
 {
+    //Administrator actor of an operator in the workflow.
+    //It administrates worker actors of its operator
     public interface IPrincipalGrain : IGrainWithGuidKey
     {
         Task Start();

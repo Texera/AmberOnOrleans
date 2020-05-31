@@ -204,11 +204,6 @@ namespace Engine.OperatorImplementation.Common
             if(workerStates[sender]!=WorkerState.Completed)
             {
                 workerStates[sender] = WorkerState.Paused;
-                //Console.WriteLine("Principal: "+Utils.GetReadableName(sender) + " paused ");
-                // foreach(var pair in workerStates)
-                // {
-                //     Console.WriteLine(Utils.GetReadableName(pair.Key)+": "+pair.Value);
-                // }
                 if(workerStates.Values.Where(x => x != WorkerState.Completed).All(x => x==WorkerState.Paused))
                 {
                     Console.WriteLine("Principal: "+Utils.GetReadableName(self)+" paused");
@@ -323,7 +318,6 @@ namespace Engine.OperatorImplementation.Common
                 }
             }
             await Task.WhenAll(taskList);
-            //return Task.CompletedTask;
         }
     }
 }

@@ -32,7 +32,6 @@ namespace Engine.OperatorImplementation.SendingSemantics
 
         public virtual void Send(PayloadMessage message)
         {
-            //Console.WriteLine(Utils.GetReadableName(message.Value.SenderIdentifer)+" -> "+Utils.GetReadableName(receiver));
             SendInternal(message.AsImmutable(),0);
         }
 
