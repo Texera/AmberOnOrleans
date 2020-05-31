@@ -37,7 +37,7 @@
     "jointjs": "^2.1.4",
     "jquery": "^3.1.1",
     "jquery-ui-dist": "^1.12.1",
-    "lodash": "^3.10.1",
+    "lodash": "^4.17.13",
     "lodash-es": "^4.17.10",
     "ngx-bootstrap": "^3.0.1",
     "ngx-json-viewer": "^2.4.0",
