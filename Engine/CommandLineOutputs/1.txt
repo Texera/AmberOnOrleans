@@ -1,0 +1,45 @@
+Start loading tuples
+Scan 2 loading done
+Scan 3 loading done
+Scan 4 loading done
+Scan 5 loading done
+Scan 6 loading done
+Scan 7 loading done
+Scan 8 loading done
+Scan 9 loading done
+Scan 10 loading done
+Scan 11 loading done
+Finish loading tuples
+Start experiment
+Scan 5 sending done
+Scan 2 sending done
+Scan 7 sending done
+Scan 8 sending done
+Scan 6 sending done
+Scan 4 sending done
+Scan 9 sending done
+Scan 3 sending done
+Sending 1000 next batch, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Ordered Filter done
+Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess,Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess,Exiting 3 PostProcess, Ordered Filter done
+Exiting 3 PostProcess, Ordered Filter done
+Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Exiting 3 PostProcess, Ordered Filter done
+Exiting 3 PostProcess, Ordered Filter done
+Exiting 3 PostProcess, Sending 99001 next batch, Ordered Filter done
+Sending 98001 next batch, Ordered Filter done
+Sending 97001 next batch, Ordered Filter done
+Sending 96001 next batch, Sending 95001 next batch, Sending 94001 next batch, Sending 93001 next batch, Sending 92001 next batch, Sending 91001 next batch, Sending 90001 next batch, Sending 89001 next batch, Sending 88001 next batch, Sending 87001 next batch, Sending 86001 next batch, Sending 85001 next batch, Sending 84001 next batch, Sending 83001 next batch, Sending 82001 next batch, Sending 81001 next batch, Sending 80001 next batch, Sending 79001 next batch, Sending 78001 next batch, Sending 77001 next batch, Sending 76001 next batch, Sending 75001 next batch, Sending 74001 next batch, Sending 73001 next batch, Sending 72001 next batch, Sending 71001 next batch, Sending 70001 next batch, Sending 69001 next batch, Sending68001 next batch, Sending 67001 next batch, Sending 66001 next batch, Sending 65001 next batch, Sending 64001 next batch, Sending 63001 next batch, Sending 62001 next batch, Sending 61001 next batch, Sending 60001 next batch, Sending 59001 next batch, Sending 58001 next batch, Sending 57001 next batch, Sending 56001 next batch, Sending 55001 next batch, Sending 54001 next batch, Sending 53001 next batch, Sending 52001 next batch, Sending 51001 next batch, Sending 50001 next batch, Sending 49001 next batch, Sending 48001 next batch, Sending 47001next batch, Sending 46001 next batch, Sending 45001 next batch, Sending 44001 next batch, Sending 43001 next batch, Sending 42001 next batch, Sending 41001 next batch, Sending 40001 next batch, Sending 39001 next batch, Sending 38001 next batch, Sending 37001 next batch, Sending 36001 next batch, Sending 35001 next batch, Sending 34001 next batch, Sending 33001 next batch, Sending 32001 next batch, Sending 31001 next batch, Sending 30001 next batch, Sending 29001 next batch, Sending 28001 next batch, Sending 27001 next batch, Sending 26001 next batch, Sending 25001 next batch, Sending 24001 next batch, Sending 23001 next batch, Sending 22001 next batch, Sending 21001 next batch, Sending 20001 next batch, Sending 19001 next batch, Sending 18001 next batch, Sending 17001 next batch, Sending 16001 next batch, Sending 15001 next batch, Sending 14001 next batch, Sending 13001 next batch,
+Sending 12001 next batch, Sending 11001 next batch, Sending 10001 next batch,
+Sending 9001 next batch, Sending 8001 next batch, Sending 7001 next batch, Sending 6001 next batch, Sending 5001 next batch, Sending 4001 next batch, Sending 3001 next batch, Sending 2001 next batch, Sending 1001 next batch,
+Sending 1 next batch,
+Scan 11 sending done
+Scan 10 sending done
+
+
+
+
+Ordered Filter done
+Ordered Filter done
+
+
+Time usage: 00:00:00.7119323
+==1000000== count received: by client
