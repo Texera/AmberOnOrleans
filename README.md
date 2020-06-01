@@ -59,8 +59,8 @@ dotnet run
 ### 4.Create workflow through Web GUI
 This is a step-by-step guide for creating and runnning Workflow TPC-H W1 in [Amber paper](http://www.vldb.org/pvldb/vol13/p740-kumar.pdf).
 Here are 2 datasets you can use:
-1. [tiny TPC-H dataset](https://drive.google.com/file/d/1S0TFQ80D6xqZcUECqBAWNGc9XW6AttCs/view?usp=sharing)
-2. [1G TPC-H sample dataset](https://drive.google.com/file/d/1h4zVUABmMp9dA2YXb2faH4O9ULUDcimY/view?usp=sharing)
+1. [tiny TPC-H dataset(MBs)](https://drive.google.com/file/d/1S0TFQ80D6xqZcUECqBAWNGc9XW6AttCs/view?usp=sharing)
+2. [TPC-H sample dataset(1GB)](https://drive.google.com/file/d/1h4zVUABmMp9dA2YXb2faH4O9ULUDcimY/view?usp=sharing)
 
 
 Download one dataset from the links above to your local machine.
