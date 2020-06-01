@@ -58,7 +58,12 @@ dotnet run
 ```
 ### 4.Create workflow through Web GUI
 This is a step-by-step guide for creating and runnning Workflow TPC-H W1 in [Amber paper](http://www.vldb.org/pvldb/vol13/p740-kumar.pdf).
-Download [1G TPC-H sample dataset](https://drive.google.com/file/d/1h4zVUABmMp9dA2YXb2faH4O9ULUDcimY/view?usp=sharing) to your local machine.
+Here are 2 datasets you can use:
+1. [tiny TPC-H dataset](https://drive.google.com/drive/folders/1K9sQFnxuJa5rBwPn3GssafdxLyhGngSk?usp=sharing)
+2. [1G TPC-H sample dataset](https://drive.google.com/file/d/1h4zVUABmMp9dA2YXb2faH4O9ULUDcimY/view?usp=sharing)
+
+
+Download one dataset from the links above to your local machine.
 Go to `http://localhost:7070`, you can see a web GUI for Amber:
 ![web GUI](http://drive.google.com/uc?export=view&id=15_-lT_asJ6YzePln4tVvvNrGRnoqK7Th)
 
