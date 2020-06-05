@@ -136,11 +136,15 @@ public volatile static int DefaultNumGrainsInOneLayer = <# of Machines in the cl
 ### 2.Start MySql Server on machine A
 ### 3.Copy the edited repo to all other machines in the cluster.
 ### 4.Start Silos:
+Slio is a container of actors in Orleans where all the computation takes place. We need to start Silo first so that Amber knows where to allocate actors.
+
 Open terminal and enter on all other machines in the cluster:
 ```
 cd AmberOnOrleans/SiloHost
 dotnet run -c Release
 ```
+You can ignore all the warnings and it takes time to build the connection.
+
 Make sure you see "Silo Started!" on all the machines before proceeding to step 4.
 ### 5.On machine A, follow from step 3 or 4 of the tutorial above
 
