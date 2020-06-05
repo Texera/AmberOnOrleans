@@ -59,7 +59,7 @@ USE amberorleans;
    Download one dataset from the links above to your local machine.
 
 ## Run Amber on your local machine:
-### 1.Start MySql Server on local machine
+### 1.Start MySql Server on local machine.
 ### 2.Start Silo:
 Slio is a container of actors in Orleans where all the computation takes place. We need to start Silo first so that Amber knows where to allocate actors.
 
@@ -80,7 +80,7 @@ dotnet run
 It will prompt you to choose a sample workflow and enter the path of the dataset on your local machine.
 
 After entering all the parameters, the workflow will automatically run and the results will be displayed.
-### 4.Create workflow through Web GUI(Optional)
+### 4.Create workflow through Web GUI(Optional):
 If you want to checkout the web-based frontend of Amber. This is a step-by-step guide for creating and runnning a sample Workflow using one of the datasets above.
 
 Open another terminal and enter:
@@ -133,7 +133,7 @@ public static string ClientIPAddress = <Current Machine's IP address>;
 ...
 public volatile static int DefaultNumGrainsInOneLayer = <# of Machines in the cluster - 1>;
 ```
-### 2.Start MySql Server on machine A
+### 2.Start MySql Server on machine A.
 ### 3.Copy the edited repo to all other machines in the cluster.
 ### 4.Start Silos:
 Slio is a container of actors in Orleans where all the computation takes place. We need to start Silo first so that Amber knows where to allocate actors.
@@ -146,5 +146,5 @@ dotnet run -c Release
 You can ignore all the warnings and it takes time to build the connection.
 
 Make sure you see "Silo Started!" on all the machines before proceeding to step 4.
-### 5.On machine A, follow from step 3 or 4 of the tutorial above
+### 5.On machine A, follow from step 3 or 4 of the tutorial above.
 
