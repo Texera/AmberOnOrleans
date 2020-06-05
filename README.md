@@ -127,7 +127,7 @@ Click the "Run" button in upper-right corner to run the workflow. After completi
 
 ## Run Amber on a cluster:
 ### 1.Clone this repo:
-on one cluster machine (name it A) which installed MySql Server and do the following change at [Constants.cs](https://github.com/Hiseen/OrleansExp/blob/master/TexeraOrleansPrototype/Utilities/Constants.cs):
+On one cluster machine (name it A) which installed MySql Server and do the following change at [Constants.cs](https://github.com/Hiseen/OrleansExp/blob/master/TexeraOrleansPrototype/Utilities/Constants.cs):
 ```
 public static string ClientIPAddress = <Current Machine's IP address>;
 ...
