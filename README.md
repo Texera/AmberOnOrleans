@@ -1,6 +1,8 @@
 # Amber Prototype based on Orleans
 
 ## Introduction
+Long-running analytic tasks on big data frameworks often provide little or no feedback about the status of the execution. Some big  data  processing frameworks provide status updates for running jobs, but these  systems  only  allow  users  to  monitor  their  jobs passively.  Even if the users notice anomalies happening during  the  execution,  they  can  either  kill  the  job  or wait for the job to run to its completion.
+
 Amber is a distributed data processing engine build on top of existing actor model implementation. It has a unique capability of supporting responsive debugging during the execution of a dataflow. Users can pause/resume the execution, investigate the state of operators, change the behavior of an operator, and set conditional breakpoints. Amber provides these features along with the support for fault tolerance. In case of a failure, it not only ensures the correctness of the final computation result, but also recovers the same consistent debugging state.
 
 **Paper**: [Amber: A Debuggable Dataflow System Based on the
