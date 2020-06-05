@@ -142,7 +142,7 @@ cd AmberOnOrleans/SiloHost
 dotnet run -c Release
 ```
 Make sure you see "Silo Started!" on all the machines before proceeding to step 4.
-### 4.Start Client(After silos get online):
+### 4.Start Web GUI(After Silos get online):
 Open terminal and enter on machine A:
 ```
 cd AmberOnOrleans/WebApp
