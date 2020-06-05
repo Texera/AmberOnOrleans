@@ -1,5 +1,14 @@
 # Amber Prototype based on Orleans
 
+## Introduction
+Amber is a distributed data processing engine build on top of existing actor model implementation. It has a unique capability of supporting responsive debugging during the execution of a dataflow. Users can pause/resume the execution, investigate the state of operators, change the behavior of an operator, and set conditional breakpoints. Amber provides these features along with the support for fault tolerance. In case of a failure, it not only ensures the correctness of the final computation result, but also recovers the same consistent debugging state. Its performance is comparable to Apache Spark.
+
+**Paper**: [Amber: A Debuggable Dataflow System Based on the
+Actor Model](http://www.vldb.org/pvldb/vol13/p740-kumar.pdf)(VLDB 2020)
+
+**Contributors**: Shengquan Ni, Avinash Kumar, Zuozhi Wang, Chen Li.
+
+**Affiliation**: University of California, Irvine.
 
 ## Install Frontend
 
@@ -41,30 +50,43 @@ USE amberorleans;
 ```
 4. Run the scripts [MySQL-Main.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Shared/MySQL-Main.sql), [MySQL-Clustering.sql](https://github.com/dotnet/orleans/blob/master/src/AdoNet/Orleans.Clustering.AdoNet/MySQL-Clustering.sql) to create the necessary tables and insert entries in the database. 
 
+5. We have generated some sample dataset for you to banchmark Amber, here are 2 datasets you can use:
+   - [tiny TPC-H dataset(MBs)](https://drive.google.com/file/d/1S0TFQ80D6xqZcUECqBAWNGc9XW6AttCs/view?usp=sharing)
+   - [TPC-H sample dataset(1GB)](https://drive.google.com/file/d/1h4zVUABmMp9dA2YXb2faH4O9ULUDcimY/view?usp=sharing)
+   
+   Download one dataset from the links above to your local machine.
+
 ## Run Amber on your local machine:
 ### 1.Start MySql Server on local machine
 ### 2.Start Silo:
+Slio is a container of actors in Orleans where all the computation takes place. We need to start Silo first so that Amber knows where to allocate actors.
+
 Open terminal and enter:
 ```
 cd AmberOnOrleans/SiloHost
 dotnet run -c Release
 ```
+You can ignore all the warnings and it takes time to build the connection.
+
 Make sure you see "Silo Started!" before proceeding to step 3.
-### 3.Start Client:
+### 3.Start Console Application:
 Open another terminal and enter:
 ```
-cd AmberOnOrleans/WebAPI
+cd AmberOnOrleans/ConsoleApp
 dotnet run
 ```
-### 4.Create workflow through Web GUI
-This is a step-by-step guide for creating and runnning Workflow TPC-H W1 in [Amber paper](http://www.vldb.org/pvldb/vol13/p740-kumar.pdf).
+It will prompt you to choose a sample workflow and enter the path of the dataset on your local machine.
 
-Here are 2 datasets you can use:
-1. [tiny TPC-H dataset(MBs)](https://drive.google.com/file/d/1S0TFQ80D6xqZcUECqBAWNGc9XW6AttCs/view?usp=sharing)
-2. [TPC-H sample dataset(1GB)](https://drive.google.com/file/d/1h4zVUABmMp9dA2YXb2faH4O9ULUDcimY/view?usp=sharing)
+After entering all the parameters, the workflow will automatically run and the results will be displayed.
+### 4.Create workflow through Web GUI(Optional)
+If you want to checkout the web-based frontend of Amber. This is a step-by-step guide for creating and runnning a sample Workflow using one of the datasets above.
 
+Open another terminal and enter:
+```
+cd AmberOnOrleans/WebApp
+dotnet run
+```
 
-Download one dataset from the links above to your local machine.
 Go to `http://localhost:7070`, you can see a web GUI for Amber:
 ![web GUI](http://drive.google.com/uc?export=view&id=15_-lT_asJ6YzePln4tVvvNrGRnoqK7Th)
 
@@ -121,7 +143,7 @@ Make sure you see "Silo Started!" on all the machines before proceeding to step 
 ### 4.Start Client(After silos get online):
 Open terminal and enter on machine A:
 ```
-cd AmberOnOrleans/WebAPI
+cd AmberOnOrleans/WebApp
 dotnet run
 ```
 ### 5.On machine A, follow from step 4 of the tutorial above
