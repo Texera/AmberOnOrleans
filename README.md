@@ -146,5 +146,5 @@ dotnet run -c Release
 You can ignore all the warnings and it takes time to build the connection.
 
 Make sure you see "Silo Started!" on all the machines before proceeding to step 4.
-### 5.On machine A, follow from step 3 or 4 of the tutorial above.
+### 5.On machine A, follow from step 3 or 4 of the tutorial above. The table file should be stored in HDFS for other machine to access and you will need to use HDFS Restful link as the path of the table file.(e.g. http://128.295.2.45:9870/webhdfs/v1/datasets/lineitem.tbl)
 
