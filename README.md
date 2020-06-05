@@ -1,7 +1,7 @@
 # Amber Prototype based on Orleans
 
 ## Introduction
-Amber is a distributed data processing engine build on top of existing actor model implementation. It has a unique capability of supporting responsive debugging during the execution of a dataflow. Users can pause/resume the execution, investigate the state of operators, change the behavior of an operator, and set conditional breakpoints. Amber provides these features along with the support for fault tolerance. In case of a failure, it not only ensures the correctness of the final computation result, but also recovers the same consistent debugging state. Its performance is comparable to Apache Spark.
+Amber is a distributed data processing engine build on top of existing actor model implementation. It has a unique capability of supporting responsive debugging during the execution of a dataflow. Users can pause/resume the execution, investigate the state of operators, change the behavior of an operator, and set conditional breakpoints. Amber provides these features along with the support for fault tolerance. In case of a failure, it not only ensures the correctness of the final computation result, but also recovers the same consistent debugging state.
 
 **Paper**: [Amber: A Debuggable Dataflow System Based on the
 Actor Model](http://www.vldb.org/pvldb/vol13/p740-kumar.pdf)(VLDB 2020)
